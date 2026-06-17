@@ -1,26 +1,147 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+  --font-heading: var(--font-display);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* We Are 26 — tokens próprios */
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-bone: var(--bone);
+  --color-trophy: var(--trophy);
+  --color-trophy-deep: var(--trophy-deep);
+  --color-trophy-light: var(--trophy-light);
+  --color-grass: var(--grass);
+  --color-carbon: var(--carbon);
+  --color-sepia: var(--sepia);
+  --color-rule: var(--rule);
+  --color-rule-dark: var(--rule-dark);
+  --color-phase-group: var(--phase-group);
+  --color-phase-32: var(--phase-32);
+  --color-phase-16: var(--phase-16);
+  --color-phase-quarter: var(--phase-quarter);
+  --color-phase-semi: var(--phase-semi);
+  --color-phase-final: var(--phase-final);
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Identidade "We Are 26 / Trophy Edition" — base CLARA (paper/bone), dourado troféu. */
+:root {
+  color-scheme: light;
+
+  --ink: #0e0e10;
+  --paper: #ffffff;
+  --bone: #f4f0e8;
+  --trophy: #d4a23b;
+  --trophy-deep: #a87a21;
+  --trophy-light: #f0d78a;
+  --grass: #b8e62a;
+  --carbon: #1a1a1f;
+  --sepia: #6b6b72;
+  --rule: #e5e0d5;
+  --rule-dark: #2a2a30;
+
+  --phase-group: #0099cc;
+  --phase-32: #f5dc1e;
+  --phase-16: #ff6633;
+  --phase-quarter: #006064;
+  --phase-semi: #c8455b;
+  --phase-final: #d4a23b;
+
+  /* mapeamento dos tokens semânticos (shadcn/base-ui) → paleta We Are 26 */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--bone);
+  --secondary-foreground: var(--ink);
+  --muted: var(--bone);
+  --muted-foreground: var(--sepia);
+  --accent: var(--bone);
+  --accent-foreground: var(--ink);
+  --destructive: var(--phase-semi);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--trophy);
+  --radius: 6px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-variant-numeric: tabular-nums;
+  }
+  html {
+    @apply font-sans;
+  }
+  /* foco com dourado, conforme brief */
+  :focus-visible {
+    outline: 2px solid var(--trophy);
+    outline-offset: 3px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* números sempre tabulares */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* manchete display condensed com kerning apertado */
+  .display {
+    font-family: var(--font-display);
+    letter-spacing: -0.04em;
+    line-height: 0.92;
+  }
+}
+
+/* skeleton do grid de 48: células pulsam em sequência */
+@keyframes grid48-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
