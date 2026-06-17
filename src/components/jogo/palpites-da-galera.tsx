@@ -3,6 +3,7 @@
 import { ChevronDown, Lock, Users } from 'lucide-react'
 import { useState } from 'react'
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { GaleraGuess } from '@/lib/queries/predictions'
 import { cn } from '@/lib/utils'
 
@@ -21,14 +22,17 @@ function Row({ g, hasStarted }: { g: GaleraGuess; hasStarted: boolean }) {
         g.isMe && 'bg-trophy/8',
       )}
     >
-      <span
-        className={cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold',
-          g.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
-        )}
-      >
-        {initials(g.name)}
-      </span>
+      <Avatar className="size-7 shrink-0">
+        {g.avatarUrl && <AvatarImage src={g.avatarUrl} alt="" />}
+        <AvatarFallback
+          className={cn(
+            'text-[11px] font-semibold',
+            g.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
+          )}
+        >
+          {initials(g.name)}
+        </AvatarFallback>
+      </Avatar>
       <span className="min-w-0 flex-1 truncate text-[14px] text-ink">
         {g.name}
         {g.isMe && <span className="ml-1.5 text-[11px] text-sepia">você</span>}

@@ -69,6 +69,7 @@ export async function getUserGuesses(): Promise<Map<string, Guess>> {
 export interface GaleraGuess {
   userId: string
   name: string
+  avatarUrl: string | null
   guess: Guess | null
   points: number | null
   isMe: boolean
@@ -91,6 +92,7 @@ export async function getMatchPredictions(
   const rows: GaleraGuess[] = (data ?? []).map((r) => ({
     userId: r.user_id,
     name: r.display_name ?? r.username,
+    avatarUrl: r.avatar_url,
     guess:
       r.home_score != null && r.away_score != null
         ? [r.home_score, r.away_score]
