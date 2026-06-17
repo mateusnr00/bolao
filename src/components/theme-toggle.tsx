@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 function applyTheme(dark: boolean) {
   document.documentElement.classList.toggle('dark', dark)
@@ -11,16 +11,26 @@ function applyTheme(dark: boolean) {
   }
 }
 
-export function ThemeToggle() {
-  const [dark, setDark] = useState(false)
+// Lê o tema direto do <html> (fonte da verdade, definida pelo script anti-flash)
+// e observa mudanças na classe, sem setState em effect.
+function subscribe(onChange: () => void) {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  })
+  return () => observer.disconnect()
+}
 
-  // sincroniza com o que o script anti-flash já aplicou no <html>
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'))
-  }, [])
+export function ThemeToggle() {
+  const dark = useSyncExternalStore(
+    subscribe,
+    () => document.documentElement.classList.contains('dark'),
+    () => false,
+  )
 
   function onChange(next: boolean) {
-    setDark(next)
+    // muta o <html>; o MutationObserver acima atualiza o estado do toggle
     applyTheme(next)
   }
 

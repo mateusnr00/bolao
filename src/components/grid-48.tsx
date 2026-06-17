@@ -23,7 +23,6 @@ const QUARTERS: Record<string, 'tl' | 'tr' | 'bl' | 'br'> = {
 
 const COLS = 8
 const ROWS = 6
-const TOTAL = COLS * ROWS
 
 function quarterPath(corner: 'tl' | 'tr' | 'bl' | 'br', s: number): string {
   // quarto de disco (raio s) ancorado em um canto da célula

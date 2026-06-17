@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { LogOut, UserRound } from 'lucide-react'
 import { useState, useTransition } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import { signOut } from '@/app/(auth)/actions'
@@ -40,8 +40,8 @@ export function ProfileScreen({
     defaultValues: { displayName, avatarUrl },
   })
 
-  const watchedName = form.watch('displayName')
-  const watchedAvatar = form.watch('avatarUrl')
+  const watchedName = useWatch({ control: form.control, name: 'displayName' })
+  const watchedAvatar = useWatch({ control: form.control, name: 'avatarUrl' })
   const previewName = watchedName || username
   const initials = previewName ? initialsOf(previewName) : ''
 
