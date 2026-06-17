@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { savePrediction } from '@/app/jogo/[id]/actions'
+import { GaleraInline } from '@/components/palpites/galera-inline'
 import {
   BottomNav,
   Flag,
@@ -127,6 +128,19 @@ function ReadonlyScore({ guess }: { guess: [number, number] }) {
   )
 }
 
+function SaveStatus({ state }: { state: 'idle' | 'saving' | 'saved' | 'error' }) {
+  if (state === 'saving') return <span className="text-[12px] text-sepia">salvando…</span>
+  if (state === 'saved')
+    return (
+      <span className="flex items-center gap-1 text-[12px] font-medium text-trophy-deep">
+        <Check className="size-3.5" /> salvo
+      </span>
+    )
+  if (state === 'error')
+    return <span className="text-[12px] font-medium text-destructive">erro</span>
+  return null
+}
+
 function CardHeader({
   m,
   right,
@@ -199,15 +213,18 @@ function EditableMatchRow({
         m={m}
         right={
           hasPools ? (
-            <button
-              type="button"
-              onClick={shuffle}
-              aria-label="gerar placar aleatório"
-              title="placar aleatório"
-              className="flex size-7 items-center justify-center rounded-md text-sepia transition-colors hover:bg-bone hover:text-ink"
-            >
-              <Shuffle className="size-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <SaveStatus state={state} />
+              <button
+                type="button"
+                onClick={shuffle}
+                aria-label="gerar placar aleatório"
+                title="placar aleatório"
+                className="flex size-7 items-center justify-center rounded-md text-sepia transition-colors hover:bg-bone hover:text-ink"
+              >
+                <Shuffle className="size-4" />
+              </button>
+            </div>
           ) : null
         }
       />
@@ -232,40 +249,30 @@ function EditableMatchRow({
         <TeamCol team={m.away} />
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
-        {!hasPools ? (
+      <div className="mt-3">
+        {hasPools ? (
+          <GaleraInline matchId={m.id} />
+        ) : (
           <Link
             href="/boloes"
-            className="text-[12px] font-medium text-trophy-deep transition-colors hover:text-ink"
+            className="flex text-[12px] font-medium text-trophy-deep transition-colors hover:text-ink"
           >
             entre num bolão pra palpitar →
           </Link>
-        ) : state === 'saving' ? (
-          <span className="text-[12px] text-sepia">salvando…</span>
-        ) : state === 'saved' ? (
-          <span className="flex items-center gap-1 text-[12px] font-medium text-trophy-deep">
-            <Check className="size-3.5" /> palpite salvo
-          </span>
-        ) : state === 'error' ? (
-          <span className="text-[12px] font-medium text-destructive">
-            não salvou, tente de novo
-          </span>
-        ) : (
-          <span className="text-[12px] text-sepia">toque pra colocar o placar</span>
         )}
-        <Link
-          href={`/jogo/${m.id}`}
-          className="text-[12px] text-sepia transition-colors hover:text-ink"
-        >
-          abrir jogo →
-        </Link>
       </div>
     </li>
   )
 }
 
 /* card de jogo já fechado / encerrado (somente leitura) */
-function StaticMatchRow({ m }: { m: PalpiteMatch }) {
+function StaticMatchRow({
+  m,
+  hasPools,
+}: {
+  m: PalpiteMatch
+  hasPools: boolean
+}) {
   const finished = m.status === 'finished'
   const win = (m.points ?? 0) > 0
 
@@ -331,14 +338,11 @@ function StaticMatchRow({ m }: { m: PalpiteMatch }) {
         <TeamCol team={m.away} />
       </div>
 
-      <div className="mt-3 flex justify-end">
-        <Link
-          href={`/jogo/${m.id}`}
-          className="text-[12px] text-sepia transition-colors hover:text-ink"
-        >
-          abrir jogo →
-        </Link>
-      </div>
+      {hasPools && (
+        <div className="mt-3">
+          <GaleraInline matchId={m.id} />
+        </div>
+      )}
     </li>
   )
 }
@@ -347,7 +351,7 @@ function MatchCard({ m, hasPools }: { m: PalpiteMatch; hasPools: boolean }) {
   if (m.status === 'open' || m.status === 'predicted') {
     return <EditableMatchRow m={m} hasPools={hasPools} />
   }
-  return <StaticMatchRow m={m} />
+  return <StaticMatchRow m={m} hasPools={hasPools} />
 }
 
 function RoundSelector({
