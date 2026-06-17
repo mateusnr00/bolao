@@ -48,6 +48,13 @@ export async function signInWithPassword(
   const supabase = await createClient()
   const { error } = await supabase.auth.signInWithPassword(parsed.data)
   if (error) {
+    const msg = error.message?.toLowerCase() ?? ''
+    if (error.code === 'email_not_confirmed' || msg.includes('not confirmed')) {
+      return { error: 'Email ainda não confirmado.' }
+    }
+    if (error.status === 429 || msg.includes('rate')) {
+      return { error: 'Muitas tentativas. Espere um pouco e tente de novo.' }
+    }
     return { error: 'Email ou senha incorretos' }
   }
 
