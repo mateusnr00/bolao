@@ -28,12 +28,13 @@ export async function GET(request: Request) {
 
   try {
     const supabase = createAdminClient()
-    // 1) calendário/seed (fonte da verdade do fixture)
-    const openfootball = await runOpenfootballSync(supabase)
+    // 1) calendário/seed (fonte da verdade do fixture). Não-fatal: se o
+    //    openfootball falhar, ainda rodamos o placar ao vivo abaixo.
+    const openfootball = await safeLive(() => runOpenfootballSync(supabase))
 
-    // 2) placar ao vivo por cima (opcional). Precedência: worldcup26 (gratuito,
-    //    nativo da Copa) e, na falta dele, SportMonks. Um erro aqui não derruba
-    //    o sync principal — só fica registrado na resposta.
+    // 2) placar ao vivo por cima. Precedência: worldcup26 (gratuito, nativo da
+    //    Copa) e, na falta dele, SportMonks. É essa etapa que marca 'live' e
+    //    'finished' dos jogos — por isso não pode depender do openfootball.
     let live: unknown = null
     const wc26Token = process.env.WC2026_API_KEY
     const sportmonksToken = process.env.SPORTMONKS_API_TOKEN
