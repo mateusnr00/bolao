@@ -19,6 +19,8 @@ export async function GET() {
         awayGoals: g.awayGoals,
         minute: g.minute,
         label: g.label,
+        homeScorers: g.homeScorers,
+        awayScorers: g.awayScorers,
       }))
 
     const res = NextResponse.json({ updatedAt: Date.now(), games })

@@ -14,6 +14,8 @@ export interface LiveEntry {
   awayGoals: number
   minute: number | null
   label: string | null
+  homeScorers: string | null
+  awayScorers: string | null
 }
 
 interface Stored extends LiveEntry {
@@ -119,5 +121,7 @@ export function useLivePair(homeCode: string, awayCode: string): LiveEntry | nul
     awayGoals: entry.awayGoals,
     minute: entry.minute,
     label: entry.label,
+    homeScorers: entry.homeScorers,
+    awayScorers: entry.awayScorers,
   }
 }

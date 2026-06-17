@@ -36,8 +36,17 @@ interface Wc26Game {
   away_team_id?: string | number
   home_score?: string | number
   away_score?: string | number
+  home_scorers?: string
+  away_scorers?: string
   finished?: string
   time_elapsed?: string
+}
+
+// a API manda "null" (string) ou vazio quando não há gols/autores
+function cleanScorers(v: unknown): string | null {
+  const s = String(v ?? '').trim()
+  if (!s || s.toLowerCase() === 'null') return null
+  return s
 }
 
 // ── parser puro (testável com mock) ─────────────────────────────────────────
@@ -97,6 +106,8 @@ export interface Wc26Live {
   finished: boolean
   minute: number | null // minuto numérico, quando dá pra ler de time_elapsed
   label: string | null // rótulo cru quando não é número (ex.: "HT")
+  homeScorers: string | null // autores dos gols da casa (cru, como a API manda)
+  awayScorers: string | null
 }
 
 /** Igual ao parser do sync, mas guarda o minuto/rótulo pra exibir no front. */
@@ -124,7 +135,17 @@ export function parseWorldcup26Live(
     const label =
       minute == null && raw && raw.toLowerCase() !== 'notstarted' ? raw : null
 
-    out.push({ homeCode, awayCode, homeGoals, awayGoals, finished, minute, label })
+    out.push({
+      homeCode,
+      awayCode,
+      homeGoals,
+      awayGoals,
+      finished,
+      minute,
+      label,
+      homeScorers: cleanScorers(g.home_scorers),
+      awayScorers: cleanScorers(g.away_scorers),
+    })
   }
   return out
 }

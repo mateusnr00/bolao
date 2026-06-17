@@ -124,6 +124,19 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
   const myLivePts =
     actual && match.guess ? calcPredictionPoints(match.guess, actual) : null
 
+  // autores dos gols (ao vivo), reorientados pra ordem casa/fora deste jogo
+  const sameOrient = frontLive ? frontLive.homeCode === match.home.code : true
+  const homeScorers = frontLive
+    ? sameOrient
+      ? frontLive.homeScorers
+      : frontLive.awayScorers
+    : null
+  const awayScorers = frontLive
+    ? sameOrient
+      ? frontLive.awayScorers
+      : frontLive.homeScorers
+    : null
+
   function confirm() {
     startTransition(async () => {
       const res = await savePrediction({
@@ -259,6 +272,26 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 </div>
                 <TeamSide team={match.away} align="end" />
               </div>
+              {(homeScorers || awayScorers) && (
+                <div className="flex items-start justify-between gap-4 text-[12px] leading-snug text-sepia">
+                  <p className="flex-1">
+                    {homeScorers && (
+                      <>
+                        <span className="text-grass">⚽ </span>
+                        {homeScorers}
+                      </>
+                    )}
+                  </p>
+                  <p className="flex-1 text-right">
+                    {awayScorers && (
+                      <>
+                        {awayScorers}
+                        <span className="text-grass"> ⚽</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+              )}
               {match.guess && (
                 <p className="text-center text-[13px] text-sepia">
                   seu palpite{' '}
