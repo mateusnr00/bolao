@@ -319,6 +319,55 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          body: string | null
+          match_id: string | null
+          pool_id: string | null
+          read_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          title: string
+          body?: string | null
+          match_id?: string | null
+          pool_id?: string | null
+          read_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          title?: string
+          body?: string | null
+          match_id?: string | null
+          pool_id?: string | null
+          read_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_match_id_fkey'
+            columns: ['match_id']
+            referencedRelation: 'matches'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'notifications_pool_id_fkey'
+            columns: ['pool_id']
+            referencedRelation: 'pools'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       pool_rankings: {
