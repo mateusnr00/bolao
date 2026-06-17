@@ -1,7 +1,7 @@
 import { NoPoolScreen } from '@/components/boloes/no-pool-screen'
 import { RankingScreen } from '@/components/ranking/ranking-screen'
 import { getUserPools } from '@/lib/queries/pools'
-import { getPoolRanking } from '@/lib/queries/rankings'
+import { getLiveMatchGuesses, getPoolRanking } from '@/lib/queries/rankings'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,10 +18,18 @@ export default async function RankingPage() {
     )
   }
 
-  const rows = await getPoolRanking(pool.id)
+  const [rows, liveMatches] = await Promise.all([
+    getPoolRanking(pool.id),
+    getLiveMatchGuesses(),
+  ])
   return (
     <RankingScreen
-      data={{ poolName: pool.name, memberCount: pool.memberCount, rows }}
+      data={{
+        poolName: pool.name,
+        memberCount: pool.memberCount,
+        rows,
+        liveMatches,
+      }}
     />
   )
 }

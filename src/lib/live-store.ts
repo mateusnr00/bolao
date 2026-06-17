@@ -108,10 +108,22 @@ function stop() {
   }
 }
 
-/** Dados ao vivo (do front) pro par de seleções, ou null se não está rolando. */
-export function useLivePair(homeCode: string, awayCode: string): LiveEntry | null {
-  const [, force] = useReducer((x: number) => x + 1, 0)
+function toEntry(e: Stored): LiveEntry {
+  return {
+    homeCode: e.homeCode,
+    awayCode: e.awayCode,
+    homeGoals: e.homeGoals,
+    awayGoals: e.awayGoals,
+    minute: e.minute,
+    label: e.label,
+    homeScorers: e.homeScorers,
+    awayScorers: e.awayScorers,
+  }
+}
 
+// inscreve no store e re-renderiza a cada emit (poll/tick)
+function useLiveSubscription() {
+  const [, force] = useReducer((x: number) => x + 1, 0)
   useEffect(() => {
     start()
     subscribers.add(force)
@@ -120,18 +132,17 @@ export function useLivePair(homeCode: string, awayCode: string): LiveEntry | nul
       stop()
     }
   }, [])
+}
 
+/** Dados ao vivo (do front) pro par de seleções, ou null se não está rolando. */
+export function useLivePair(homeCode: string, awayCode: string): LiveEntry | null {
+  useLiveSubscription()
   const entry = byPair.get(pairKey(homeCode, awayCode))
-  if (!entry) return null
+  return entry ? toEntry(entry) : null
+}
 
-  return {
-    homeCode: entry.homeCode,
-    awayCode: entry.awayCode,
-    homeGoals: entry.homeGoals,
-    awayGoals: entry.awayGoals,
-    minute: entry.minute,
-    label: entry.label,
-    homeScorers: entry.homeScorers,
-    awayScorers: entry.awayScorers,
-  }
+/** Todos os jogos ao vivo conhecidos pelo front (pra somar pontos no ranking). */
+export function useAllLive(): LiveEntry[] {
+  useLiveSubscription()
+  return Array.from(byPair.values(), toEntry)
 }

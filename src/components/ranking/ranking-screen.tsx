@@ -1,8 +1,15 @@
-import { BottomNav, Eyebrow, ExactDots, Rule, TopNav } from '@/components/we26'
+'use client'
+
+import { BottomNav, Eyebrow, ExactDots, LiveBadge, Rule, TopNav } from '@/components/we26'
+import { LiveRefresher } from '@/components/live-refresher'
+import { useAllLive } from '@/lib/live-store'
+import type { LiveMatchGuesses } from '@/lib/queries/rankings'
+import { calcPredictionPoints } from '@/lib/scoring'
 import { cn } from '@/lib/utils'
 
 export interface RankRow {
   position: number
+  userId: string
   name: string
   points: number
   predictionsMade: number
@@ -14,6 +21,12 @@ export interface RankingData {
   poolName: string
   memberCount: number
   rows: RankRow[]
+  liveMatches: LiveMatchGuesses[]
+}
+
+interface ComputedRow extends RankRow {
+  livePoints: number // pontos provisórios (jogos ao vivo)
+  total: number // persistido + provisório
 }
 
 function medalColor(pos: number) {
@@ -23,19 +36,74 @@ function medalColor(pos: number) {
   return 'text-sepia'
 }
 
+function pairKey(a: string, b: string) {
+  return [a, b].sort().join('|')
+}
+
+// soma os pontos provisórios de cada usuário a partir dos jogos ao vivo.
+// usa o placar do front (mais fresco) e cai pro placar do banco se ele piscar.
+function computeLiveDelta(
+  liveMatches: LiveMatchGuesses[],
+  liveByPair: Map<string, { homeCode: string; homeGoals: number; awayGoals: number }>,
+): Map<string, number> {
+  const delta = new Map<string, number>()
+  for (const m of liveMatches) {
+    const front = liveByPair.get(pairKey(m.homeCode, m.awayCode))
+    const actual: [number, number] | null = front
+      ? front.homeCode === m.homeCode
+        ? [front.homeGoals, front.awayGoals]
+        : [front.awayGoals, front.homeGoals]
+      : m.dbScore
+    if (!actual) continue
+    for (const g of m.guesses) {
+      const pts = calcPredictionPoints(g.guess, actual)
+      delta.set(g.userId, (delta.get(g.userId) ?? 0) + pts)
+    }
+  }
+  return delta
+}
+
 export function RankingScreen({ data }: { data: RankingData }) {
-  const { rows } = data
-  const me = rows.find((r) => r.isMe)
-  const leader = rows[0]?.points ?? 0
+  const { liveMatches } = data
+
+  // placar ao vivo do front (re-renderiza sozinho a cada atualização)
+  const liveEntries = useAllLive()
+  const liveByPair = new Map(
+    liveEntries.map((e) => [pairKey(e.homeCode, e.awayCode), e]),
+  )
+
+  const delta = computeLiveDelta(liveMatches, liveByPair)
+  const liveOn = liveMatches.length > 0
+
+  // recompõe a tabela com os pontos provisórios e reordena
+  const computed: ComputedRow[] = data.rows
+    .map((r) => {
+      const livePoints = delta.get(r.userId) ?? 0
+      return { ...r, livePoints, total: r.points + livePoints }
+    })
+    .sort(
+      (a, b) =>
+        b.total - a.total ||
+        b.exactScores - a.exactScores ||
+        b.predictionsMade - a.predictionsMade,
+    )
+    .map((r, i) => ({ ...r, position: i + 1 }))
+
+  const me = computed.find((r) => r.isMe)
+  const leader = computed[0]?.total ?? 0
 
   return (
     <div className="flex min-h-full flex-col bg-paper">
+      {liveOn && <LiveRefresher />}
       <TopNav active="ranking" />
 
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
         <div className="space-y-6">
           <section className="space-y-1">
-            <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">ranking</h1>
+            <div className="flex items-center gap-2.5">
+              <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">ranking</h1>
+              {liveOn && <LiveBadge />}
+            </div>
             <p className="text-[13px] text-sepia">
               {data.poolName} · {data.memberCount}{' '}
               {data.memberCount === 1 ? 'membro' : 'membros'}
@@ -50,15 +118,29 @@ export function RankingScreen({ data }: { data: RankingData }) {
               </div>
               <div>
                 <Eyebrow>pontos</Eyebrow>
-                <p className="display text-3xl text-ink tabular">{me.points}</p>
+                <p className="display text-3xl text-ink tabular">
+                  {me.total}
+                  {me.livePoints > 0 && (
+                    <span className="ml-1.5 align-middle text-base font-semibold text-grass">
+                      +{me.livePoints}
+                    </span>
+                  )}
+                </p>
               </div>
               <div>
                 <Eyebrow>atrás do 1º</Eyebrow>
                 <p className="display text-3xl text-trophy-deep tabular">
-                  {leader - me.points}
+                  {leader - me.total}
                 </p>
               </div>
             </section>
+          )}
+
+          {liveOn && (
+            <p className="flex items-center justify-center gap-1.5 rounded-md bg-phase-semi/5 px-3 py-1.5 text-center text-[12px] font-medium text-phase-semi">
+              <span className="size-1.5 animate-pulse rounded-full bg-phase-semi" />
+              pontuação provisória · ao vivo (atualiza sozinho)
+            </p>
           )}
 
           <Rule />
@@ -68,15 +150,15 @@ export function RankingScreen({ data }: { data: RankingData }) {
               <Eyebrow>classificação</Eyebrow>
               <Eyebrow className="text-[10px]">pts</Eyebrow>
             </div>
-            {rows.length === 0 ? (
+            {computed.length === 0 ? (
               <p className="py-10 text-center text-[14px] text-sepia">
                 ninguém pontuou ainda. os pontos aparecem quando os jogos terminam.
               </p>
             ) : (
               <ul className="-mx-2">
-                {rows.map((r) => (
+                {computed.map((r) => (
                   <li
-                    key={r.position}
+                    key={r.userId}
                     className={cn(
                       'flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-bone',
                       r.isMe && 'bg-bone',
@@ -104,8 +186,14 @@ export function RankingScreen({ data }: { data: RankingData }) {
                         {r.predictionsMade} palpites
                       </span>
                     </span>
+                    {r.livePoints > 0 && (
+                      <span className="flex items-center gap-1 font-mono text-[12px] tabular font-medium text-grass">
+                        <span className="size-1.5 animate-pulse rounded-full bg-phase-semi" />
+                        +{r.livePoints}
+                      </span>
+                    )}
                     <span className="w-14 text-right font-mono text-sm tabular font-medium text-ink">
-                      {r.points}
+                      {r.total}
                     </span>
                     <span className="w-4 text-trophy">{r.isMe ? '←' : ''}</span>
                   </li>
