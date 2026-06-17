@@ -88,10 +88,15 @@ export function GaleraInline({
   matchId,
   homeCode,
   awayCode,
+  isLive = false,
+  dbScore = null,
 }: {
   matchId: string
   homeCode: string
   awayCode: string
+  // jogo ao vivo segundo o banco + placar já orientado (casa/fora deste jogo)
+  isLive?: boolean
+  dbScore?: [number, number] | null
 }) {
   const [open, setOpen] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -99,13 +104,17 @@ export function GaleraInline({
   const [hasStarted, setHasStarted] = useState(false)
   const [rows, setRows] = useState<Row[]>([])
 
-  // placar ao vivo (do front), reorientado pra ordem casa/fora deste jogo
+  // placar atual pros pontos provisórios: prioriza o front (/api/live, mais
+  // fresco); se ele der um soluço e voltar vazio, cai pro placar do banco
+  // enquanto o jogo está ao vivo — assim a pontuação não zera no meio do jogo.
   const live = useLivePair(homeCode, awayCode)
   const actual: [number, number] | null = live
     ? live.homeCode === homeCode
       ? [live.homeGoals, live.awayGoals]
       : [live.awayGoals, live.homeGoals]
-    : null
+    : isLive && dbScore
+      ? dbScore
+      : null
 
   async function toggle() {
     const next = !open

@@ -450,7 +450,13 @@ function StaticMatchRow({
 
       {hasPools && (
         <div className="mt-3">
-          <GaleraInline matchId={m.id} homeCode={m.home.code} awayCode={m.away.code} />
+          <GaleraInline
+            matchId={m.id}
+            homeCode={m.home.code}
+            awayCode={m.away.code}
+            isLive={live}
+            dbScore={m.score ?? null}
+          />
         </div>
       )}
     </li>
