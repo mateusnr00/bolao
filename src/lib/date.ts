@@ -30,6 +30,12 @@ export function fullKickoff(iso: string): string {
   return formatInTimeZone(new Date(iso), TZ, "EEEE, dd MMM '·' HH:mm", { locale: ptBR })
 }
 
+// "qui · 11/06 · 16h" — compacto pro card de jogo
+export function shortKickoff(iso: string): string {
+  return formatInTimeZone(new Date(iso), TZ, "EEE '·' dd/MM '·' HH'h'", { locale: ptBR })
+    .replace(/\./g, '')
+}
+
 // "2d 4h" / "4h 12m" / "8m" — tempo até o kickoff. null se já passou.
 export function closesInLabel(iso: string, now = new Date()): string | null {
   const ms = new Date(iso).getTime() - now.getTime()

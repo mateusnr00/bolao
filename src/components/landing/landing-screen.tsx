@@ -2,6 +2,10 @@ import { ArrowRight, Trophy } from 'lucide-react'
 import Link from 'next/link'
 
 import { Grid48 } from '@/components/grid-48'
+import {
+  type GameCardData,
+  MatchesGrid,
+} from '@/components/landing/matches-grid'
 import { buttonVariants } from '@/components/ui/button'
 import { Eyebrow, Flag, Logo, PhaseBadge } from '@/components/we26'
 import { cn } from '@/lib/utils'
@@ -94,7 +98,7 @@ function ScoreboardCard() {
   )
 }
 
-export function LandingScreen() {
+export function LandingScreen({ games = [] }: { games?: GameCardData[] }) {
   return (
     <div className="flex min-h-full flex-col bg-paper">
       <header className="sticky top-0 z-20 border-b border-rule bg-paper/85 backdrop-blur">
@@ -186,6 +190,9 @@ export function LandingScreen() {
             </div>
           </div>
         </section>
+
+        {/* jogos da copa — placar real + ao vivo */}
+        <MatchesGrid games={games} />
 
         {/* como funciona */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
