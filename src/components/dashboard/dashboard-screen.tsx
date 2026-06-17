@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { PendingPalpites } from '@/components/dashboard/pending-palpites'
 import { LiveRefresher } from '@/components/live-refresher'
 import { LiveScore } from '@/components/live/live-score'
 import type { DashboardData, LiveMatch } from '@/lib/queries/dashboard'
@@ -84,7 +85,7 @@ function ScoreBox({ value }: { value?: number }) {
 }
 
 export function DashboardScreen({ data }: { data: DashboardData }) {
-  const { pool, me, live, next, ranking, results } = data
+  const { pool, me, live, next, pending, ranking, results } = data
   const topRanking = ranking.slice(0, 5)
 
   return (
@@ -118,6 +119,9 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               )}
             </div>
           </section>
+
+          {/* falta palpitar hoje */}
+          {pending.length > 0 && <PendingPalpites matches={pending} />}
 
           {/* ao vivo agora */}
           {live.length > 0 && (

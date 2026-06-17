@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { closesInLabel } from '@/lib/date'
+import { closesInLabel, dayKey } from '@/lib/date'
 import { getMatches, type MatchView } from '@/lib/queries/matches'
 import { getPoolRanking, type RankingRow } from '@/lib/queries/rankings'
 import { createClient } from '@/lib/supabase/server'
@@ -42,12 +42,23 @@ export interface LiveMatch {
   guess?: [number, number]
 }
 
+// jogo de hoje ainda sem palpite (pro aviso "falta palpitar" com contagem)
+export interface PendingMatch {
+  matchId: string
+  kickoffAt: string
+  stage: MatchStage
+  label?: string
+  home: { code: string; flagUrl: string | null }
+  away: { code: string; flagUrl: string | null }
+}
+
 export interface DashboardData {
   pool: DashboardPool
   me: { position: number | null; points: number; predictionsMade: number }
   totalMatches: number
   live: LiveMatch[]
   next: NextMatch | null
+  pending: PendingMatch[]
   ranking: RankingRow[]
   results: ResultRow[]
 }
@@ -81,6 +92,17 @@ export async function getDashboard(
     .filter((m) => m.status === 'scheduled' && new Date(m.kickoffAt) > now)
     .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt))[0]
 
+  // jogos de HOJE ainda abertos (pro aviso "falta palpitar")
+  const todayKey = dayKey(now.toISOString())
+  const todaysOpen = matches
+    .filter(
+      (m) =>
+        m.status === 'scheduled' &&
+        new Date(m.kickoffAt) > now &&
+        dayKey(m.kickoffAt) === todayKey,
+    )
+    .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt))
+
   // jogos rolando agora
   const liveRaw = matches.filter(
     (m) => m.status === 'live' && m.homeScore != null && m.awayScore != null,
@@ -96,9 +118,12 @@ export async function getDashboard(
 
   // meus palpites nos jogos relevantes (deste bolão)
   const relevantIds = [
-    ...(upcoming ? [upcoming.id] : []),
-    ...liveRaw.map((m) => m.id),
-    ...finished.map((m) => m.id),
+    ...new Set([
+      ...(upcoming ? [upcoming.id] : []),
+      ...todaysOpen.map((m) => m.id),
+      ...liveRaw.map((m) => m.id),
+      ...finished.map((m) => m.id),
+    ]),
   ]
   const guessMap = new Map<string, { guess: [number, number]; points: number }>()
   if (user && relevantIds.length > 0) {
@@ -151,6 +176,18 @@ export async function getDashboard(
     }
   })
 
+  // jogos de hoje que ainda não têm meu palpite
+  const pending: PendingMatch[] = todaysOpen
+    .filter((m) => !guessMap.has(m.id))
+    .map((m) => ({
+      matchId: m.id,
+      kickoffAt: m.kickoffAt,
+      stage: m.stage,
+      label: m.groupName ? `Grupo ${m.groupName}` : undefined,
+      home: teamLite(m.home),
+      away: teamLite(m.away),
+    }))
+
   const meRow = ranking.find((r) => r.isMe)
 
   return {
@@ -163,6 +200,7 @@ export async function getDashboard(
     totalMatches: matches.length,
     live,
     next,
+    pending,
     ranking,
     results,
   }
