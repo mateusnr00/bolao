@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
@@ -14,7 +15,15 @@ export type AuthResult =
   | { error: string }
   | { ok: true; message?: string }
 
-function appUrl() {
+// Origem real do request (domínio onde a pessoa está), pra o link do email não
+// cair em localhost quando NEXT_PUBLIC_APP_URL não estiver setada em produção.
+async function appUrl() {
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host')
+  if (host) {
+    const proto = h.get('x-forwarded-proto') ?? 'https'
+    return `${proto}://${host}`
+  }
   return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 }
 
@@ -77,7 +86,7 @@ export async function signUpWithPassword(
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${appUrl()}/auth/callback`,
+      emailRedirectTo: `${await appUrl()}/auth/callback`,
       data: {
         username: parsed.data.username,
         display_name: parsed.data.displayName ?? parsed.data.username,
@@ -114,7 +123,7 @@ export async function signInWithMagicLink(
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: {
-      emailRedirectTo: `${appUrl()}/auth/callback`,
+      emailRedirectTo: `${await appUrl()}/auth/callback`,
       shouldCreateUser: false,
     },
   })
