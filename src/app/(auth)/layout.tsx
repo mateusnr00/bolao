@@ -32,7 +32,7 @@ export default function AuthLayout({
             48 seleções, um placar pra cada jogo, e a única regra que importa:
             acertar mais que os seus amigos.
           </p>
-          <Emblem imgClassName="h-28 w-auto" />
+          <Emblem className="h-28 w-auto" />
         </div>
 
         <ul className="flex flex-wrap gap-x-5 gap-y-2">

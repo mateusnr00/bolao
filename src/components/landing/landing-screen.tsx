@@ -173,7 +173,7 @@ export function LandingScreen({ games = [] }: { games?: GameCardData[] }) {
 
             {/* visual: emblema oficial + placar de exemplo */}
             <div className="flex flex-col items-center gap-6 lg:items-end">
-              <Emblem imgClassName="h-28 w-auto sm:h-36" />
+              <Emblem className="h-28 w-auto sm:h-40" />
               <ScoreboardCard />
             </div>
           </div>
@@ -241,10 +241,7 @@ export function LandingScreen({ games = [] }: { games?: GameCardData[] }) {
                 </Link>
               </div>
 
-              <Emblem
-                className="hidden shrink-0 lg:inline-flex"
-                imgClassName="h-32 w-auto"
-              />
+              <Emblem className="hidden h-32 w-auto shrink-0 lg:block" />
             </div>
           </div>
         </section>

@@ -38,28 +38,15 @@ export function Logo({ className }: { className?: string }) {
   )
 }
 
-// Emblema oficial da Copa num tile branco (o JPG assenta bem em claro e escuro).
-export function Emblem({
-  className,
-  imgClassName,
-}: {
-  className?: string
-  imgClassName?: string
-}) {
+// Emblema oficial da Copa (PNG transparente) — usado direto, sem fundo.
+export function Emblem({ className }: { className?: string }) {
   return (
-    <span
-      className={cn(
-        'inline-flex rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-black/5',
-        className,
-      )}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={LOGO_EMBLEM_SRC}
-        alt="Copa do Mundo FIFA 2026"
-        className={cn('object-contain', imgClassName)}
-      />
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={LOGO_EMBLEM_SRC}
+      alt="Copa do Mundo FIFA 2026"
+      className={cn('object-contain', className)}
+    />
   )
 }
 
