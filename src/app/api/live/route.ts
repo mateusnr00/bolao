@@ -27,8 +27,13 @@ export async function GET() {
       'public, s-maxage=15, stale-while-revalidate=30',
     )
     return res
-  } catch {
-    // falha na fonte externa não pode quebrar o front — devolve vazio
-    return NextResponse.json({ updatedAt: Date.now(), games: [] })
+  } catch (err) {
+    // falha na fonte externa não pode quebrar o front — devolve vazio, mas
+    // expõe o erro pra dar pra diagnosticar (token, fonte fora do ar etc.)
+    return NextResponse.json({
+      updatedAt: Date.now(),
+      games: [],
+      error: err instanceof Error ? err.message : 'erro ao buscar ao vivo',
+    })
   }
 }
