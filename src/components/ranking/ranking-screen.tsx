@@ -1,5 +1,6 @@
 'use client'
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BottomNav, Eyebrow, ExactDots, LiveBadge, Rule, TopNav } from '@/components/we26'
 import { LiveRefresher } from '@/components/live-refresher'
 import { useAllLive } from '@/lib/live-store'
@@ -11,6 +12,7 @@ export interface RankRow {
   position: number
   userId: string
   name: string
+  avatarUrl: string | null
   points: number
   predictionsMade: number
   exactScores: number
@@ -34,6 +36,13 @@ function medalColor(pos: number) {
   if (pos === 2) return 'text-sepia'
   if (pos === 3) return 'text-trophy-deep'
   return 'text-sepia'
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/)
+  const a = parts[0]?.[0] ?? ''
+  const b = parts.length > 1 ? (parts[parts.length - 1][0] ?? '') : ''
+  return (a + b).toUpperCase()
 }
 
 function pairKey(a: string, b: string) {
@@ -172,6 +181,17 @@ export function RankingScreen({ data }: { data: RankingData }) {
                     >
                       {String(r.position).padStart(2, '0')}
                     </span>
+                    <Avatar className="size-8 shrink-0">
+                      {r.avatarUrl && <AvatarImage src={r.avatarUrl} alt="" />}
+                      <AvatarFallback
+                        className={cn(
+                          'text-[11px] font-semibold',
+                          r.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
+                        )}
+                      >
+                        {initials(r.name)}
+                      </AvatarFallback>
+                    </Avatar>
                     <span
                       className={cn(
                         'flex-1 truncate text-[15px]',

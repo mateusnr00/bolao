@@ -6,6 +6,7 @@ export interface RankingRow {
   position: number
   userId: string
   name: string
+  avatarUrl: string | null
   points: number
   predictionsMade: number
   exactScores: number
@@ -16,6 +17,7 @@ interface RawRanking {
   user_id: string
   display_name: string | null
   username: string
+  avatar_url: string | null
   total_points: number
   predictions_made: number
   exact_scores: number
@@ -31,7 +33,9 @@ export async function getPoolRanking(poolId: string): Promise<RankingRow[]> {
 
   const { data, error } = await supabase
     .from('pool_rankings')
-    .select('user_id, display_name, username, total_points, predictions_made, exact_scores')
+    .select(
+      'user_id, display_name, username, avatar_url, total_points, predictions_made, exact_scores',
+    )
     .eq('pool_id', poolId)
     .order('total_points', { ascending: false })
     .order('exact_scores', { ascending: false })
@@ -42,6 +46,7 @@ export async function getPoolRanking(poolId: string): Promise<RankingRow[]> {
     position: i + 1,
     userId: r.user_id,
     name: r.display_name?.trim() || r.username,
+    avatarUrl: r.avatar_url,
     points: r.total_points,
     predictionsMade: r.predictions_made,
     exactScores: r.exact_scores,
