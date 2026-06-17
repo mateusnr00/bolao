@@ -1,4 +1,4 @@
-import { House, ListChecks, Trophy, User } from 'lucide-react'
+import { House, ListChecks, Trophy, Users } from 'lucide-react'
 import Link from 'next/link'
 
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -138,7 +138,7 @@ export function BottomNav({ active = 'inicio' }: { active?: NavKey }) {
     { key: 'inicio', icon: House, label: 'início', href: '/' },
     { key: 'palpites', icon: ListChecks, label: 'palpites', href: '/palpites' },
     { key: 'ranking', icon: Trophy, label: 'ranking', href: '/ranking' },
-    { key: 'perfil', icon: User, label: 'perfil', href: '/perfil' },
+    { key: 'boloes', icon: Users, label: 'ligas', href: '/boloes' },
   ]
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-rule bg-paper md:hidden">
