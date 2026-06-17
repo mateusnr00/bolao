@@ -77,8 +77,8 @@ export function CreatePoolForm() {
               {isPending ? 'criando…' : 'criar bolão'}
             </Button>
             <p className="text-center text-[12px] text-sepia">
-              a pontuação padrão (placar exato 10 · vencedor+saldo 7 · vencedor 5) já
-              vem configurada.
+              a pontuação padrão (placar exato 25 · acertos parciais de 10 a 18)
+              já vem configurada.
             </p>
           </form>
         </div>
