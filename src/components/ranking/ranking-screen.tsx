@@ -187,7 +187,7 @@ export function RankingScreen({ data }: { data: RankingData }) {
                     </span>
                     <Avatar
                       className={cn(
-                        'size-11 shrink-0',
+                        'size-11 shrink-0 md:size-14',
                         r.position === 1 &&
                           'ring-2 ring-trophy ring-offset-2 ring-offset-paper',
                       )}
@@ -199,7 +199,7 @@ export function RankingScreen({ data }: { data: RankingData }) {
                       )}
                       <AvatarFallback
                         className={cn(
-                          'text-[13px] font-semibold',
+                          'text-[13px] font-semibold md:text-base',
                           r.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
                         )}
                       >
