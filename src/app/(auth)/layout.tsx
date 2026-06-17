@@ -1,4 +1,5 @@
 import { Grid48 } from '@/components/grid-48'
+import { Logo } from '@/components/we26'
 
 const PHASES = [
   { label: 'grupos', color: 'bg-phase-group' },
@@ -18,7 +19,7 @@ export default function AuthLayout({
       {/* painel de marca — só desktop */}
       <aside className="relative hidden flex-col justify-between overflow-hidden bg-ink p-12 text-paper md:flex">
         <div className="flex items-center justify-between">
-          <span className="display text-2xl leading-none">╳26</span>
+          <Logo className="h-9" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-paper/55">
             copa · 2026
           </span>
@@ -52,7 +53,7 @@ export default function AuthLayout({
       <main className="flex flex-col items-center justify-center px-4 py-10">
         {/* cabeçalho da marca — só mobile */}
         <div className="mb-8 flex flex-col items-center gap-2 text-center md:hidden">
-          <span className="display text-3xl leading-none text-ink">╳26</span>
+          <Logo className="h-12" />
           <p className="text-[13px] text-sepia">
             palpites entre amigos · copa 2026
           </p>

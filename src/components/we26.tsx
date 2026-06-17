@@ -24,8 +24,20 @@ export const PHASE_META: Record<Phase, { label: string; bg: string; fg: string }
   final: { label: 'final', bg: 'bg-phase-final', fg: 'text-ink' },
 }
 
-export function Logo() {
-  return <span className="display text-2xl leading-none text-ink">╳26</span>
+// Logos da Copa (hospedados externamente por ora; pra produção, baixar e
+// commitar em public/brand e trocar por '/brand/...').
+export const LOGO_TROPHY_SRC = 'https://i.postimg.cc/022srSL1/26taca.png'
+export const LOGO_EMBLEM_SRC = 'https://i.postimg.cc/FHYXV4rG/fwc.jpg'
+
+export function Logo({ className }: { className?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={LOGO_TROPHY_SRC}
+      alt="Copa 2026"
+      className={cn('h-8 w-auto object-contain', className)}
+    />
+  )
 }
 
 export function Eyebrow({

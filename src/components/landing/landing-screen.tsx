@@ -7,7 +7,13 @@ import {
   MatchesGrid,
 } from '@/components/landing/matches-grid'
 import { buttonVariants } from '@/components/ui/button'
-import { Eyebrow, Flag, Logo, PhaseBadge } from '@/components/we26'
+import {
+  Eyebrow,
+  Flag,
+  LOGO_EMBLEM_SRC,
+  Logo,
+  PhaseBadge,
+} from '@/components/we26'
 import { cn } from '@/lib/utils'
 
 const STEPS = [
@@ -129,6 +135,15 @@ export function LandingScreen({ games = [] }: { games?: GameCardData[] }) {
         <section className="border-b border-rule">
           <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8 lg:py-24">
             <div className="space-y-7">
+              {/* emblema oficial — tile branco pra assentar o JPG em qualquer modo */}
+              <div className="inline-flex rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-black/5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={LOGO_EMBLEM_SRC}
+                  alt="Copa do Mundo FIFA 2026"
+                  className="h-16 w-auto object-contain sm:h-20"
+                />
+              </div>
               <Eyebrow>copa do mundo · 2026 · eua · méxico · canadá</Eyebrow>
               <h1 className="display text-[clamp(44px,8.5vw,80px)] uppercase text-ink">
                 o bolão da copa entre amigos
