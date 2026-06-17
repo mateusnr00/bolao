@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 const STEPS = [
   { n: '01', title: 'crie ou entre num bolão', body: 'monte o seu e chame a galera, ou entre com o código de 8 letras.' },
-  { n: '02', title: 'palpite os 48 jogos', body: 'um placar pra cada partida. trava no apito inicial — sem moleza.' },
+  { n: '02', title: 'palpite os 48 jogos', body: 'um placar pra cada partida. trava no apito inicial, sem moleza.' },
   { n: '03', title: 'suba no ranking', body: 'placar exato vale mais. acompanhe a classificação a cada jogo.' },
 ]
 

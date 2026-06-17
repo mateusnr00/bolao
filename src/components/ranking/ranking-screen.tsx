@@ -70,7 +70,7 @@ export function RankingScreen({ data }: { data: RankingData }) {
             </div>
             {rows.length === 0 ? (
               <p className="py-10 text-center text-[14px] text-sepia">
-                ninguém pontuou ainda — os pontos aparecem quando os jogos terminam.
+                ninguém pontuou ainda. os pontos aparecem quando os jogos terminam.
               </p>
             ) : (
               <ul className="-mx-2">
@@ -115,7 +115,7 @@ export function RankingScreen({ data }: { data: RankingData }) {
           </section>
 
           <p className="pt-2 text-center text-[12px] text-sepia">
-            placar exato vale mais — por isso os pontos não seguem só o nº de acertos.
+            placar exato vale mais. por isso os pontos não seguem só o número de acertos.
           </p>
         </div>
       </main>

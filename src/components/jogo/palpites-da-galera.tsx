@@ -48,7 +48,7 @@ function Row({ g, hasStarted }: { g: GaleraGuess; hasStarted: boolean }) {
           )}
         </>
       ) : (
-        <span className="font-mono text-[15px] text-rule-dark">—</span>
+        <Lock className="size-3.5 text-rule-dark" aria-label="oculto" />
       )}
     </li>
   )

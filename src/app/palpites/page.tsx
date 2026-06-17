@@ -7,7 +7,7 @@ import {
 } from '@/components/palpites/palpites-screen'
 import { dayKey, dayLabel, timeLabel } from '@/lib/date'
 import { getMatches } from '@/lib/queries/matches'
-import { getUserGuesses } from '@/lib/queries/predictions'
+import { getUserGuesses, getUserPoolIds } from '@/lib/queries/predictions'
 import type { MatchStage } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -50,8 +50,13 @@ function statusOf(
 }
 
 export default async function PalpitesPage() {
-  const [matches, guesses] = await Promise.all([getMatches(), getUserGuesses()])
+  const [matches, guesses, poolIds] = await Promise.all([
+    getMatches(),
+    getUserGuesses(),
+    getUserPoolIds(),
+  ])
   const now = new Date()
+  const hasPools = poolIds.length > 0
 
   // Rodada de cada jogo. Grupos: 4 times = 6 jogos, 2 por rodada, em ordem
   // cronológica → rodada = floor(ordem_no_grupo / 2) + 1. Mata-mata: o stage.
@@ -119,5 +124,5 @@ export default async function PalpitesPage() {
     ),
   }))
 
-  return <PalpitesScreen rounds={rounds} />
+  return <PalpitesScreen rounds={rounds} hasPools={hasPools} />
 }

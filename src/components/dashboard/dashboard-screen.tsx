@@ -41,7 +41,7 @@ function ScoreBox({ value }: { value?: number }) {
         value == null ? 'border-dashed border-rule text-rule' : 'border-rule-dark text-ink',
       )}
     >
-      {value ?? '–'}
+      {value ?? ''}
     </div>
   )
 }

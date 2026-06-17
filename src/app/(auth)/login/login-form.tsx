@@ -163,7 +163,7 @@ export function LoginForm() {
             {isPending ? 'enviando…' : 'enviar link mágico'}
           </Button>
           <p className="text-center text-[12px] text-sepia">
-            sem senha — a gente manda um link de acesso.
+            sem senha. a gente manda um link de acesso.
           </p>
         </form>
       )}

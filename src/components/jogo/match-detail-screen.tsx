@@ -115,7 +115,7 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
         return
       }
       setSaved(true)
-      toast.success(`palpite salvo: ${match.home.code} ${home}–${away} ${match.away.code}`)
+      toast.success(`palpite salvo: ${match.home.code} ${home} a ${away} ${match.away.code}`)
     })
   }
 
@@ -185,7 +185,7 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                         : 'confirmar palpite'}
                   </Button>
                   <p className="text-center text-[12px] text-sepia">
-                    trava no apito inicial — depois não dá pra mudar.
+                    trava no apito inicial. depois não dá pra mudar.
                   </p>
                 </>
               ) : (

@@ -1,9 +1,11 @@
 'use client'
 
-import { CalendarDays, Check, ChevronDown, Lock } from 'lucide-react'
+import { CalendarDays, Check, ChevronDown, Lock, Shuffle } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
+import { toast } from 'sonner'
 
+import { savePrediction } from '@/app/jogo/[id]/actions'
 import {
   BottomNav,
   Flag,
@@ -11,6 +13,7 @@ import {
   PhaseBadge,
   TopNav,
 } from '@/components/we26'
+import { randomFootballScore } from '@/lib/score'
 import { cn } from '@/lib/utils'
 
 export type Status = 'open' | 'predicted' | 'locked' | 'finished'
@@ -50,116 +53,301 @@ const FILTERS = [
 type FilterKey = (typeof FILTERS)[number]['key']
 
 function matchesFilter(m: PalpiteMatch, f: FilterKey) {
-  if (f === 'abertos') return m.status === 'open'
-  if (f === 'encerrados') return m.status === 'finished'
+  if (f === 'abertos') return m.status === 'open' || m.status === 'predicted'
+  if (f === 'encerrados') return m.status === 'finished' || m.status === 'locked'
   return true
 }
 
-function ScoreBox({ value, dim }: { value?: number; dim?: boolean }) {
+/* bandeira redonda estilo "card de jogo" */
+function TeamCol({
+  team,
+}: {
+  team: { code: string; flagUrl: string | null }
+}) {
   return (
-    <div
-      className={cn(
-        'flex size-9 items-center justify-center rounded-md border font-mono text-lg tabular font-medium',
-        dim ? 'border-dashed border-rule text-rule' : 'border-rule-dark text-ink',
-      )}
-    >
-      {value ?? '–'}
+    <div className="flex flex-1 flex-col items-center gap-2">
+      <Flag
+        src={team.flagUrl ?? undefined}
+        className="size-12 rounded-full object-cover ring-1 ring-rule"
+      />
+      <span className="font-mono text-[14px] font-semibold text-ink">{team.code}</span>
     </div>
   )
 }
 
-function StatusPill({ m }: { m: PalpiteMatch }) {
-  if (m.status === 'finished') {
-    if (m.guess === undefined || m.points === undefined) {
-      return <span className="text-[12px] text-sepia">encerrado</span>
-    }
-    const win = (m.points ?? 0) > 0
-    return (
-      <span className="flex items-center gap-1.5">
-        {m.exact && <span className="size-2 rounded-full bg-grass" aria-label="placar exato" />}
-        <span className={cn('font-mono text-[13px] tabular font-medium', win ? 'text-trophy-deep' : 'text-sepia')}>
-          {win ? `+${m.points}` : '0'} pts
-        </span>
-      </span>
-    )
-  }
-  if (m.status === 'locked') {
-    return (
-      <span className="flex items-center gap-1 text-[12px] text-sepia">
-        <Lock className="size-3" /> fechado
-      </span>
-    )
-  }
-  if (m.status === 'predicted') {
-    return (
-      <span className="flex items-center gap-1 text-[12px] font-medium text-trophy-deep">
-        <Check className="size-3.5" /> palpitado
-      </span>
-    )
-  }
-  return <span className="text-[12px] font-medium text-trophy-deep">a palpitar →</span>
-}
-
-function TeamTag({
-  team,
-  align,
+/* uma casinha de placar editável (input numérico discreto) */
+function ScoreSlot({
+  value,
+  onChange,
+  disabled,
+  ariaLabel,
 }: {
-  team: { code: string; flagUrl: string | null }
-  align: 'start' | 'end'
+  value: number | null
+  onChange: (n: number | null) => void
+  disabled?: boolean
+  ariaLabel: string
 }) {
   return (
-    <span
-      className={cn(
-        'flex flex-1 items-center gap-2',
-        align === 'end' ? 'flex-row-reverse' : 'flex-row',
-      )}
-    >
-      <Flag src={team.flagUrl ?? undefined} className="h-[18px] w-6" />
-      <span className="font-mono text-[15px] font-semibold text-ink">{team.code}</span>
-    </span>
+    <input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      aria-label={ariaLabel}
+      value={value === null ? '' : String(value)}
+      disabled={disabled}
+      onChange={(e) => {
+        const d = e.target.value.replace(/\D/g, '').slice(0, 2)
+        onChange(d === '' ? null : Math.min(20, parseInt(d, 10)))
+      }}
+      onFocus={(e) => e.currentTarget.select()}
+      className="size-11 rounded-full bg-transparent text-center font-mono text-2xl tabular font-semibold text-ink caret-trophy outline-none transition-colors focus:bg-bone disabled:cursor-not-allowed"
+    />
   )
 }
 
-function MatchRow({ m }: { m: PalpiteMatch }) {
+function ScorePill({ children }: { children: React.ReactNode }) {
   return (
-    <Link
-      href={`/jogo/${m.id}`}
-      className="block rounded-md px-2 py-3 transition-colors hover:bg-bone"
-    >
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2">
-          <span className="font-mono text-[13px] tabular text-sepia">{m.time}</span>
-          <PhaseBadge phase={m.phase} label={m.label} className="text-[10px]" />
-        </span>
-        <StatusPill m={m} />
+    <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-rule-dark px-1.5 py-1">
+      {children}
+    </div>
+  )
+}
+
+function ReadonlyScore({ guess }: { guess: [number, number] }) {
+  return (
+    <ScorePill>
+      <span className="flex size-11 items-center justify-center font-mono text-2xl tabular font-semibold text-ink">
+        {guess[0]}
+      </span>
+      <span className="font-mono text-sm text-sepia">×</span>
+      <span className="flex size-11 items-center justify-center font-mono text-2xl tabular font-semibold text-ink">
+        {guess[1]}
+      </span>
+    </ScorePill>
+  )
+}
+
+function CardHeader({
+  m,
+  right,
+}: {
+  m: PalpiteMatch
+  right: React.ReactNode
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="flex items-center gap-2">
+        <span className="font-mono text-[13px] tabular text-sepia">{m.time}</span>
+        <PhaseBadge phase={m.phase} label={m.label} className="text-[10px]" />
+      </span>
+      {right}
+    </div>
+  )
+}
+
+/* card com palpite editável inline + gerador de placar */
+function EditableMatchRow({
+  m,
+  hasPools,
+}: {
+  m: PalpiteMatch
+  hasPools: boolean
+}) {
+  const [home, setHome] = useState<number | null>(m.guess?.[0] ?? null)
+  const [away, setAway] = useState<number | null>(m.guess?.[1] ?? null)
+  const savedRef = useRef(m.guess ? `${m.guess[0]}-${m.guess[1]}` : '')
+  const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
+    m.guess ? 'saved' : 'idle',
+  )
+  const [, startTransition] = useTransition()
+
+  useEffect(() => {
+    if (!hasPools || home === null || away === null) return
+    const key = `${home}-${away}`
+    if (key === savedRef.current) return
+    setState('saving')
+    const t = setTimeout(() => {
+      startTransition(async () => {
+        const res = await savePrediction({
+          matchId: m.id,
+          homeScore: home,
+          awayScore: away,
+        })
+        if ('error' in res) {
+          setState('error')
+          toast.error(res.error)
+        } else {
+          savedRef.current = key
+          setState('saved')
+        }
+      })
+    }, 600)
+    return () => clearTimeout(t)
+  }, [home, away, hasPools, m.id, startTransition])
+
+  function shuffle() {
+    const [h, a] = randomFootballScore(
+      home !== null && away !== null ? [home, away] : undefined,
+    )
+    setHome(h)
+    setAway(a)
+  }
+
+  return (
+    <li className="rounded-xl border border-rule bg-paper p-4">
+      <CardHeader
+        m={m}
+        right={
+          hasPools ? (
+            <button
+              type="button"
+              onClick={shuffle}
+              aria-label="gerar placar aleatório"
+              title="placar aleatório"
+              className="flex size-7 items-center justify-center rounded-md text-sepia transition-colors hover:bg-bone hover:text-ink"
+            >
+              <Shuffle className="size-4" />
+            </button>
+          ) : null
+        }
+      />
+
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <TeamCol team={m.home} />
+        <ScorePill>
+          <ScoreSlot
+            value={home}
+            onChange={setHome}
+            disabled={!hasPools}
+            ariaLabel={`gols ${m.home.code}`}
+          />
+          <span className="font-mono text-sm text-sepia">×</span>
+          <ScoreSlot
+            value={away}
+            onChange={setAway}
+            disabled={!hasPools}
+            ariaLabel={`gols ${m.away.code}`}
+          />
+        </ScorePill>
+        <TeamCol team={m.away} />
       </div>
 
-      <div className="mt-2.5 flex items-center justify-between gap-2">
-        <TeamTag team={m.home} align="start" />
-        <div className="flex shrink-0 items-center gap-1.5">
-          {m.status === 'finished' ? (
-            <div className="text-center">
-              <p className="font-mono text-lg tabular font-semibold text-ink">
-                {m.score![0]}<span className="text-sepia"> × </span>{m.score![1]}
+      <div className="mt-3 flex items-center justify-between">
+        {!hasPools ? (
+          <Link
+            href="/boloes"
+            className="text-[12px] font-medium text-trophy-deep transition-colors hover:text-ink"
+          >
+            entre num bolão pra palpitar →
+          </Link>
+        ) : state === 'saving' ? (
+          <span className="text-[12px] text-sepia">salvando…</span>
+        ) : state === 'saved' ? (
+          <span className="flex items-center gap-1 text-[12px] font-medium text-trophy-deep">
+            <Check className="size-3.5" /> palpite salvo
+          </span>
+        ) : state === 'error' ? (
+          <span className="text-[12px] font-medium text-destructive">
+            não salvou, tente de novo
+          </span>
+        ) : (
+          <span className="text-[12px] text-sepia">toque pra colocar o placar</span>
+        )}
+        <Link
+          href={`/jogo/${m.id}`}
+          className="text-[12px] text-sepia transition-colors hover:text-ink"
+        >
+          abrir jogo →
+        </Link>
+      </div>
+    </li>
+  )
+}
+
+/* card de jogo já fechado / encerrado (somente leitura) */
+function StaticMatchRow({ m }: { m: PalpiteMatch }) {
+  const finished = m.status === 'finished'
+  const win = (m.points ?? 0) > 0
+
+  return (
+    <li className="rounded-xl border border-rule bg-paper p-4">
+      <CardHeader
+        m={m}
+        right={
+          finished ? (
+            m.guess !== undefined && m.points !== undefined ? (
+              <span className="flex items-center gap-1.5">
+                {m.exact && (
+                  <span
+                    className="size-2 rounded-full bg-grass"
+                    aria-label="placar exato"
+                  />
+                )}
+                <span
+                  className={cn(
+                    'font-mono text-[13px] tabular font-medium',
+                    win ? 'text-trophy-deep' : 'text-sepia',
+                  )}
+                >
+                  {win ? `+${m.points}` : '0'} pts
+                </span>
+              </span>
+            ) : (
+              <span className="text-[12px] text-sepia">encerrado</span>
+            )
+          ) : (
+            <span className="flex items-center gap-1 text-[12px] text-sepia">
+              <Lock className="size-3" /> fechado
+            </span>
+          )
+        }
+      />
+
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <TeamCol team={m.home} />
+        <div className="shrink-0 text-center">
+          {finished && m.score ? (
+            <>
+              <p className="font-mono text-2xl tabular font-semibold text-ink">
+                {m.score[0]}
+                <span className="px-1 text-sepia">×</span>
+                {m.score[1]}
               </p>
               {m.guess && (
-                <p className="font-mono text-[11px] tabular text-sepia">
-                  você: {m.guess[0]}-{m.guess[1]}
+                <p className="mt-0.5 font-mono text-[11px] tabular text-sepia">
+                  você: {m.guess[0]} a {m.guess[1]}
                 </p>
               )}
-            </div>
-          ) : (
-            <>
-              <ScoreBox value={m.guess?.[0]} dim={m.status === 'open'} />
-              <span className="font-mono text-sm text-sepia">×</span>
-              <ScoreBox value={m.guess?.[1]} dim={m.status === 'open'} />
             </>
+          ) : m.guess ? (
+            <>
+              <ReadonlyScore guess={m.guess} />
+              <p className="mt-1 text-[11px] text-sepia">seu palpite</p>
+            </>
+          ) : (
+            <p className="font-mono text-[13px] text-sepia">sem palpite</p>
           )}
         </div>
-        <TeamTag team={m.away} align="end" />
+        <TeamCol team={m.away} />
       </div>
-    </Link>
+
+      <div className="mt-3 flex justify-end">
+        <Link
+          href={`/jogo/${m.id}`}
+          className="text-[12px] text-sepia transition-colors hover:text-ink"
+        >
+          abrir jogo →
+        </Link>
+      </div>
+    </li>
   )
+}
+
+function MatchCard({ m, hasPools }: { m: PalpiteMatch; hasPools: boolean }) {
+  if (m.status === 'open' || m.status === 'predicted') {
+    return <EditableMatchRow m={m} hasPools={hasPools} />
+  }
+  return <StaticMatchRow m={m} />
 }
 
 function RoundSelector({
@@ -245,7 +433,13 @@ function RoundSelector({
   )
 }
 
-export function PalpitesScreen({ rounds }: { rounds: PalpiteRound[] }) {
+export function PalpitesScreen({
+  rounds,
+  hasPools,
+}: {
+  rounds: PalpiteRound[]
+  hasPools: boolean
+}) {
   const [filter, setFilter] = useState<FilterKey>('todos')
   const [roundId, setRoundId] = useState<string>(
     () => rounds.find((r) => r.isCurrent)?.id ?? rounds[0]?.id ?? '',
@@ -297,17 +491,15 @@ export function PalpitesScreen({ rounds }: { rounds: PalpiteRound[] }) {
           ) : (
             <div className="space-y-7">
               {days.map((d) => (
-                <section key={d.id} className="space-y-1">
+                <section key={d.id} className="space-y-2.5">
                   <div className="sticky top-14 z-10 -mx-2 bg-paper/90 px-2 py-2 backdrop-blur">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-sepia">
                       {d.title}
                     </p>
                   </div>
-                  <ul className="-mx-2 divide-y divide-rule">
+                  <ul className="space-y-2.5">
                     {d.matches.map((m) => (
-                      <li key={m.id}>
-                        <MatchRow m={m} />
-                      </li>
+                      <MatchCard key={m.id} m={m} hasPools={hasPools} />
                     ))}
                   </ul>
                 </section>
