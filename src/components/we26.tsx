@@ -1,8 +1,8 @@
 import { House, ListChecks, Trophy, User } from 'lucide-react'
 import Link from 'next/link'
 
-import { signOut } from '@/app/(auth)/actions'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { UserMenu } from '@/components/user-menu'
 import { cn } from '@/lib/utils'
 
 export type Phase =
@@ -126,11 +126,7 @@ export function TopNav({ active }: { active?: NavKey }) {
             </Link>
           </nav>
           <ThemeToggle />
-          <form action={signOut}>
-            <button className="flex size-8 items-center justify-center rounded-md border border-rule text-ink transition-colors hover:bg-bone md:size-7">
-              <User className="size-4" />
-            </button>
-          </form>
+          <UserMenu />
         </div>
       </div>
     </header>
@@ -142,7 +138,7 @@ export function BottomNav({ active = 'inicio' }: { active?: NavKey }) {
     { key: 'inicio', icon: House, label: 'início', href: '/' },
     { key: 'palpites', icon: ListChecks, label: 'palpites', href: '/palpites' },
     { key: 'ranking', icon: Trophy, label: 'ranking', href: '/ranking' },
-    { key: 'perfil', icon: User, label: 'perfil', href: '/' },
+    { key: 'perfil', icon: User, label: 'perfil', href: '/perfil' },
   ]
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-rule bg-paper md:hidden">
