@@ -6,7 +6,7 @@ import {
   type Status,
 } from '@/components/palpites/palpites-screen'
 import { dayKey, dayLabel, fullKickoff, timeLabel } from '@/lib/date'
-import { getMatches } from '@/lib/queries/matches'
+import { getMatches, type MatchView } from '@/lib/queries/matches'
 import { getUserGuesses, getUserPoolIds } from '@/lib/queries/predictions'
 import type { MatchStage } from '@/types/database'
 
@@ -38,14 +38,10 @@ const ROUND_LABEL: Record<RoundId, string> = {
   final: 'final',
 }
 
-function statusOf(
-  kickoffAt: string,
-  finished: boolean,
-  hasGuess: boolean,
-  now: Date,
-): Status {
-  if (finished) return 'finished'
-  if (new Date(kickoffAt) <= now) return 'locked'
+function statusOf(m: MatchView, hasGuess: boolean, now: Date): Status {
+  if (m.status === 'finished') return 'finished'
+  if (m.status === 'live') return 'live'
+  if (new Date(m.kickoffAt) <= now) return 'locked'
   return hasGuess ? 'predicted' : 'open'
 }
 
@@ -91,10 +87,12 @@ export default async function PalpitesPage() {
       away: { code: m.away.code, flagUrl: m.away.flagUrl },
       guess,
       score:
-        finished && m.homeScore != null && m.awayScore != null
+        (finished || m.status === 'live') &&
+        m.homeScore != null &&
+        m.awayScore != null
           ? [m.homeScore, m.awayScore]
           : undefined,
-      status: statusOf(m.kickoffAt, finished, guess != null, now),
+      status: statusOf(m, guess != null, now),
     }
 
     const rid = roundIdOf(m.stage, m.groupName)
@@ -126,5 +124,9 @@ export default async function PalpitesPage() {
     ),
   }))
 
-  return <PalpitesScreen rounds={rounds} hasPools={hasPools} />
+  const hasLive = matches.some((m) => m.status === 'live')
+
+  return (
+    <PalpitesScreen rounds={rounds} hasPools={hasPools} hasLive={hasLive} />
+  )
 }

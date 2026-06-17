@@ -24,7 +24,8 @@ export default async function JogoPage({
   if (!m) notFound()
 
   const now = new Date()
-  const isOpen = m.status !== 'finished' && new Date(m.kickoffAt) > now
+  const isLive = m.status === 'live'
+  const isOpen = m.status !== 'finished' && !isLive && new Date(m.kickoffAt) > now
 
   const [guess, poolIds, galera] = await Promise.all([
     getUserGuess(id),
@@ -39,6 +40,7 @@ export default async function JogoPage({
     kickoff: fullKickoff(m.kickoffAt),
     venue: m.venue,
     isOpen,
+    isLive,
     hasPools: poolIds.length > 0,
     guess: guess ?? undefined,
     closesIn: closesInLabel(m.kickoffAt, now) ?? undefined,

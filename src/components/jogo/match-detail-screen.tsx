@@ -7,11 +7,13 @@ import { toast } from 'sonner'
 
 import { savePrediction } from '@/app/jogo/[id]/actions'
 import { PalpitesDaGalera } from '@/components/jogo/palpites-da-galera'
+import { LiveRefresher } from '@/components/live-refresher'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   BottomNav,
   Eyebrow,
   Flag,
+  LiveBadge,
   type Phase,
   PhaseBadge,
   Rule,
@@ -27,6 +29,7 @@ export interface MatchDetail {
   kickoff: string
   venue: string | null
   isOpen: boolean
+  isLive: boolean
   hasPools: boolean
   guess?: [number, number]
   closesIn?: string
@@ -121,6 +124,7 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
 
   return (
     <div className="flex min-h-full flex-col bg-paper">
+      {match.isLive && <LiveRefresher />}
       <TopNav active="palpites" />
 
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
@@ -208,12 +212,20 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
           ) : (
             /* jogo já começou / encerrado */
             <section className="space-y-4">
-              <Eyebrow>resultado</Eyebrow>
+              <div className="flex items-center gap-2">
+                <Eyebrow>{match.isLive ? 'ao vivo' : 'resultado'}</Eyebrow>
+                {match.isLive && <LiveBadge />}
+              </div>
               <div className="flex items-center justify-between gap-3">
                 <TeamSide team={match.home} align="start" />
                 <div className="shrink-0 text-center">
                   {match.score ? (
-                    <p className="font-mono text-4xl tabular font-semibold text-ink">
+                    <p
+                      className={cn(
+                        'font-mono text-4xl tabular font-semibold',
+                        match.isLive ? 'text-phase-semi' : 'text-ink',
+                      )}
+                    >
                       {match.score[0]}<span className="px-1 text-sepia">×</span>{match.score[1]}
                     </p>
                   ) : (
@@ -222,9 +234,11 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 </div>
                 <TeamSide team={match.away} align="end" />
               </div>
-              <p className="flex items-center justify-center gap-1.5 text-center text-[12px] text-sepia">
-                <Lock className="size-3" /> palpites encerrados
-              </p>
+              {!match.isLive && (
+                <p className="flex items-center justify-center gap-1.5 text-center text-[12px] text-sepia">
+                  <Lock className="size-3" /> palpites encerrados
+                </p>
+              )}
             </section>
           )}
 

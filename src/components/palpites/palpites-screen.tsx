@@ -15,10 +15,12 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { savePrediction } from '@/app/jogo/[id]/actions'
+import { LiveRefresher } from '@/components/live-refresher'
 import { GaleraInline } from '@/components/palpites/galera-inline'
 import {
   BottomNav,
   Flag,
+  LiveBadge,
   type Phase,
   PHASE_META,
   PhaseBadge,
@@ -27,7 +29,7 @@ import {
 import { randomFootballScore } from '@/lib/score'
 import { cn } from '@/lib/utils'
 
-export type Status = 'open' | 'predicted' | 'locked' | 'finished'
+export type Status = 'open' | 'predicted' | 'locked' | 'live' | 'finished'
 
 export interface PalpiteMatch {
   id: string
@@ -67,7 +69,8 @@ type FilterKey = (typeof FILTERS)[number]['key']
 
 function matchesFilter(m: PalpiteMatch, f: FilterKey) {
   if (f === 'abertos') return m.status === 'open' || m.status === 'predicted'
-  if (f === 'encerrados') return m.status === 'finished' || m.status === 'locked'
+  if (f === 'encerrados')
+    return m.status === 'finished' || m.status === 'locked' || m.status === 'live'
   return true
 }
 
@@ -355,10 +358,16 @@ function StaticMatchRow({
   hasPools: boolean
 }) {
   const finished = m.status === 'finished'
+  const live = m.status === 'live'
   const win = (m.points ?? 0) > 0
 
   return (
-    <li className="rounded-xl border border-rule bg-paper p-4">
+    <li
+      className={cn(
+        'rounded-xl border bg-paper p-4',
+        live ? 'border-phase-semi/40' : 'border-rule',
+      )}
+    >
       <CardHeader
         m={m}
         right={
@@ -383,6 +392,8 @@ function StaticMatchRow({
             ) : (
               <span className="text-[12px] text-sepia">encerrado</span>
             )
+          ) : live ? (
+            <LiveBadge />
           ) : (
             <span className="flex items-center gap-1 text-[12px] text-sepia">
               <Lock className="size-3" /> fechado
@@ -398,9 +409,14 @@ function StaticMatchRow({
       <div className="mt-3 flex items-center justify-between gap-2">
         <TeamCol team={m.home} />
         <div className="shrink-0 text-center">
-          {finished && m.score ? (
+          {(finished || live) && m.score ? (
             <>
-              <p className="font-mono text-2xl tabular font-semibold text-ink">
+              <p
+                className={cn(
+                  'font-mono text-2xl tabular font-semibold',
+                  live ? 'text-phase-semi' : 'text-ink',
+                )}
+              >
                 {m.score[0]}
                 <span className="px-1 text-sepia">×</span>
                 {m.score[1]}
@@ -525,9 +541,11 @@ function RoundSelector({
 export function PalpitesScreen({
   rounds,
   hasPools,
+  hasLive = false,
 }: {
   rounds: PalpiteRound[]
   hasPools: boolean
+  hasLive?: boolean
 }) {
   const [filter, setFilter] = useState<FilterKey>('todos')
   const [roundId, setRoundId] = useState<string>(
@@ -544,6 +562,7 @@ export function PalpitesScreen({
 
   return (
     <div className="flex min-h-full flex-col bg-paper">
+      {hasLive && <LiveRefresher />}
       <TopNav active="palpites" />
 
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">

@@ -91,6 +91,25 @@ export function PhaseBadge({
   )
 }
 
+/* selo "AO VIVO" com pontinho pulsando (usa phase-semi, o vermelho da paleta).
+   A animação respeita prefers-reduced-motion via override global em globals.css. */
+export function LiveBadge({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full bg-phase-semi/12 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-phase-semi',
+        className,
+      )}
+    >
+      <span className="relative flex size-1.5">
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-phase-semi opacity-75" />
+        <span className="relative inline-flex size-1.5 rounded-full bg-phase-semi" />
+      </span>
+      ao vivo
+    </span>
+  )
+}
+
 export function ExactDots({ n }: { n: number }) {
   if (n <= 0) return null
   return (

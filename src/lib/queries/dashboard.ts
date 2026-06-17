@@ -32,10 +32,21 @@ export interface ResultRow {
   exact?: boolean
 }
 
+export interface LiveMatch {
+  matchId: string
+  stage: MatchStage
+  label?: string
+  home: { code: string; flagUrl: string | null }
+  away: { code: string; flagUrl: string | null }
+  score: [number, number]
+  guess?: [number, number]
+}
+
 export interface DashboardData {
   pool: DashboardPool
   me: { position: number | null; points: number; predictionsMade: number }
   totalMatches: number
+  live: LiveMatch[]
   next: NextMatch | null
   ranking: RankingRow[]
   results: ResultRow[]
@@ -70,6 +81,11 @@ export async function getDashboard(
     .filter((m) => m.status === 'scheduled' && new Date(m.kickoffAt) > now)
     .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt))[0]
 
+  // jogos rolando agora
+  const liveRaw = matches.filter(
+    (m) => m.status === 'live' && m.homeScore != null && m.awayScore != null,
+  )
+
   // resultados recentes (jogos encerrados, mais recentes primeiro)
   const finished = matches
     .filter(
@@ -81,6 +97,7 @@ export async function getDashboard(
   // meus palpites nos jogos relevantes (deste bolão)
   const relevantIds = [
     ...(upcoming ? [upcoming.id] : []),
+    ...liveRaw.map((m) => m.id),
     ...finished.map((m) => m.id),
   ]
   const guessMap = new Map<string, { guess: [number, number]; points: number }>()
@@ -98,6 +115,16 @@ export async function getDashboard(
       })
     }
   }
+
+  const live: LiveMatch[] = liveRaw.map((m) => ({
+    matchId: m.id,
+    stage: m.stage,
+    label: m.groupName ? `Grupo ${m.groupName}` : undefined,
+    home: teamLite(m.home),
+    away: teamLite(m.away),
+    score: [m.homeScore!, m.awayScore!],
+    guess: guessMap.get(m.id)?.guess,
+  }))
 
   const next: NextMatch | null = upcoming
     ? {
@@ -134,6 +161,7 @@ export async function getDashboard(
       predictionsMade: meRow?.predictionsMade ?? 0,
     },
     totalMatches: matches.length,
+    live,
     next,
     ranking,
     results,

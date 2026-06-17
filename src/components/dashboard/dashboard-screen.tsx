@@ -1,17 +1,43 @@
 import Link from 'next/link'
 
 import { Grid48 } from '@/components/grid-48'
-import type { DashboardData } from '@/lib/queries/dashboard'
+import { LiveRefresher } from '@/components/live-refresher'
+import type { DashboardData, LiveMatch } from '@/lib/queries/dashboard'
 import {
   BottomNav,
   Eyebrow,
   ExactDots,
   Flag,
+  LiveBadge,
   PhaseBadge,
   Rule,
   TopNav,
 } from '@/components/we26'
 import { cn } from '@/lib/utils'
+
+function LiveRow({ m }: { m: LiveMatch }) {
+  return (
+    <Link
+      href={`/jogo/${m.matchId}`}
+      className="flex items-center gap-3 rounded-lg border border-phase-semi/40 bg-phase-semi/5 px-3 py-2.5 transition-colors hover:bg-phase-semi/10"
+    >
+      <span className="flex min-w-0 flex-1 items-center gap-2">
+        <Flag src={m.home.flagUrl ?? undefined} />
+        <span className="font-mono text-sm font-medium text-ink">{m.home.code}</span>
+        <span className="font-mono tabular text-lg font-semibold text-phase-semi">
+          {m.score[0]}<span className="px-0.5 text-sepia">×</span>{m.score[1]}
+        </span>
+        <span className="font-mono text-sm font-medium text-ink">{m.away.code}</span>
+        <Flag src={m.away.flagUrl ?? undefined} />
+      </span>
+      {m.guess && (
+        <span className="hidden shrink-0 font-mono text-[12px] tabular text-sepia sm:inline">
+          você: {m.guess[0]}-{m.guess[1]}
+        </span>
+      )}
+    </Link>
+  )
+}
 
 function TeamSide({
   team,
@@ -47,7 +73,7 @@ function ScoreBox({ value }: { value?: number }) {
 }
 
 export function DashboardScreen({ data }: { data: DashboardData }) {
-  const { pool, me, next, ranking, results } = data
+  const { pool, me, live, next, ranking, results } = data
   const activeCells =
     data.totalMatches > 0
       ? Math.round((me.predictionsMade / data.totalMatches) * 48)
@@ -56,6 +82,7 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
   return (
     <div className="flex min-h-full flex-col bg-paper">
+      {live.length > 0 && <LiveRefresher />}
       <TopNav active="inicio" />
 
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
@@ -84,6 +111,21 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
               )}
             </div>
           </section>
+
+          {/* ao vivo agora */}
+          {live.length > 0 && (
+            <section className="space-y-2.5">
+              <div className="flex items-center gap-2">
+                <Eyebrow>ao vivo agora</Eyebrow>
+                <LiveBadge />
+              </div>
+              <div className="space-y-2">
+                {live.map((m) => (
+                  <LiveRow key={m.matchId} m={m} />
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* progresso (grid de 48) */}
           <section className="flex items-center justify-between gap-4">
