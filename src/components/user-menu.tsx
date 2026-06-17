@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronDown, LogOut, UserRound } from 'lucide-react'
+import { BookOpen, ChevronDown, LogOut, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 
@@ -102,6 +102,12 @@ export function UserMenu() {
           className="gap-2.5 px-2 py-2 text-[14px]"
         >
           <UserRound className="size-4 text-sepia" /> editar perfil
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link href="/regras" />}
+          className="gap-2.5 px-2 py-2 text-[14px]"
+        >
+          <BookOpen className="size-4 text-sepia" /> regras
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={isPending}
