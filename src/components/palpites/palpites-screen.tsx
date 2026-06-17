@@ -189,7 +189,13 @@ function SobreJogo({ m }: { m: PalpiteMatch }) {
   )
 }
 
-function SaveStatus({ state }: { state: 'idle' | 'saving' | 'saved' | 'error' }) {
+function SaveStatus({
+  state,
+}: {
+  state: 'idle' | 'incomplete' | 'saving' | 'saved' | 'error'
+}) {
+  if (state === 'incomplete')
+    return <span className="text-[12px] text-sepia">preencha os dois placares</span>
   if (state === 'saving') return <span className="text-[12px] text-sepia">salvando…</span>
   if (state === 'saved')
     return (
@@ -231,15 +237,25 @@ function EditableMatchRow({
   const [home, setHome] = useState<number | null>(m.guess?.[0] ?? null)
   const [away, setAway] = useState<number | null>(m.guess?.[1] ?? null)
   const savedRef = useRef(m.guess ? `${m.guess[0]}-${m.guess[1]}` : '')
-  const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
-    m.guess ? 'saved' : 'idle',
-  )
+  const [state, setState] = useState<
+    'idle' | 'incomplete' | 'saving' | 'saved' | 'error'
+  >(m.guess ? 'saved' : 'idle')
   const [, startTransition] = useTransition()
 
   useEffect(() => {
-    if (!hasPools || home === null || away === null) return
+    if (!hasPools) return
+    // Placar incompleto: não salva e avisa. Só nag se a pessoa já mexeu em
+    // algo (um campo preenchido, ou já tinha palpite salvo); senão fica neutro.
+    if (home === null || away === null) {
+      const touched = home !== null || away !== null || savedRef.current !== ''
+      setState(touched ? 'incomplete' : 'idle')
+      return
+    }
     const key = `${home}-${away}`
-    if (key === savedRef.current) return
+    if (key === savedRef.current) {
+      setState('saved')
+      return
+    }
     setState('saving')
     const t = setTimeout(() => {
       startTransition(async () => {

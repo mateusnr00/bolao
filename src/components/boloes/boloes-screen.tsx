@@ -177,7 +177,7 @@ export function BoloesScreen({ pools }: { pools: PoolCard[] }) {
         </div>
       </main>
 
-      <BottomNav active="inicio" />
+      <BottomNav active="boloes" />
     </div>
   )
 }

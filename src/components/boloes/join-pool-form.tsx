@@ -83,7 +83,7 @@ export function JoinPoolForm() {
         </div>
       </main>
 
-      <BottomNav active="inicio" />
+      <BottomNav active="boloes" />
     </div>
   )
 }

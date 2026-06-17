@@ -84,7 +84,7 @@ export function CreatePoolForm() {
         </div>
       </main>
 
-      <BottomNav active="inicio" />
+      <BottomNav active="boloes" />
     </div>
   )
 }
