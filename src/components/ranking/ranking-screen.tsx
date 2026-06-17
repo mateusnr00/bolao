@@ -187,10 +187,9 @@ export function RankingScreen({ data }: { data: RankingData }) {
                     </span>
                     <Avatar
                       className={cn(
-                        'shrink-0',
-                        r.position === 1
-                          ? 'size-11 ring-2 ring-trophy ring-offset-2 ring-offset-paper'
-                          : 'size-8',
+                        'size-11 shrink-0',
+                        r.position === 1 &&
+                          'ring-2 ring-trophy ring-offset-2 ring-offset-paper',
                       )}
                     >
                       {r.userId === lastUserId ? (
@@ -200,8 +199,7 @@ export function RankingScreen({ data }: { data: RankingData }) {
                       )}
                       <AvatarFallback
                         className={cn(
-                          'font-semibold',
-                          r.position === 1 ? 'text-[13px]' : 'text-[11px]',
+                          'text-[13px] font-semibold',
                           r.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
                         )}
                       >
