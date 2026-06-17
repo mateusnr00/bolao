@@ -1,5 +1,3 @@
-import Link from 'next/link'
-
 import { BottomNav, Eyebrow, ExactDots, Rule, TopNav } from '@/components/we26'
 import { cn } from '@/lib/utils'
 
@@ -36,20 +34,12 @@ export function RankingScreen({ data }: { data: RankingData }) {
 
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
         <div className="space-y-6">
-          <section className="flex items-end justify-between gap-3">
-            <div className="space-y-1">
-              <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">ranking</h1>
-              <p className="text-[13px] text-sepia">
-                {data.poolName} · {data.memberCount}{' '}
-                {data.memberCount === 1 ? 'membro' : 'membros'}
-              </p>
-            </div>
-            <Link
-              href="/artilheiros"
-              className="shrink-0 text-[13px] font-medium text-trophy-deep transition-colors hover:text-ink"
-            >
-              artilheiros →
-            </Link>
+          <section className="space-y-1">
+            <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">ranking</h1>
+            <p className="text-[13px] text-sepia">
+              {data.poolName} · {data.memberCount}{' '}
+              {data.memberCount === 1 ? 'membro' : 'membros'}
+            </p>
           </section>
 
           {me && (

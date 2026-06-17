@@ -5,7 +5,6 @@ import {
   MatchDetailScreen,
 } from '@/components/jogo/match-detail-screen'
 import { closesInLabel, fullKickoff } from '@/lib/date'
-import { getMatchGoals, isGoalAdmin } from '@/lib/queries/goals'
 import { getMatchById } from '@/lib/queries/matches'
 import {
   getMatchPredictions,
@@ -28,12 +27,10 @@ export default async function JogoPage({
   const isLive = m.status === 'live'
   const isOpen = m.status !== 'finished' && !isLive && new Date(m.kickoffAt) > now
 
-  const [guess, poolIds, galera, goals, canManageGoals] = await Promise.all([
+  const [guess, poolIds, galera] = await Promise.all([
     getUserGuess(id),
     getUserPoolIds(),
     getMatchPredictions(id),
-    getMatchGoals(id),
-    isGoalAdmin(),
   ])
 
   const detail: MatchDetail = {
@@ -54,8 +51,6 @@ export default async function JogoPage({
         ? [m.homeScore, m.awayScore]
         : undefined,
     galera,
-    goals,
-    canManageGoals,
   }
 
   return <MatchDetailScreen match={detail} />

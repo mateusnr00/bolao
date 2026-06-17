@@ -157,13 +157,7 @@ export function ExactDots({ n }: { n: number }) {
   )
 }
 
-type NavKey =
-  | 'inicio'
-  | 'boloes'
-  | 'palpites'
-  | 'ranking'
-  | 'artilheiros'
-  | 'perfil'
+type NavKey = 'inicio' | 'boloes' | 'palpites' | 'ranking' | 'perfil'
 
 export function TopNav({ active }: { active?: NavKey }) {
   const link = (key: NavKey) =>
@@ -184,9 +178,6 @@ export function TopNav({ active }: { active?: NavKey }) {
             </Link>
             <Link href="/ranking" className={link('ranking')}>
               ranking
-            </Link>
-            <Link href="/artilheiros" className={link('artilheiros')}>
-              artilheiros
             </Link>
           </nav>
           <ThemeToggle />

@@ -319,46 +319,6 @@ export type Database = {
           },
         ]
       }
-      match_goals: {
-        Row: {
-          id: string
-          match_id: string
-          team_id: string
-          scorer: string
-          minute: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          match_id: string
-          team_id: string
-          scorer: string
-          minute?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          match_id?: string
-          team_id?: string
-          scorer?: string
-          minute?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'match_goals_match_id_fkey'
-            columns: ['match_id']
-            referencedRelation: 'matches'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'match_goals_team_id_fkey'
-            columns: ['team_id']
-            referencedRelation: 'teams'
-            referencedColumns: ['id']
-          },
-        ]
-      }
     }
     Views: {
       pool_rankings: {
@@ -392,14 +352,6 @@ export type Database = {
           points: number | null
           has_started: boolean
           is_me: boolean
-        }[]
-      }
-      top_scorers: {
-        Args: { p_limit?: number }
-        Returns: {
-          scorer: string
-          team_id: string
-          goals: number
         }[]
       }
     }
