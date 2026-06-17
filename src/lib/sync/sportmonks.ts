@@ -21,8 +21,14 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+import {
+  applyLiveUpdates,
+  type LiveUpdate,
+} from '@/lib/sync/live'
 import { NATIONS } from '@/lib/sync/openfootball'
 import type { Database } from '@/types/database'
+
+export type { LiveUpdate }
 
 const DEFAULT_BASE_URL = 'https://api.sportmonks.com/v3/football'
 // /inplay precisa só de: participants (quem é casa/fora), scores (o placar) e
@@ -120,14 +126,6 @@ function codeOfParticipant(p: SmParticipant | undefined): string | null {
 
 // ── parser puro (testável com mock) ─────────────────────────────────────────
 
-export interface LiveUpdate {
-  homeCode: string
-  awayCode: string
-  homeGoals: number
-  awayGoals: number
-  finished: boolean
-}
-
 /** Extrai as atualizações de placar de um payload /inplay, ignorando o que não
  *  dá pra resolver (sem times, sem placar atual, seleção desconhecida). */
 export function parseInplayFixtures(payload: SmResponse): LiveUpdate[] {
@@ -163,26 +161,6 @@ export interface SportmonksSyncResult {
   unmatched: string[]
 }
 
-// chave do par de seleções, sem ordem (casa/fora pode divergir entre fontes).
-function pairKey(a: string, b: string): string {
-  return [a, b].sort().join('|')
-}
-
-// o embed de FK no PostgREST pode vir como objeto ou array; normaliza pra code.
-function readCode(rel: unknown): string | null {
-  if (!rel) return null
-  const obj = Array.isArray(rel) ? rel[0] : rel
-  const code = (obj as { code?: string } | undefined)?.code
-  return code ?? null
-}
-
-interface RawMatchRow {
-  id: string
-  status: Database['public']['Tables']['matches']['Row']['status']
-  home: unknown
-  away: unknown
-}
-
 export async function runSportmonksSync(
   supabase: SupabaseClient<Database>,
   token: string,
@@ -196,51 +174,6 @@ export async function runSportmonksSync(
   }
   const payload = (await res.json()) as SmResponse
   const updates = parseInplayFixtures(payload)
-
-  // índice dos nossos jogos por par de seleções.
-  const { data, error } = await supabase
-    .from('matches')
-    .select('id, status, home:home_team_id(code), away:away_team_id(code)')
-  if (error) throw new Error(`Erro ao ler matches: ${error.message}`)
-
-  const byPair = new Map<string, { id: string; homeCode: string }>()
-  for (const r of (data ?? []) as unknown as RawMatchRow[]) {
-    const hc = readCode(r.home)
-    const ac = readCode(r.away)
-    if (!hc || !ac) continue
-    byPair.set(pairKey(hc, ac), { id: r.id, homeCode: hc })
-  }
-
-  let live = 0
-  let finished = 0
-  const unmatched: string[] = []
-  const now = new Date().toISOString()
-
-  for (const u of updates) {
-    const m = byPair.get(pairKey(u.homeCode, u.awayCode))
-    if (!m) {
-      unmatched.push(`${u.homeCode}-${u.awayCode}`)
-      continue
-    }
-    // orienta o placar conforme a ordem casa/fora do NOSSO registro.
-    const sameOrientation = m.homeCode === u.homeCode
-    const homeScore = sameOrientation ? u.homeGoals : u.awayGoals
-    const awayScore = sameOrientation ? u.awayGoals : u.homeGoals
-
-    const patch: Database['public']['Tables']['matches']['Update'] = {
-      home_score: homeScore,
-      away_score: awayScore,
-      status: u.finished ? 'finished' : 'live',
-      updated_at: now,
-    }
-    if (u.finished) patch.finished_at = now
-
-    const { error: upErr } = await supabase.from('matches').update(patch).eq('id', m.id)
-    if (upErr) throw new Error(`Erro ao atualizar match ${m.id}: ${upErr.message}`)
-
-    if (u.finished) finished++
-    else live++
-  }
-
-  return { fetched: updates.length, live, finished, unmatched }
+  const applied = await applyLiveUpdates(supabase, updates)
+  return { fetched: updates.length, ...applied }
 }

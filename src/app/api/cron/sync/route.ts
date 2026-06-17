@@ -2,15 +2,22 @@ import { NextResponse } from 'next/server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runOpenfootballSync } from '@/lib/sync/openfootball'
-import {
-  runSportmonksSync,
-  type SportmonksSyncResult,
-} from '@/lib/sync/sportmonks'
+import { runSportmonksSync } from '@/lib/sync/sportmonks'
+import { runWorldcup26Sync } from '@/lib/sync/worldcup26'
 
 // Lê headers e escreve no banco → sempre dinâmica, nunca cacheada.
 export const dynamic = 'force-dynamic'
 // O fetch + upsert pode passar de 10s; dá folga (Vercel limita por plano).
 export const maxDuration = 60
+
+// Roda o sync ao vivo sem deixar um erro de fonte externa derrubar o cron.
+async function safeLive<T>(fn: () => Promise<T>): Promise<T | { error: string }> {
+  try {
+    return await fn()
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'erro no sync ao vivo' }
+  }
+}
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET
@@ -24,25 +31,23 @@ export async function GET(request: Request) {
     // 1) calendário/seed (fonte da verdade do fixture)
     const openfootball = await runOpenfootballSync(supabase)
 
-    // 2) placar ao vivo por cima (opcional: só roda se houver token). Um erro
-    //    aqui não derruba o sync principal — só registra na resposta.
-    let sportmonks: SportmonksSyncResult | { error: string } | null = null
-    const token = process.env.SPORTMONKS_API_TOKEN
-    if (token) {
-      try {
-        sportmonks = await runSportmonksSync(supabase, token)
-      } catch (err) {
-        sportmonks = {
-          error: err instanceof Error ? err.message : 'erro no sync ao vivo',
-        }
-      }
+    // 2) placar ao vivo por cima (opcional). Precedência: worldcup26 (gratuito,
+    //    nativo da Copa) e, na falta dele, SportMonks. Um erro aqui não derruba
+    //    o sync principal — só fica registrado na resposta.
+    let live: unknown = null
+    const wc26Token = process.env.WC2026_API_KEY
+    const sportmonksToken = process.env.SPORTMONKS_API_TOKEN
+    if (wc26Token) {
+      live = { source: 'worldcup26', ...(await safeLive(() => runWorldcup26Sync(supabase, wc26Token))) }
+    } else if (sportmonksToken) {
+      live = { source: 'sportmonks', ...(await safeLive(() => runSportmonksSync(supabase, sportmonksToken))) }
     }
 
     return NextResponse.json({
       ok: true,
       ranAt: new Date().toISOString(),
       openfootball,
-      sportmonks,
+      live,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'erro desconhecido'

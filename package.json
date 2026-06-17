@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "sync": "tsx --env-file=.env.local scripts/sync-openfootball.ts",
+    "sync:wc26": "tsx --env-file=.env.local scripts/sync-worldcup26.ts",
     "sync:live": "tsx --env-file=.env.local scripts/sync-sportmonks.ts"
   },
   "dependencies": {
