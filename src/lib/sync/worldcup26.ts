@@ -7,13 +7,12 @@
  *   GET /get/games  → { games: [{ id, home_team_id, away_team_id, home_score,
  *                       away_score, finished, time_elapsed, type, group, ... }] }
  *
- * Papel: igual ao overlay da SportMonks — o openfootball é a fonte do
- * calendário/seed; aqui só atualizamos placar e status dos jogos que já existem.
- * Casamos pelo PAR de seleções via código FIFA (o `fifa_code` do worldcup26
- * bate 1:1 com o nosso teams.code), resolvido a partir do team id de cada jogo.
+ * Fonte oficial ÚNICA do placar ao vivo. O openfootball só semeia o calendário
+ * (horários corretos em UTC); aqui atualizamos placar e status dos jogos que já
+ * existem. Casamos pelo PAR de seleções via código FIFA (o `fifa_code` do
+ * worldcup26 bate 1:1 com o nosso teams.code), resolvido pelo team id do jogo.
  *
- * Vantagem sobre a SportMonks: é gratuito, nativo da Copa 2026 e traz a flag
- * `finished` explícita (sem adivinhar estado).
+ * Gratuita, nativa da Copa 2026 e com a flag `finished` explícita.
  *
  * Auth: a API pede um JWT (registro gratuito; token vale 84 dias). Mandamos como
  * Bearer quando WC2026_API_KEY existe.

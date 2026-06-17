@@ -176,7 +176,7 @@ export async function runOpenfootballSync(
   if (selErr) throw new Error(`Erro ao ler teams: ${selErr.message}`)
   const idByCode = new Map(teams!.map((t) => [t.code, t.id]))
 
-  // Jogos que o sync ao vivo (SportMonks) já marcou como 'live'/'finished'. O
+  // Jogos que o sync ao vivo (worldcup26) já marcou como 'live'/'finished'. O
   // openfootball pode estar atrasado e ainda não ter o placar final desses; sem
   // essa guarda, ele os rebaixaria de volta pra 'scheduled' e zeraria o placar.
   const { data: existing, error: exErr } = await supabase

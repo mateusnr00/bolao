@@ -1,6 +1,6 @@
 /**
  * Aplicação de placar AO VIVO no banco, compartilhada pelos adapters de fonte
- * (worldcup26, SportMonks…). Cada adapter só precisa produzir LiveUpdate[]; este
+ * (worldcup26). O adapter só precisa produzir LiveUpdate[]; este
  * módulo cuida de casar com os nossos jogos e gravar.
  *
  * Reconciliação: casa pelo PAR de seleções (código FIFA), sem depender da ordem
