@@ -64,7 +64,7 @@ function PersonRow({
 
   return (
     <li className={cn('flex items-center gap-3 px-3 py-2.5', g.isMe && 'bg-trophy/8')}>
-      <Avatar className="size-7 shrink-0">
+      <Avatar className="size-10 shrink-0 md:size-12">
         {isLast ? (
           <AvatarImage src={DONKEY_SRC} alt="lanterninha" />
         ) : (
@@ -72,7 +72,7 @@ function PersonRow({
         )}
         <AvatarFallback
           className={cn(
-            'text-[11px] font-semibold',
+            'text-[12px] font-semibold md:text-sm',
             g.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
           )}
         >
@@ -81,7 +81,6 @@ function PersonRow({
       </Avatar>
       <span className="min-w-0 flex-1 truncate text-[14px] text-ink">
         {g.name}
-        {g.isMe && <span className="ml-1.5 text-[11px] text-sepia">você</span>}
       </span>
 
       {hasStarted && g.guess ? (
