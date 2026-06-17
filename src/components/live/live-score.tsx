@@ -17,6 +17,8 @@ function minuteLabel(minute: number | null, label: string | null): string | null
   if (l === 'ht') return 'intervalo'
   if (l === 'et' || l === 'aet') return 'prorrogação'
   if (l === 'pen' || l === 'pen_live') return 'pênaltis'
+  // "live"/"inplay" sem minuto → não mostra texto (o badge AO VIVO já basta)
+  if (l === 'live' || l === 'inplay' || l === 'in_play') return null
   return label
 }
 
