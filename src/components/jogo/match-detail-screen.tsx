@@ -126,16 +126,16 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
 
   // autores dos gols (ao vivo), reorientados pra ordem casa/fora deste jogo
   const sameOrient = frontLive ? frontLive.homeCode === match.home.code : true
-  const homeScorers = frontLive
+  const homeScorers: string[] = frontLive
     ? sameOrient
       ? frontLive.homeScorers
       : frontLive.awayScorers
-    : null
-  const awayScorers = frontLive
+    : []
+  const awayScorers: string[] = frontLive
     ? sameOrient
       ? frontLive.awayScorers
       : frontLive.homeScorers
-    : null
+    : []
 
   function confirm() {
     startTransition(async () => {
@@ -272,24 +272,24 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 </div>
                 <TeamSide team={match.away} align="end" />
               </div>
-              {(homeScorers || awayScorers) && (
-                <div className="flex items-start justify-between gap-4 text-[12px] leading-snug text-sepia">
-                  <p className="flex-1">
-                    {homeScorers && (
-                      <>
+              {(homeScorers.length > 0 || awayScorers.length > 0) && (
+                <div className="flex items-start justify-between gap-4 text-[12px] leading-relaxed text-sepia">
+                  <ul className="flex-1 space-y-0.5">
+                    {homeScorers.map((s, i) => (
+                      <li key={i}>
                         <span className="text-grass">⚽ </span>
-                        {homeScorers}
-                      </>
-                    )}
-                  </p>
-                  <p className="flex-1 text-right">
-                    {awayScorers && (
-                      <>
-                        {awayScorers}
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                  <ul className="flex-1 space-y-0.5 text-right">
+                    {awayScorers.map((s, i) => (
+                      <li key={i}>
+                        {s}
                         <span className="text-grass"> ⚽</span>
-                      </>
-                    )}
-                  </p>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               {match.guess && (

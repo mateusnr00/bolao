@@ -14,8 +14,8 @@ export interface LiveEntry {
   awayGoals: number
   minute: number | null
   label: string | null
-  homeScorers: string | null
-  awayScorers: string | null
+  homeScorers: string[]
+  awayScorers: string[]
 }
 
 interface Stored extends LiveEntry {

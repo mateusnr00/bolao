@@ -42,11 +42,17 @@ interface Wc26Game {
   time_elapsed?: string
 }
 
-// a API manda "null" (string) ou vazio quando não há gols/autores
-function cleanScorers(v: unknown): string | null {
-  const s = String(v ?? '').trim()
-  if (!s || s.toLowerCase() === 'null') return null
-  return s
+// a API manda os autores como array literal do Postgres, ex.:
+//   {"Hri Kin 42'","Ptar Mvsa 45+5'"}  → ["Hri Kin 42'", "Ptar Mvsa 45+5'"]
+// (ou "null"/vazio quando não há gols). Cada item é "Nome MINUTO'".
+function parseScorers(v: unknown): string[] {
+  const raw = String(v ?? '').trim()
+  if (!raw || raw.toLowerCase() === 'null') return []
+  const inner = raw.replace(/^\{/, '').replace(/\}$/, '')
+  if (!inner) return []
+  const quoted = inner.match(/"([^"]*)"/g)
+  if (quoted) return quoted.map((s) => s.slice(1, -1).trim()).filter(Boolean)
+  return inner.split(',').map((s) => s.trim()).filter(Boolean)
 }
 
 // ── parser puro (testável com mock) ─────────────────────────────────────────
@@ -106,8 +112,8 @@ export interface Wc26Live {
   finished: boolean
   minute: number | null // minuto numérico, quando dá pra ler de time_elapsed
   label: string | null // rótulo cru quando não é número (ex.: "HT")
-  homeScorers: string | null // autores dos gols da casa (cru, como a API manda)
-  awayScorers: string | null
+  homeScorers: string[] // autores dos gols da casa ("Nome 42'")
+  awayScorers: string[]
 }
 
 /** Igual ao parser do sync, mas guarda o minuto/rótulo pra exibir no front. */
@@ -143,8 +149,8 @@ export function parseWorldcup26Live(
       finished,
       minute,
       label,
-      homeScorers: cleanScorers(g.home_scorers),
-      awayScorers: cleanScorers(g.away_scorers),
+      homeScorers: parseScorers(g.home_scorers),
+      awayScorers: parseScorers(g.away_scorers),
     })
   }
   return out
