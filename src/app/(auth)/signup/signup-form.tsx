@@ -1,16 +1,15 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { MailCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import { signUpWithPassword } from '@/app/(auth)/actions'
+import { Field } from '@/components/auth/field'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { signupSchema, type SignupInput } from '@/lib/validations'
 
 export function SignupForm() {
@@ -41,95 +40,92 @@ export function SignupForm() {
 
   if (confirmSent) {
     return (
-      <Card>
-        <CardContent className="pt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Conta criada! Confira seu email para confirmar e entrar.
+      <div className="space-y-7">
+        <div className="space-y-1.5">
+          <h1 className="display text-[clamp(32px,9vw,44px)] uppercase leading-none text-ink">
+            quase lá
+          </h1>
+        </div>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-rule px-4 py-8 text-center">
+          <MailCheck className="size-6 text-trophy-deep" />
+          <p className="text-[14px] text-sepia">
+            conta criada! confira seu email pra confirmar e entrar.
           </p>
+        </div>
+        <p className="text-center text-[13px] text-sepia">
           <Link
             href="/login"
-            className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+            className="font-medium text-ink underline-offset-4 hover:underline"
           >
-            Voltar ao login
+            voltar ao login
           </Link>
-        </CardContent>
-      </Card>
+        </p>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="displayName">Nome de exibição</Label>
-            <Input
-              id="displayName"
-              placeholder="Seu nome"
-              autoComplete="name"
-              {...form.register('displayName')}
-            />
-            {form.formState.errors.displayName && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.displayName.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              placeholder="seu_user"
-              autoComplete="username"
-              {...form.register('username')}
-            />
-            {form.formState.errors.username && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.username.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="voce@email.com"
-              autoComplete="email"
-              {...form.register('email')}
-            />
-            {form.formState.errors.email && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.email.message}
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              {...form.register('password')}
-            />
-            {form.formState.errors.password && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.password.message}
-              </p>
-            )}
-          </div>
-          <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Criando…' : 'Criar conta'}
-          </Button>
-        </form>
+    <div className="space-y-7">
+      <div className="space-y-1.5">
+        <h1 className="display text-[clamp(32px,9vw,44px)] uppercase leading-none text-ink">
+          criar conta
+        </h1>
+        <p className="text-[14px] text-sepia">leva menos de um minuto.</p>
+      </div>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Já tem conta?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Entrar
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Field
+          id="displayName"
+          label="nome de exibição"
+          placeholder="seu nome"
+          autoComplete="name"
+          error={form.formState.errors.displayName?.message}
+          {...form.register('displayName')}
+        />
+        <Field
+          id="username"
+          label="username"
+          placeholder="seu_user"
+          autoComplete="username"
+          error={form.formState.errors.username?.message}
+          {...form.register('username')}
+        />
+        <Field
+          id="email"
+          label="email"
+          type="email"
+          placeholder="voce@email.com"
+          autoComplete="email"
+          error={form.formState.errors.email?.message}
+          {...form.register('email')}
+        />
+        <Field
+          id="password"
+          label="senha"
+          type="password"
+          placeholder="••••••••"
+          autoComplete="new-password"
+          error={form.formState.errors.password?.message}
+          {...form.register('password')}
+        />
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="h-11 w-full rounded-md text-[15px] font-medium"
+        >
+          {isPending ? 'criando…' : 'criar conta'}
+        </Button>
+      </form>
+
+      <p className="text-center text-[13px] text-sepia">
+        já tem conta?{' '}
+        <Link
+          href="/login"
+          className="font-medium text-ink underline-offset-4 hover:underline"
+        >
+          entrar
+        </Link>
+      </p>
+    </div>
   )
 }

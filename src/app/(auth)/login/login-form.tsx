@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { MailCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
@@ -8,11 +9,9 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import { signInWithMagicLink, signInWithPassword } from '@/app/(auth)/actions'
+import { Field } from '@/components/auth/field'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 import {
   loginSchema,
   magicLinkSchema,
@@ -20,11 +19,15 @@ import {
   type MagicLinkInput,
 } from '@/lib/validations'
 
+type Mode = 'password' | 'magic'
+
 export function LoginForm() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') ?? '/'
   const urlError = searchParams.get('error')
   const [isPending, startTransition] = useTransition()
+  const [mode, setMode] = useState<Mode>('password')
+  const [magicSent, setMagicSent] = useState(false)
 
   useEffect(() => {
     if (urlError) toast.error(urlError)
@@ -39,8 +42,6 @@ export function LoginForm() {
     resolver: zodResolver(magicLinkSchema),
     defaultValues: { email: '' },
   })
-
-  const [magicSent, setMagicSent] = useState(false)
 
   function onPasswordSubmit(values: LoginInput) {
     startTransition(async () => {
@@ -68,94 +69,114 @@ export function LoginForm() {
   }
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <Tabs defaultValue="password">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="password">Senha</TabsTrigger>
-            <TabsTrigger value="magic">Link mágico</TabsTrigger>
-          </TabsList>
+    <div className="space-y-7">
+      <div className="space-y-1.5">
+        <h1 className="display text-[clamp(32px,9vw,44px)] uppercase leading-none text-ink">
+          entrar
+        </h1>
+        <p className="text-[14px] text-sepia">bom te ver de novo.</p>
+      </div>
 
-          <TabsContent value="password">
-            <form
-              onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="voce@email.com"
-                  {...passwordForm.register('email')}
-                />
-                {passwordForm.formState.errors.email && (
-                  <p className="text-sm text-destructive">
-                    {passwordForm.formState.errors.email.message}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  {...passwordForm.register('password')}
-                />
-                {passwordForm.formState.errors.password && (
-                  <p className="text-sm text-destructive">
-                    {passwordForm.formState.errors.password.message}
-                  </p>
-                )}
-              </div>
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? 'Entrando…' : 'Entrar'}
-              </Button>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="magic">
-            {magicSent ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                Enviamos um link para o seu email. Abra para entrar.
-              </p>
-            ) : (
-              <form
-                onSubmit={magicForm.handleSubmit(onMagicSubmit)}
-                className="space-y-4"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="magic-email">Email</Label>
-                  <Input
-                    id="magic-email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="voce@email.com"
-                    {...magicForm.register('email')}
-                  />
-                  {magicForm.formState.errors.email && (
-                    <p className="text-sm text-destructive">
-                      {magicForm.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
-                <Button type="submit" className="w-full" disabled={isPending}>
-                  {isPending ? 'Enviando…' : 'Enviar link mágico'}
-                </Button>
-              </form>
+      {/* alternador senha / link mágico */}
+      <div className="grid grid-cols-2 gap-1 rounded-lg border border-rule bg-bone/60 p-1">
+        {(
+          [
+            ['password', 'senha'],
+            ['magic', 'link mágico'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setMode(key)}
+            className={cn(
+              'rounded-md py-2 text-[13px] font-medium transition-colors',
+              mode === key
+                ? 'bg-paper text-ink shadow-sm'
+                : 'text-sepia hover:text-ink',
             )}
-          </TabsContent>
-        </Tabs>
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Não tem conta?{' '}
-          <Link href="/signup" className="font-medium text-primary hover:underline">
-            Criar conta
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+      {mode === 'password' ? (
+        <form
+          onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+          className="space-y-4"
+        >
+          <Field
+            id="email"
+            label="email"
+            type="email"
+            autoComplete="email"
+            placeholder="voce@email.com"
+            error={passwordForm.formState.errors.email?.message}
+            {...passwordForm.register('email')}
+          />
+          <Field
+            id="password"
+            label="senha"
+            type="password"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            error={passwordForm.formState.errors.password?.message}
+            {...passwordForm.register('password')}
+          />
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="h-11 w-full rounded-md text-[15px] font-medium"
+          >
+            {isPending ? 'entrando…' : 'entrar'}
+          </Button>
+        </form>
+      ) : magicSent ? (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-rule px-4 py-8 text-center">
+          <MailCheck className="size-6 text-trophy-deep" />
+          <p className="text-[14px] text-sepia">
+            enviamos um link pro seu email.
+            <br />
+            abra pra entrar.
+          </p>
+        </div>
+      ) : (
+        <form
+          onSubmit={magicForm.handleSubmit(onMagicSubmit)}
+          className="space-y-4"
+        >
+          <Field
+            id="magic-email"
+            label="email"
+            type="email"
+            autoComplete="email"
+            placeholder="voce@email.com"
+            error={magicForm.formState.errors.email?.message}
+            {...magicForm.register('email')}
+          />
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="h-11 w-full rounded-md text-[15px] font-medium"
+          >
+            {isPending ? 'enviando…' : 'enviar link mágico'}
+          </Button>
+          <p className="text-center text-[12px] text-sepia">
+            sem senha — a gente manda um link de acesso.
+          </p>
+        </form>
+      )}
+
+      <p className="text-center text-[13px] text-sepia">
+        não tem conta?{' '}
+        <Link
+          href="/signup"
+          className="font-medium text-ink underline-offset-4 hover:underline"
+        >
+          criar conta
+        </Link>
+      </p>
+    </div>
   )
 }
