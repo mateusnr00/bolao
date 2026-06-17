@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono, Anton } from 'next/font/google'
 
 import { Toaster } from '@/components/ui/sonner'
+import { LOGO_EMBLEM_SRC } from '@/lib/brand'
 
 import './globals.css'
 
@@ -24,6 +25,7 @@ const anton = Anton({
 export const metadata: Metadata = {
   title: 'Bolão Copa 2026',
   description: 'Bolão da Copa do Mundo FIFA 2026 entre amigos',
+  icons: { icon: LOGO_EMBLEM_SRC, shortcut: LOGO_EMBLEM_SRC, apple: LOGO_EMBLEM_SRC },
 }
 
 export const viewport: Viewport = {

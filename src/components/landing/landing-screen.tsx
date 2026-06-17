@@ -1,19 +1,12 @@
 import { ArrowRight, Trophy } from 'lucide-react'
 import Link from 'next/link'
 
-import { Grid48 } from '@/components/grid-48'
 import {
   type GameCardData,
   MatchesGrid,
 } from '@/components/landing/matches-grid'
 import { buttonVariants } from '@/components/ui/button'
-import {
-  Eyebrow,
-  Flag,
-  LOGO_EMBLEM_SRC,
-  Logo,
-  PhaseBadge,
-} from '@/components/we26'
+import { Emblem, Eyebrow, Flag, Logo, PhaseBadge } from '@/components/we26'
 import { cn } from '@/lib/utils'
 
 const STEPS = [
@@ -135,15 +128,6 @@ export function LandingScreen({ games = [] }: { games?: GameCardData[] }) {
         <section className="border-b border-rule">
           <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8 lg:py-24">
             <div className="space-y-7">
-              {/* emblema oficial — tile branco pra assentar o JPG em qualquer modo */}
-              <div className="inline-flex rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-black/5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={LOGO_EMBLEM_SRC}
-                  alt="Copa do Mundo FIFA 2026"
-                  className="h-16 w-auto object-contain sm:h-20"
-                />
-              </div>
               <Eyebrow>copa do mundo · 2026 · eua · méxico · canadá</Eyebrow>
               <h1 className="display text-[clamp(44px,8.5vw,80px)] uppercase text-ink">
                 o bolão da copa entre amigos
@@ -187,21 +171,10 @@ export function LandingScreen({ games = [] }: { games?: GameCardData[] }) {
               </dl>
             </div>
 
-            {/* visual: placar de exemplo + grid-assinatura */}
+            {/* visual: emblema oficial + placar de exemplo */}
             <div className="flex flex-col items-center gap-6 lg:items-end">
+              <Emblem imgClassName="h-28 w-auto sm:h-36" />
               <ScoreboardCard />
-              <div className="flex items-center gap-3">
-                <Grid48
-                  cell={11}
-                  gap={2}
-                  active={33}
-                  exact={[10, 18, 27, 40]}
-                  aria-label="grid de 48 seleções"
-                />
-                <p className="max-w-[16ch] text-[12px] leading-snug text-sepia">
-                  cada quadrado, uma seleção — do primeiro jogo à final.
-                </p>
-              </div>
             </div>
           </div>
         </section>
@@ -246,35 +219,33 @@ export function LandingScreen({ games = [] }: { games?: GameCardData[] }) {
 
         {/* cta final — pôster invertido (alto contraste nos dois modos) */}
         <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-          <div className="relative overflow-hidden rounded-3xl bg-ink px-8 py-16 text-paper sm:px-14">
-            <div className="relative z-10 max-w-xl space-y-5">
-              <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-paper/55">
-                <Trophy className="size-4" /> trophy edition
-              </span>
-              <h2 className="display text-[clamp(32px,7vw,56px)] uppercase leading-[0.95]">
-                bora começar?
-              </h2>
-              <p className="max-w-[42ch] text-[15px] leading-relaxed text-paper/65">
-                crie seu bolão em segundos, mande o código pra galera e que vença
-                o melhor palpiteiro.
-              </p>
-              <Link
-                href="/signup"
-                className="group inline-flex h-12 items-center gap-2 rounded-md bg-paper px-8 text-[15px] font-semibold text-ink transition-colors hover:bg-paper/90"
-              >
-                criar meu bolão
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
+          <div className="overflow-hidden rounded-3xl bg-ink px-8 py-16 text-paper sm:px-14">
+            <div className="flex items-center justify-between gap-8">
+              <div className="max-w-xl space-y-5">
+                <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-paper/55">
+                  <Trophy className="size-4" /> trophy edition
+                </span>
+                <h2 className="display text-[clamp(32px,7vw,56px)] uppercase leading-[0.95]">
+                  bora começar?
+                </h2>
+                <p className="max-w-[42ch] text-[15px] leading-relaxed text-paper/65">
+                  crie seu bolão em segundos, mande o código pra galera e que
+                  vença o melhor palpiteiro.
+                </p>
+                <Link
+                  href="/signup"
+                  className="group inline-flex h-12 items-center gap-2 rounded-md bg-paper px-8 text-[15px] font-semibold text-ink transition-colors hover:bg-paper/90"
+                >
+                  criar meu bolão
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </div>
 
-            <Grid48
-              cell={16}
-              gap={4}
-              active={33}
-              exact={[10, 18, 27, 40]}
-              aria-label=""
-              className="pointer-events-none absolute -right-6 -bottom-8 hidden opacity-30 sm:block"
-            />
+              <Emblem
+                className="hidden shrink-0 lg:inline-flex"
+                imgClassName="h-32 w-auto"
+              />
+            </div>
           </div>
         </section>
       </main>

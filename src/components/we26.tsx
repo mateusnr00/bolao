@@ -3,7 +3,10 @@ import Link from 'next/link'
 
 import { ThemeToggle } from '@/components/theme-toggle'
 import { UserMenu } from '@/components/user-menu'
+import { LOGO_EMBLEM_SRC, LOGO_TROPHY_SRC } from '@/lib/brand'
 import { cn } from '@/lib/utils'
+
+export { LOGO_EMBLEM_SRC, LOGO_TROPHY_SRC }
 
 export type Phase =
   | 'group'
@@ -24,11 +27,6 @@ export const PHASE_META: Record<Phase, { label: string; bg: string; fg: string }
   final: { label: 'final', bg: 'bg-phase-final', fg: 'text-ink' },
 }
 
-// Logos da Copa (hospedados externamente por ora; pra produção, baixar e
-// commitar em public/brand e trocar por '/brand/...').
-export const LOGO_TROPHY_SRC = 'https://i.postimg.cc/022srSL1/26taca.png'
-export const LOGO_EMBLEM_SRC = 'https://i.postimg.cc/FHYXV4rG/fwc.jpg'
-
 export function Logo({ className }: { className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -37,6 +35,31 @@ export function Logo({ className }: { className?: string }) {
       alt="Copa 2026"
       className={cn('h-8 w-auto object-contain', className)}
     />
+  )
+}
+
+// Emblema oficial da Copa num tile branco (o JPG assenta bem em claro e escuro).
+export function Emblem({
+  className,
+  imgClassName,
+}: {
+  className?: string
+  imgClassName?: string
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-black/5',
+        className,
+      )}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={LOGO_EMBLEM_SRC}
+        alt="Copa do Mundo FIFA 2026"
+        className={cn('object-contain', imgClassName)}
+      />
+    </span>
   )
 }
 

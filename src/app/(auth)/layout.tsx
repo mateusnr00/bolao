@@ -1,5 +1,4 @@
-import { Grid48 } from '@/components/grid-48'
-import { Logo } from '@/components/we26'
+import { Emblem, Logo } from '@/components/we26'
 
 const PHASES = [
   { label: 'grupos', color: 'bg-phase-group' },
@@ -33,7 +32,7 @@ export default function AuthLayout({
             48 seleções, um placar pra cada jogo, e a única regra que importa:
             acertar mais que os seus amigos.
           </p>
-          <Grid48 cell={20} gap={4} active={33} exact={[10, 18, 27, 40]} />
+          <Emblem imgClassName="h-28 w-auto" />
         </div>
 
         <ul className="flex flex-wrap gap-x-5 gap-y-2">
