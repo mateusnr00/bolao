@@ -30,7 +30,7 @@ const TICK_MS = 10_000
 // antigo do banco quando a fonte dá um soluço e volta vazia por um instante)
 const RETAIN_MS = 90_000
 
-let byPair = new Map<string, Stored>()
+const byPair = new Map<string, Stored>()
 const subscribers = new Set<() => void>()
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let tickTimer: ReturnType<typeof setInterval> | null = null
