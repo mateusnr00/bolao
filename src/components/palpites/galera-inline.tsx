@@ -4,6 +4,8 @@ import { ChevronDown, Lock, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useLivePair } from '@/lib/live-store'
+import { calcPredictionPoints } from '@/lib/scoring'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -23,7 +25,19 @@ function initials(name: string) {
   return (a + b).toUpperCase()
 }
 
-function PersonRow({ g, hasStarted }: { g: Row; hasStarted: boolean }) {
+function PersonRow({
+  g,
+  hasStarted,
+  actual,
+}: {
+  g: Row
+  hasStarted: boolean
+  actual: [number, number] | null
+}) {
+  // ao vivo: pontos provisórios calculados sobre o placar atual
+  const provisional = actual != null && g.guess != null
+  const pts = provisional ? calcPredictionPoints(g.guess!, actual) : g.points
+
   return (
     <li className={cn('flex items-center gap-3 px-3 py-2.5', g.isMe && 'bg-trophy/8')}>
       <Avatar className="size-7 shrink-0">
@@ -49,9 +63,17 @@ function PersonRow({ g, hasStarted }: { g: Row; hasStarted: boolean }) {
             <span className="px-0.5 text-sepia">×</span>
             {g.guess[1]}
           </span>
-          {g.points != null && (
-            <span className="w-12 text-right font-mono tabular text-[13px] font-medium text-trophy-deep">
-              {g.points} pt
+          {pts != null && (
+            <span
+              className={cn(
+                'flex w-14 items-center justify-end gap-1 font-mono tabular text-[13px] font-medium',
+                provisional ? 'text-grass' : 'text-trophy-deep',
+              )}
+            >
+              {provisional && (
+                <span className="size-1.5 animate-pulse rounded-full bg-phase-semi" />
+              )}
+              {pts} pt
             </span>
           )}
         </>
@@ -62,12 +84,28 @@ function PersonRow({ g, hasStarted }: { g: Row; hasStarted: boolean }) {
   )
 }
 
-export function GaleraInline({ matchId }: { matchId: string }) {
+export function GaleraInline({
+  matchId,
+  homeCode,
+  awayCode,
+}: {
+  matchId: string
+  homeCode: string
+  awayCode: string
+}) {
   const [open, setOpen] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
   const [rows, setRows] = useState<Row[]>([])
+
+  // placar ao vivo (do front), reorientado pra ordem casa/fora deste jogo
+  const live = useLivePair(homeCode, awayCode)
+  const actual: [number, number] | null = live
+    ? live.homeCode === homeCode
+      ? [live.homeGoals, live.awayGoals]
+      : [live.awayGoals, live.homeGoals]
+    : null
 
   async function toggle() {
     const next = !open
@@ -136,9 +174,20 @@ export function GaleraInline({ matchId }: { matchId: string }) {
                   <Lock className="size-3" /> os placares aparecem quando a bola rolar
                 </p>
               )}
+              {actual && (
+                <p className="flex items-center justify-center gap-1.5 border-b border-rule bg-phase-semi/5 px-3 py-1.5 text-center text-[11px] font-medium text-phase-semi">
+                  <span className="size-1.5 animate-pulse rounded-full bg-phase-semi" />
+                  pontuação provisória · ao vivo
+                </p>
+              )}
               <ul className="divide-y divide-rule">
                 {rows.map((g) => (
-                  <PersonRow key={g.userId} g={g} hasStarted={hasStarted} />
+                  <PersonRow
+                    key={g.userId}
+                    g={g}
+                    hasStarted={hasStarted}
+                    actual={actual}
+                  />
                 ))}
               </ul>
             </>

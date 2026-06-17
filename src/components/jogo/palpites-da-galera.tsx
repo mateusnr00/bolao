@@ -5,6 +5,7 @@ import { useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { GaleraGuess } from '@/lib/queries/predictions'
+import { calcPredictionPoints } from '@/lib/scoring'
 import { cn } from '@/lib/utils'
 
 function initials(name: string) {
@@ -14,7 +15,18 @@ function initials(name: string) {
   return (a + b).toUpperCase()
 }
 
-function Row({ g, hasStarted }: { g: GaleraGuess; hasStarted: boolean }) {
+function Row({
+  g,
+  hasStarted,
+  actual,
+}: {
+  g: GaleraGuess
+  hasStarted: boolean
+  actual: [number, number] | null
+}) {
+  const provisional = actual != null && g.guess != null
+  const pts = provisional ? calcPredictionPoints(g.guess!, actual) : g.points
+
   return (
     <li
       className={cn(
@@ -45,9 +57,17 @@ function Row({ g, hasStarted }: { g: GaleraGuess; hasStarted: boolean }) {
             <span className="px-0.5 text-sepia">×</span>
             {g.guess[1]}
           </span>
-          {g.points != null && (
-            <span className="w-12 text-right font-mono tabular text-[13px] font-medium text-trophy-deep">
-              {g.points} pt
+          {pts != null && (
+            <span
+              className={cn(
+                'flex w-14 items-center justify-end gap-1 font-mono tabular text-[13px] font-medium',
+                provisional ? 'text-grass' : 'text-trophy-deep',
+              )}
+            >
+              {provisional && (
+                <span className="size-1.5 animate-pulse rounded-full bg-phase-semi" />
+              )}
+              {pts} pt
             </span>
           )}
         </>
@@ -61,9 +81,11 @@ function Row({ g, hasStarted }: { g: GaleraGuess; hasStarted: boolean }) {
 export function PalpitesDaGalera({
   rows,
   hasStarted,
+  actual = null,
 }: {
   rows: GaleraGuess[]
   hasStarted: boolean
+  actual?: [number, number] | null
 }) {
   const [open, setOpen] = useState(false)
 
@@ -101,9 +123,15 @@ export function PalpitesDaGalera({
                   rolar
                 </p>
               )}
+              {actual && (
+                <p className="flex items-center justify-center gap-1.5 border-b border-rule bg-phase-semi/5 px-3 py-1.5 text-center text-[11px] font-medium text-phase-semi">
+                  <span className="size-1.5 animate-pulse rounded-full bg-phase-semi" />
+                  pontuação provisória · ao vivo
+                </p>
+              )}
               <ul className="divide-y divide-rule">
                 {rows.map((g) => (
-                  <Row key={g.userId} g={g} hasStarted={hasStarted} />
+                  <Row key={g.userId} g={g} hasStarted={hasStarted} actual={actual} />
                 ))}
               </ul>
             </>

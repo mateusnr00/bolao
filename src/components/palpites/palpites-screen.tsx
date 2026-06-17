@@ -336,7 +336,7 @@ function EditableMatchRow({
 
       <div className="mt-3">
         {hasPools ? (
-          <GaleraInline matchId={m.id} />
+          <GaleraInline matchId={m.id} homeCode={m.home.code} awayCode={m.away.code} />
         ) : (
           <Link
             href="/boloes"
@@ -450,7 +450,7 @@ function StaticMatchRow({
 
       {hasPools && (
         <div className="mt-3">
-          <GaleraInline matchId={m.id} />
+          <GaleraInline matchId={m.id} homeCode={m.home.code} awayCode={m.away.code} />
         </div>
       )}
     </li>

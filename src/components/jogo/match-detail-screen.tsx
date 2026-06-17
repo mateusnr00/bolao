@@ -22,6 +22,7 @@ import {
 } from '@/components/we26'
 import { useLivePair } from '@/lib/live-store'
 import type { GaleraGuess } from '@/lib/queries/predictions'
+import { calcPredictionPoints } from '@/lib/scoring'
 import { cn } from '@/lib/utils'
 
 export interface MatchDetail {
@@ -111,6 +112,17 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
   // o front sabe do "ao vivo" antes do banco (sync de 10 min) → reflete na hora
   const frontLive = useLivePair(match.home.code, match.away.code)
   const liveNow = match.isLive || frontLive != null
+
+  // placar atual (front ou banco), reorientado, pra pontos provisórios ao vivo
+  const actual: [number, number] | null = frontLive
+    ? frontLive.homeCode === match.home.code
+      ? [frontLive.homeGoals, frontLive.awayGoals]
+      : [frontLive.awayGoals, frontLive.homeGoals]
+    : liveNow && match.score
+      ? match.score
+      : null
+  const myLivePts =
+    actual && match.guess ? calcPredictionPoints(match.guess, actual) : null
 
   function confirm() {
     startTransition(async () => {
@@ -247,6 +259,22 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 </div>
                 <TeamSide team={match.away} align="end" />
               </div>
+              {match.guess && (
+                <p className="text-center text-[13px] text-sepia">
+                  seu palpite{' '}
+                  <span className="font-mono text-ink">
+                    {match.guess[0]} a {match.guess[1]}
+                  </span>
+                  {myLivePts != null && (
+                    <>
+                      {' · '}
+                      <span className="font-semibold text-grass">
+                        marcando {myLivePts} pts
+                      </span>
+                    </>
+                  )}
+                </p>
+              )}
               {!liveNow && (
                 <p className="flex items-center justify-center gap-1.5 text-center text-[12px] text-sepia">
                   <Lock className="size-3" /> palpites encerrados
@@ -258,6 +286,7 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
           <PalpitesDaGalera
             rows={match.galera.rows}
             hasStarted={match.galera.hasStarted}
+            actual={actual}
           />
 
           <Rule />
