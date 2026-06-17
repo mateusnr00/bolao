@@ -4,9 +4,38 @@ import { ChevronDown, Lock, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { DONKEY_SRC } from '@/lib/brand'
 import type { GaleraGuess } from '@/lib/queries/predictions'
 import { calcPredictionPoints } from '@/lib/scoring'
 import { cn } from '@/lib/utils'
+
+// pontos atuais de um palpite (provisórios ao vivo, ou os persistidos)
+function effectivePoints(
+  guess: [number, number] | null,
+  points: number | null,
+  actual: [number, number] | null,
+): number {
+  if (actual != null && guess != null) return calcPredictionPoints(guess, actual)
+  return points ?? 0
+}
+
+// userId do último colocado (menor pontuação); empate → o último da lista
+function lastPlaceUserId(
+  rows: GaleraGuess[],
+  actual: [number, number] | null,
+): string | null {
+  if (rows.length < 2) return null
+  let min = Infinity
+  let found: string | null = null
+  for (const g of rows) {
+    const p = effectivePoints(g.guess, g.points, actual)
+    if (p <= min) {
+      min = p
+      found = g.userId
+    }
+  }
+  return found
+}
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/)
@@ -19,10 +48,12 @@ function Row({
   g,
   hasStarted,
   actual,
+  isLast,
 }: {
   g: GaleraGuess
   hasStarted: boolean
   actual: [number, number] | null
+  isLast: boolean
 }) {
   const provisional = actual != null && g.guess != null
   const pts = provisional ? calcPredictionPoints(g.guess!, actual) : g.points
@@ -35,7 +66,11 @@ function Row({
       )}
     >
       <Avatar className="size-7 shrink-0">
-        {g.avatarUrl && <AvatarImage src={g.avatarUrl} alt="" />}
+        {isLast ? (
+          <AvatarImage src={DONKEY_SRC} alt="lanterninha" />
+        ) : (
+          g.avatarUrl && <AvatarImage src={g.avatarUrl} alt="" />
+        )}
         <AvatarFallback
           className={cn(
             'text-[11px] font-semibold',
@@ -88,6 +123,7 @@ export function PalpitesDaGalera({
   actual?: [number, number] | null
 }) {
   const [open, setOpen] = useState(false)
+  const lastId = hasStarted ? lastPlaceUserId(rows, actual) : null
 
   return (
     <section className="overflow-hidden rounded-lg border border-rule">
@@ -131,7 +167,13 @@ export function PalpitesDaGalera({
               )}
               <ul className="divide-y divide-rule">
                 {rows.map((g) => (
-                  <Row key={g.userId} g={g} hasStarted={hasStarted} actual={actual} />
+                  <Row
+                    key={g.userId}
+                    g={g}
+                    hasStarted={hasStarted}
+                    actual={actual}
+                    isLast={g.userId === lastId}
+                  />
                 ))}
               </ul>
             </>

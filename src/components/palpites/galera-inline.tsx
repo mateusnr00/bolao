@@ -4,6 +4,7 @@ import { ChevronDown, Lock, Users } from 'lucide-react'
 import { useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { DONKEY_SRC } from '@/lib/brand'
 import { useLivePair } from '@/lib/live-store'
 import { calcPredictionPoints } from '@/lib/scoring'
 import { createClient } from '@/lib/supabase/client'
@@ -18,6 +19,27 @@ interface Row {
   isMe: boolean
 }
 
+// pontos atuais (provisórios ao vivo, ou os persistidos)
+function effectivePoints(g: Row, actual: [number, number] | null): number {
+  if (actual != null && g.guess != null) return calcPredictionPoints(g.guess, actual)
+  return g.points ?? 0
+}
+
+// userId do último colocado (menor pontuação); empate → o último da lista
+function lastPlaceUserId(rows: Row[], actual: [number, number] | null): string | null {
+  if (rows.length < 2) return null
+  let min = Infinity
+  let found: string | null = null
+  for (const g of rows) {
+    const p = effectivePoints(g, actual)
+    if (p <= min) {
+      min = p
+      found = g.userId
+    }
+  }
+  return found
+}
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/)
   const a = parts[0]?.[0] ?? ''
@@ -29,10 +51,12 @@ function PersonRow({
   g,
   hasStarted,
   actual,
+  isLast,
 }: {
   g: Row
   hasStarted: boolean
   actual: [number, number] | null
+  isLast: boolean
 }) {
   // ao vivo: pontos provisórios calculados sobre o placar atual
   const provisional = actual != null && g.guess != null
@@ -41,7 +65,11 @@ function PersonRow({
   return (
     <li className={cn('flex items-center gap-3 px-3 py-2.5', g.isMe && 'bg-trophy/8')}>
       <Avatar className="size-7 shrink-0">
-        {g.avatarUrl && <AvatarImage src={g.avatarUrl} alt="" />}
+        {isLast ? (
+          <AvatarImage src={DONKEY_SRC} alt="lanterninha" />
+        ) : (
+          g.avatarUrl && <AvatarImage src={g.avatarUrl} alt="" />
+        )}
         <AvatarFallback
           className={cn(
             'text-[11px] font-semibold',
@@ -115,6 +143,9 @@ export function GaleraInline({
     : isLive && dbScore
       ? dbScore
       : null
+
+  // lanterninha (último colocado) ganha o burrinho
+  const lastId = lastPlaceUserId(rows, actual)
 
   async function toggle() {
     const next = !open
@@ -196,6 +227,7 @@ export function GaleraInline({
                     g={g}
                     hasStarted={hasStarted}
                     actual={actual}
+                    isLast={hasStarted && g.userId === lastId}
                   />
                 ))}
               </ul>

@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BottomNav, Eyebrow, ExactDots, LiveBadge, Rule, TopNav } from '@/components/we26'
 import { LiveRefresher } from '@/components/live-refresher'
+import { DONKEY_SRC } from '@/lib/brand'
 import { useAllLive } from '@/lib/live-store'
 import type { LiveMatchGuesses } from '@/lib/queries/rankings'
 import { calcPredictionPoints } from '@/lib/scoring'
@@ -100,6 +101,9 @@ export function RankingScreen({ data }: { data: RankingData }) {
 
   const me = computed.find((r) => r.isMe)
   const leader = computed[0]?.total ?? 0
+  // lanterninha: último colocado (só faz sentido com mais de um membro)
+  const lastUserId =
+    computed.length > 1 ? computed[computed.length - 1].userId : null
 
   return (
     <div className="flex min-h-full flex-col bg-paper">
@@ -189,7 +193,11 @@ export function RankingScreen({ data }: { data: RankingData }) {
                           : 'size-8',
                       )}
                     >
-                      {r.avatarUrl && <AvatarImage src={r.avatarUrl} alt="" />}
+                      {r.userId === lastUserId ? (
+                        <AvatarImage src={DONKEY_SRC} alt="lanterninha" />
+                      ) : (
+                        r.avatarUrl && <AvatarImage src={r.avatarUrl} alt="" />
+                      )}
                       <AvatarFallback
                         className={cn(
                           'font-semibold',
