@@ -63,7 +63,7 @@ export async function getDashboard(
       .eq('pool_id', pool.id)
       .maybeSingle(),
   ])
-  const exactScorePoints = rulesRes.data?.exact_score_points ?? 10
+  const exactScorePoints = rulesRes.data?.exact_score_points ?? 25
 
   // próximo jogo aberto
   const upcoming = matches

@@ -216,7 +216,9 @@ export type Database = {
         Row: {
           pool_id: string
           exact_score_points: number
+          winner_with_winner_goals_points: number
           winner_with_diff_points: number
+          winner_with_loser_goals_points: number
           winner_only_points: number
           draw_wrong_score_points: number
           group_multiplier: number
@@ -228,7 +230,9 @@ export type Database = {
         Insert: {
           pool_id: string
           exact_score_points?: number
+          winner_with_winner_goals_points?: number
           winner_with_diff_points?: number
+          winner_with_loser_goals_points?: number
           winner_only_points?: number
           draw_wrong_score_points?: number
           group_multiplier?: number
@@ -240,7 +244,9 @@ export type Database = {
         Update: {
           pool_id?: string
           exact_score_points?: number
+          winner_with_winner_goals_points?: number
           winner_with_diff_points?: number
+          winner_with_loser_goals_points?: number
           winner_only_points?: number
           draw_wrong_score_points?: number
           group_multiplier?: number
