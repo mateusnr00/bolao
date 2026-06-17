@@ -2,13 +2,41 @@ import {
   PalpitesScreen,
   type PalpiteDay,
   type PalpiteMatch,
+  type PalpiteRound,
   type Status,
 } from '@/components/palpites/palpites-screen'
 import { dayKey, dayLabel, timeLabel } from '@/lib/date'
 import { getMatches } from '@/lib/queries/matches'
 import { getUserGuesses } from '@/lib/queries/predictions'
+import type { MatchStage } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
+
+// Ordem canônica das rodadas e rótulos (fase de grupos vira 3 rodadas).
+const ROUND_ORDER = [
+  'g1',
+  'g2',
+  'g3',
+  'round_of_32',
+  'round_of_16',
+  'quarter_final',
+  'semi_final',
+  'third_place',
+  'final',
+] as const
+type RoundId = (typeof ROUND_ORDER)[number]
+
+const ROUND_LABEL: Record<RoundId, string> = {
+  g1: 'rodada 1',
+  g2: 'rodada 2',
+  g3: 'rodada 3',
+  round_of_32: '16-avos',
+  round_of_16: 'oitavas',
+  quarter_final: 'quartas',
+  semi_final: 'semi',
+  third_place: '3º lugar',
+  final: 'final',
+}
 
 function statusOf(
   kickoffAt: string,
@@ -25,8 +53,25 @@ export default async function PalpitesPage() {
   const [matches, guesses] = await Promise.all([getMatches(), getUserGuesses()])
   const now = new Date()
 
-  // Agrupa por dia (fuso de Brasília).
-  const byDay = new Map<string, PalpiteDay>()
+  // Rodada de cada jogo. Grupos: 4 times = 6 jogos, 2 por rodada, em ordem
+  // cronológica → rodada = floor(ordem_no_grupo / 2) + 1. Mata-mata: o stage.
+  // (matches já vem ordenado por kickoff asc.)
+  const groupCount = new Map<string, number>()
+  function roundIdOf(stage: MatchStage, groupName: string | null): RoundId {
+    if (stage === 'group') {
+      const g = groupName ?? '?'
+      const idx = groupCount.get(g) ?? 0
+      groupCount.set(g, idx + 1)
+      const md = Math.min(3, Math.floor(idx / 2) + 1)
+      return `g${md}` as RoundId
+    }
+    return stage as RoundId
+  }
+
+  // Agrupa: rodada → dia → jogos.
+  const byRound = new Map<RoundId, Map<string, PalpiteDay>>()
+  const openByRound = new Map<RoundId, boolean>()
+
   for (const m of matches) {
     const finished = m.status === 'finished'
     const guess = guesses.get(m.id)
@@ -44,6 +89,12 @@ export default async function PalpitesPage() {
           : undefined,
       status: statusOf(m.kickoffAt, finished, guess != null, now),
     }
+
+    const rid = roundIdOf(m.stage, m.groupName)
+    if (!finished) openByRound.set(rid, true)
+
+    if (!byRound.has(rid)) byRound.set(rid, new Map())
+    const byDay = byRound.get(rid)!
     const key = dayKey(m.kickoffAt)
     if (!byDay.has(key)) {
       byDay.set(key, { id: key, title: dayLabel(m.kickoffAt, now), matches: [] })
@@ -51,14 +102,22 @@ export default async function PalpitesPage() {
     byDay.get(key)!.matches.push(item)
   }
 
-  // Próximos/hoje (asc) primeiro, depois passado (desc).
-  const todayKey = dayKey(now.toISOString())
-  const days = [...byDay.values()].sort((a, b) => {
-    const aFut = a.id >= todayKey
-    const bFut = b.id >= todayKey
-    if (aFut !== bFut) return aFut ? -1 : 1
-    return aFut ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id)
-  })
+  // Rodada "atual": primeira (na ordem) que ainda tem jogo em aberto; se todas
+  // encerradas, a última com jogos.
+  const presentRounds = ROUND_ORDER.filter((r) => byRound.has(r))
+  const currentId =
+    presentRounds.find((r) => openByRound.get(r)) ??
+    presentRounds[presentRounds.length - 1] ??
+    null
 
-  return <PalpitesScreen days={days} />
+  const rounds: PalpiteRound[] = presentRounds.map((rid) => ({
+    id: rid,
+    label: ROUND_LABEL[rid],
+    isCurrent: rid === currentId,
+    days: [...byRound.get(rid)!.values()].sort((a, b) =>
+      a.id.localeCompare(b.id),
+    ),
+  }))
+
+  return <PalpitesScreen rounds={rounds} />
 }

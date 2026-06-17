@@ -1,8 +1,8 @@
 'use client'
 
-import { Check, Lock } from 'lucide-react'
+import { CalendarDays, Check, ChevronDown, Lock } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   BottomNav,
@@ -33,6 +33,13 @@ export interface PalpiteDay {
   id: string
   title: string
   matches: PalpiteMatch[]
+}
+
+export interface PalpiteRound {
+  id: string
+  label: string
+  isCurrent: boolean
+  days: PalpiteDay[]
 }
 
 const FILTERS = [
@@ -155,10 +162,97 @@ function MatchRow({ m }: { m: PalpiteMatch }) {
   )
 }
 
-export function PalpitesScreen({ days: allDays }: { days: PalpiteDay[] }) {
-  const [filter, setFilter] = useState<FilterKey>('todos')
+function RoundSelector({
+  rounds,
+  selectedId,
+  onSelect,
+}: {
+  rounds: PalpiteRound[]
+  selectedId: string
+  onSelect: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = rounds.find((r) => r.id === selectedId)
 
-  const days = allDays
+  useEffect(() => {
+    if (!open) return
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2.5 rounded-lg border border-rule-dark bg-paper px-3.5 py-2.5 text-left transition-colors hover:bg-bone"
+      >
+        <CalendarDays className="size-4 shrink-0 text-trophy-deep" />
+        <span className="flex-1 text-[15px] font-medium text-ink">
+          {selected?.label ?? 'rodada'}
+          {selected?.isCurrent && (
+            <span className="ml-1.5 text-[12px] font-normal text-sepia">
+              (atual)
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          className={cn(
+            'size-4 shrink-0 text-sepia transition-transform',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 overflow-hidden rounded-lg border border-rule-dark bg-paper shadow-lg">
+          <ul className="max-h-[60vh] overflow-y-auto py-1">
+            {rounds.map((r) => (
+              <li key={r.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelect(r.id)
+                    setOpen(false)
+                  }}
+                  className={cn(
+                    'flex w-full items-center justify-between px-3.5 py-2.5 text-left text-[15px] transition-colors hover:bg-bone',
+                    r.id === selectedId
+                      ? 'font-semibold text-trophy-deep'
+                      : 'text-ink',
+                  )}
+                >
+                  <span>
+                    {r.label}
+                    {r.isCurrent && (
+                      <span className="ml-1.5 text-[12px] font-normal text-sepia">
+                        (atual)
+                      </span>
+                    )}
+                  </span>
+                  {r.id === selectedId && <Check className="size-4" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function PalpitesScreen({ rounds }: { rounds: PalpiteRound[] }) {
+  const [filter, setFilter] = useState<FilterKey>('todos')
+  const [roundId, setRoundId] = useState<string>(
+    () => rounds.find((r) => r.isCurrent)?.id ?? rounds[0]?.id ?? '',
+  )
+
+  const round = rounds.find((r) => r.id === roundId) ?? rounds[0]
+  const days = (round?.days ?? [])
     .map((d) => ({
       ...d,
       matches: d.matches.filter((m) => matchesFilter(m, filter)),
@@ -172,6 +266,14 @@ export function PalpitesScreen({ days: allDays }: { days: PalpiteDay[] }) {
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
         <div className="space-y-5">
           <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">palpites</h1>
+
+          {rounds.length > 0 && (
+            <RoundSelector
+              rounds={rounds}
+              selectedId={roundId}
+              onSelect={setRoundId}
+            />
+          )}
 
           <div className="flex gap-2">
             {FILTERS.map((f) => (
