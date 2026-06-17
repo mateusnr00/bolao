@@ -21,7 +21,7 @@ interface Stored extends LiveEntry {
   fetchedAt: number
 }
 
-const POLL_MS = 30_000
+const POLL_MS = 15_000
 const TICK_MS = 10_000
 
 let byPair = new Map<string, Stored>()
