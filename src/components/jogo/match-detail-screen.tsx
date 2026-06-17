@@ -1,11 +1,11 @@
 'use client'
 
-import { ChevronDown, ChevronLeft, ChevronUp, Lock } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronUp, Lock, X } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
-import { savePrediction } from '@/app/jogo/[id]/actions'
+import { addGoal, removeGoal, savePrediction } from '@/app/jogo/[id]/actions'
 import { PalpitesDaGalera } from '@/components/jogo/palpites-da-galera'
 import { LiveRefresher } from '@/components/live-refresher'
 import { LiveScore } from '@/components/live/live-score'
@@ -21,6 +21,7 @@ import {
   TopNav,
 } from '@/components/we26'
 import { useLivePair } from '@/lib/live-store'
+import type { MatchGoal } from '@/lib/queries/goals'
 import type { GaleraGuess } from '@/lib/queries/predictions'
 import { calcPredictionPoints } from '@/lib/scoring'
 import { cn } from '@/lib/utils'
@@ -40,6 +41,130 @@ export interface MatchDetail {
   away: { code: string; name: string; flagUrl: string | null }
   score?: [number, number]
   galera: { rows: GaleraGuess[]; hasStarted: boolean }
+  goals: MatchGoal[]
+  canManageGoals: boolean
+}
+
+/* gols persistidos (nome certo) — exibe pra todos; donos de bolão lançam/removem */
+function GoalsSection({
+  matchId,
+  goals,
+  canManage,
+  homeCode,
+  awayCode,
+}: {
+  matchId: string
+  goals: MatchGoal[]
+  canManage: boolean
+  homeCode: string
+  awayCode: string
+}) {
+  const [scorer, setScorer] = useState('')
+  const [minute, setMinute] = useState('')
+  const [side, setSide] = useState<'home' | 'away'>('home')
+  const [isPending, startTransition] = useTransition()
+
+  function add() {
+    if (!scorer.trim()) return
+    startTransition(async () => {
+      const res = await addGoal({ matchId, side, scorer, minute })
+      if ('error' in res) {
+        toast.error(res.error)
+        return
+      }
+      setScorer('')
+      setMinute('')
+    })
+  }
+
+  function remove(id: string) {
+    startTransition(async () => {
+      const res = await removeGoal(id, matchId)
+      if ('error' in res) toast.error(res.error)
+    })
+  }
+
+  if (goals.length === 0 && !canManage) return null
+
+  return (
+    <section className="space-y-3">
+      <Eyebrow>gols</Eyebrow>
+
+      {goals.length === 0 ? (
+        <p className="text-[13px] text-sepia">nenhum gol lançado.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {goals.map((g) => (
+            <li key={g.id} className="flex items-center gap-2.5 text-[14px]">
+              <span className="w-9 shrink-0 text-right font-mono text-[12px] tabular text-sepia">
+                {g.minute ? `${g.minute}'` : ''}
+              </span>
+              <span className="w-9 shrink-0 font-mono text-[12px] font-semibold text-trophy-deep">
+                {g.teamCode}
+              </span>
+              <span className="flex-1 text-ink">{g.scorer}</span>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => remove(g.id)}
+                  disabled={isPending}
+                  aria-label="remover gol"
+                  className="text-sepia transition-colors hover:text-destructive"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {canManage && (
+        <div className="space-y-2 rounded-lg border border-rule bg-bone/40 p-3">
+          <div className="flex gap-2">
+            {(['home', 'away'] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSide(s)}
+                className={cn(
+                  'flex-1 rounded-md border px-2 py-1.5 font-mono text-[13px] font-semibold transition-colors',
+                  side === s
+                    ? 'border-ink bg-ink text-paper'
+                    : 'border-rule text-sepia hover:text-ink',
+                )}
+              >
+                {s === 'home' ? homeCode : awayCode}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={scorer}
+              onChange={(e) => setScorer(e.target.value)}
+              placeholder="nome do jogador"
+              className="h-9 flex-1 rounded-md border border-rule-dark bg-paper px-2.5 text-[14px] text-ink outline-none focus:border-trophy"
+            />
+            <input
+              value={minute}
+              onChange={(e) => setMinute(e.target.value.replace(/[^\d+]/g, '').slice(0, 5))}
+              placeholder="min"
+              inputMode="numeric"
+              className="h-9 w-16 rounded-md border border-rule-dark bg-paper px-2 text-center text-[14px] text-ink outline-none focus:border-trophy"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={add}
+            disabled={isPending || !scorer.trim()}
+            className="h-9 w-full rounded-md bg-ink text-[14px] font-medium text-paper transition-opacity disabled:opacity-50"
+          >
+            {isPending ? 'salvando…' : '+ adicionar gol'}
+          </button>
+        </div>
+      )}
+    </section>
+  )
 }
 
 const SCORING = [
@@ -321,6 +446,19 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
             hasStarted={match.galera.hasStarted}
             actual={actual}
           />
+
+          {(match.goals.length > 0 || match.canManageGoals) && (
+            <>
+              <Rule />
+              <GoalsSection
+                matchId={match.id}
+                goals={match.goals}
+                canManage={match.canManageGoals}
+                homeCode={match.home.code}
+                awayCode={match.away.code}
+              />
+            </>
+          )}
 
           <Rule />
 
