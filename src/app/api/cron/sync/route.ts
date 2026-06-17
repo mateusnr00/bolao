@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runOpenfootballSync } from '@/lib/sync/openfootball'
+import {
+  runSportmonksSync,
+  type SportmonksSyncResult,
+} from '@/lib/sync/sportmonks'
 
 // Lê headers e escreve no banco → sempre dinâmica, nunca cacheada.
 export const dynamic = 'force-dynamic'
@@ -17,8 +21,29 @@ export async function GET(request: Request) {
 
   try {
     const supabase = createAdminClient()
-    const result = await runOpenfootballSync(supabase)
-    return NextResponse.json({ ok: true, ranAt: new Date().toISOString(), ...result })
+    // 1) calendário/seed (fonte da verdade do fixture)
+    const openfootball = await runOpenfootballSync(supabase)
+
+    // 2) placar ao vivo por cima (opcional: só roda se houver token). Um erro
+    //    aqui não derruba o sync principal — só registra na resposta.
+    let sportmonks: SportmonksSyncResult | { error: string } | null = null
+    const token = process.env.SPORTMONKS_API_TOKEN
+    if (token) {
+      try {
+        sportmonks = await runSportmonksSync(supabase, token)
+      } catch (err) {
+        sportmonks = {
+          error: err instanceof Error ? err.message : 'erro no sync ao vivo',
+        }
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      ranAt: new Date().toISOString(),
+      openfootball,
+      sportmonks,
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'erro desconhecido'
     return NextResponse.json({ ok: false, error: message }, { status: 500 })

@@ -23,7 +23,7 @@ const SOURCE =
 // é dado estático de seleção, não de jogo/placar. Bandeiras via flagcdn.
 // ISO usa gb-eng/gb-sct p/ nações britânicas (suportado pelo flagcdn).
 // Chave = nome em inglês como o openfootball escreve; `pt` = nome exibido.
-const NATIONS: Record<string, { code: string; iso: string; pt: string }> = {
+export const NATIONS: Record<string, { code: string; iso: string; pt: string }> = {
   Mexico: { code: 'MEX', iso: 'mx', pt: 'México' },
   'South Africa': { code: 'RSA', iso: 'za', pt: 'África do Sul' },
   'South Korea': { code: 'KOR', iso: 'kr', pt: 'Coreia do Sul' },
@@ -176,6 +176,19 @@ export async function runOpenfootballSync(
   if (selErr) throw new Error(`Erro ao ler teams: ${selErr.message}`)
   const idByCode = new Map(teams!.map((t) => [t.code, t.id]))
 
+  // Jogos que o sync ao vivo (SportMonks) já marcou como 'live'/'finished'. O
+  // openfootball pode estar atrasado e ainda não ter o placar final desses; sem
+  // essa guarda, ele os rebaixaria de volta pra 'scheduled' e zeraria o placar.
+  const { data: existing, error: exErr } = await supabase
+    .from('matches')
+    .select('external_id, status')
+  if (exErr) throw new Error(`Erro ao ler matches: ${exErr.message}`)
+  const liveOrFinished = new Set(
+    (existing ?? [])
+      .filter((m) => m.status === 'live' || m.status === 'finished')
+      .map((m) => m.external_id),
+  )
+
   // Jogos: só os com ambos os times reais (FK NOT NULL).
   const matchRows: Database['public']['Tables']['matches']['Insert'][] = []
   let skipped = 0
@@ -199,6 +212,13 @@ export async function runOpenfootballSync(
     const externalId = mt.group
       ? `wc2026-g-${slug(groupName ?? '')}-${slug(mt.team1)}-${slug(mt.team2)}`
       : `wc2026-ko-${mt.num}`
+
+    // Sem placar na fonte, mas já 'live'/'finished' no banco → não mexe (deixa o
+    // sync ao vivo mandar). Quando o openfootball tiver o ft, ele reassume.
+    if (!hasScore && liveOrFinished.has(externalId)) {
+      skipped++
+      continue
+    }
 
     matchRows.push({
       external_id: externalId,
