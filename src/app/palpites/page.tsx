@@ -5,7 +5,7 @@ import {
   type PalpiteRound,
   type Status,
 } from '@/components/palpites/palpites-screen'
-import { dayKey, dayLabel, timeLabel } from '@/lib/date'
+import { dayKey, dayLabel, fullKickoff, timeLabel } from '@/lib/date'
 import { getMatches } from '@/lib/queries/matches'
 import { getUserGuesses, getUserPoolIds } from '@/lib/queries/predictions'
 import type { MatchStage } from '@/types/database'
@@ -85,6 +85,8 @@ export default async function PalpitesPage() {
       time: timeLabel(m.kickoffAt),
       phase: m.stage,
       label: m.groupName ? `Grupo ${m.groupName}` : undefined,
+      dateLong: fullKickoff(m.kickoffAt),
+      venue: m.venue,
       home: { code: m.home.code, flagUrl: m.home.flagUrl },
       away: { code: m.away.code, flagUrl: m.away.flagUrl },
       guess,

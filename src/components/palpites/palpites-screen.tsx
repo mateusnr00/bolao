@@ -1,6 +1,15 @@
 'use client'
 
-import { CalendarDays, Check, ChevronDown, Lock, Shuffle } from 'lucide-react'
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Info,
+  Lock,
+  MapPin,
+  Shuffle,
+  Trophy,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -11,6 +20,7 @@ import {
   BottomNav,
   Flag,
   type Phase,
+  PHASE_META,
   PhaseBadge,
   TopNav,
 } from '@/components/we26'
@@ -24,6 +34,8 @@ export interface PalpiteMatch {
   time: string
   phase: Phase
   label?: string
+  dateLong: string
+  venue: string | null
   home: { code: string; flagUrl: string | null }
   away: { code: string; flagUrl: string | null }
   guess?: [number, number]
@@ -128,6 +140,55 @@ function ReadonlyScore({ guess }: { guess: [number, number] }) {
   )
 }
 
+/* "sobre o jogo": fica em cima do placar, abre as infos da partida */
+function SobreJogo({ m }: { m: PalpiteMatch }) {
+  const [open, setOpen] = useState(false)
+  const phaseText = m.label
+    ? `${PHASE_META[m.phase].label} · ${m.label}`
+    : PHASE_META[m.phase].label
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 py-1 text-left transition-colors"
+      >
+        <Info className="size-4 text-sepia" />
+        <span className="flex-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-sepia">
+          sobre o jogo
+        </span>
+        <ChevronDown
+          className={cn(
+            'size-4 text-sepia transition-transform',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+
+      {open && (
+        <dl className="mt-1.5 space-y-2 rounded-lg border border-rule bg-bone/40 p-3 text-[13px]">
+          <div className="flex items-start gap-2">
+            <CalendarDays className="mt-0.5 size-4 shrink-0 text-sepia" />
+            <dd className="text-ink">
+              {m.dateLong}{' '}
+              <span className="text-sepia">· horário de Brasília</span>
+            </dd>
+          </div>
+          <div className="flex items-start gap-2">
+            <MapPin className="mt-0.5 size-4 shrink-0 text-sepia" />
+            <dd className="text-ink">{m.venue ?? 'estádio a confirmar'}</dd>
+          </div>
+          <div className="flex items-start gap-2">
+            <Trophy className="mt-0.5 size-4 shrink-0 text-sepia" />
+            <dd className="text-ink">{phaseText}</dd>
+          </div>
+        </dl>
+      )}
+    </div>
+  )
+}
+
 function SaveStatus({ state }: { state: 'idle' | 'saving' | 'saved' | 'error' }) {
   if (state === 'saving') return <span className="text-[12px] text-sepia">salvando…</span>
   if (state === 'saved')
@@ -229,6 +290,10 @@ function EditableMatchRow({
         }
       />
 
+      <div className="mt-2">
+        <SobreJogo m={m} />
+      </div>
+
       <div className="mt-3 flex items-center justify-between gap-2">
         <TeamCol team={m.home} />
         <ScorePill>
@@ -309,6 +374,10 @@ function StaticMatchRow({
           )
         }
       />
+
+      <div className="mt-2">
+        <SobreJogo m={m} />
+      </div>
 
       <div className="mt-3 flex items-center justify-between gap-2">
         <TeamCol team={m.home} />
