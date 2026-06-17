@@ -21,10 +21,14 @@ export interface LiveEntry {
 interface Stored extends LiveEntry {
   baseMinute: number | null
   fetchedAt: number
+  lastSeen: number
 }
 
 const POLL_MS = 15_000
 const TICK_MS = 10_000
+// quanto tempo segurar um jogo que sumiu do /api/live (evita piscar pro placar
+// antigo do banco quando a fonte dá um soluço e volta vazia por um instante)
+const RETAIN_MS = 90_000
 
 let byPair = new Map<string, Stored>()
 const subscribers = new Set<() => void>()
@@ -59,16 +63,22 @@ async function poll() {
     const res = await fetch('/api/live', { cache: 'no-store' })
     if (!res.ok) return
     const data = (await res.json()) as { games?: LiveEntry[] }
-    const next = new Map<string, Stored>()
     const now = Date.now()
+
+    // atualiza/insere os jogos vindos agora
+    const seen = new Set<string>()
     for (const g of data.games ?? []) {
-      next.set(pairKey(g.homeCode, g.awayCode), {
-        ...g,
-        baseMinute: g.minute,
-        fetchedAt: now,
-      })
+      const key = pairKey(g.homeCode, g.awayCode)
+      seen.add(key)
+      byPair.set(key, { ...g, baseMinute: g.minute, fetchedAt: now, lastSeen: now })
     }
-    byPair = next
+
+    // remove só quem sumiu há mais de RETAIN_MS (segura soluços da fonte)
+    for (const [key, entry] of byPair) {
+      if (!seen.has(key) && now - entry.lastSeen > RETAIN_MS) {
+        byPair.delete(key)
+      }
+    }
     emit()
   } catch {
     // silencioso: mantém o último estado conhecido
