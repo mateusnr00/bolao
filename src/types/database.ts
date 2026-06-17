@@ -340,6 +340,20 @@ export type Database = {
         Args: { p_pool_id: string }
         Returns: boolean
       }
+      match_predictions: {
+        Args: { p_match_id: string }
+        Returns: {
+          user_id: string
+          display_name: string | null
+          username: string
+          avatar_url: string | null
+          home_score: number | null
+          away_score: number | null
+          points: number | null
+          has_started: boolean
+          is_me: boolean
+        }[]
+      }
     }
     Enums: {
       match_status: MatchStatus

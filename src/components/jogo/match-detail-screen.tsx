@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { savePrediction } from '@/app/jogo/[id]/actions'
+import { PalpitesDaGalera } from '@/components/jogo/palpites-da-galera'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   BottomNav,
@@ -16,6 +17,7 @@ import {
   Rule,
   TopNav,
 } from '@/components/we26'
+import type { GaleraGuess } from '@/lib/queries/predictions'
 import { cn } from '@/lib/utils'
 
 export interface MatchDetail {
@@ -31,12 +33,16 @@ export interface MatchDetail {
   home: { code: string; name: string; flagUrl: string | null }
   away: { code: string; name: string; flagUrl: string | null }
   score?: [number, number]
+  galera: { rows: GaleraGuess[]; hasStarted: boolean }
 }
 
 const SCORING = [
-  { label: 'placar exato', pts: '10' },
-  { label: 'vencedor + saldo de gols', pts: '7' },
-  { label: 'só o vencedor / empate', pts: '5' },
+  { label: 'placar exato', pts: '25' },
+  { label: 'vencedor + placar do vencedor', pts: '18' },
+  { label: 'vencedor + diferença de gols', pts: '15' },
+  { label: 'empate (placar errado)', pts: '15' },
+  { label: 'vencedor + placar do perdedor', pts: '12' },
+  { label: 'só o vencedor', pts: '10' },
   { label: 'errou', pts: '0' },
 ]
 
@@ -221,6 +227,11 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
               </p>
             </section>
           )}
+
+          <PalpitesDaGalera
+            rows={match.galera.rows}
+            hasStarted={match.galera.hasStarted}
+          />
 
           <Rule />
 

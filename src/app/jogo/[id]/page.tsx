@@ -6,7 +6,11 @@ import {
 } from '@/components/jogo/match-detail-screen'
 import { closesInLabel, fullKickoff } from '@/lib/date'
 import { getMatchById } from '@/lib/queries/matches'
-import { getUserGuess, getUserPoolIds } from '@/lib/queries/predictions'
+import {
+  getMatchPredictions,
+  getUserGuess,
+  getUserPoolIds,
+} from '@/lib/queries/predictions'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,9 +26,10 @@ export default async function JogoPage({
   const now = new Date()
   const isOpen = m.status !== 'finished' && new Date(m.kickoffAt) > now
 
-  const [guess, poolIds] = await Promise.all([
+  const [guess, poolIds, galera] = await Promise.all([
     getUserGuess(id),
     getUserPoolIds(),
+    getMatchPredictions(id),
   ])
 
   const detail: MatchDetail = {
@@ -43,6 +48,7 @@ export default async function JogoPage({
       m.homeScore != null && m.awayScore != null
         ? [m.homeScore, m.awayScore]
         : undefined,
+    galera,
   }
 
   return <MatchDetailScreen match={detail} />

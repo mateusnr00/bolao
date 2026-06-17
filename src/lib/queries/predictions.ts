@@ -63,3 +63,44 @@ export async function getUserGuesses(): Promise<Map<string, Guess>> {
   }
   return map
 }
+
+// Palpite de cada pessoa do bolão num jogo. Anti-cola: o placar dos outros só
+// vem preenchido depois do apito (a função no banco devolve null antes disso).
+export interface GaleraGuess {
+  userId: string
+  name: string
+  guess: Guess | null
+  points: number | null
+  isMe: boolean
+}
+
+export interface MatchPredictions {
+  hasStarted: boolean
+  rows: GaleraGuess[]
+}
+
+export async function getMatchPredictions(
+  matchId: string,
+): Promise<MatchPredictions> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('match_predictions', {
+    p_match_id: matchId,
+  })
+  if (error) throw new Error(`Erro ao buscar palpites da galera: ${error.message}`)
+
+  const rows: GaleraGuess[] = (data ?? []).map((r) => ({
+    userId: r.user_id,
+    name: r.display_name ?? r.username,
+    guess:
+      r.home_score != null && r.away_score != null
+        ? [r.home_score, r.away_score]
+        : null,
+    points: r.points,
+    isMe: r.is_me,
+  }))
+
+  return {
+    hasStarted: data?.[0]?.has_started ?? false,
+    rows,
+  }
+}
