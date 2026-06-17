@@ -1,13 +1,13 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { LogOut, UserRound } from 'lucide-react'
-import { useState, useTransition } from 'react'
+import { ImageUp, LogOut, UserRound } from 'lucide-react'
+import { useRef, useState, useTransition } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 import { signOut } from '@/app/(auth)/actions'
-import { updateProfile } from '@/app/perfil/actions'
+import { updateProfile, uploadAvatar } from '@/app/perfil/actions'
 import { Field } from '@/components/auth/field'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,8 @@ export function ProfileScreen({
 }) {
   const [isPending, startTransition] = useTransition()
   const [isSigningOut, startSignOut] = useTransition()
+  const [isUploading, startUpload] = useTransition()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const form = useForm<ProfileInput>({
     resolver: zodResolver(profileSchema),
@@ -63,6 +65,26 @@ export function ProfileScreen({
         })
         toast.success(res.message ?? 'Perfil atualizado!')
       }
+    })
+  }
+
+  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permite reenviar o mesmo arquivo
+    if (!file) return
+
+    startUpload(async () => {
+      const fd = new FormData()
+      fd.set('file', file)
+      const res = await uploadAvatar(fd)
+      if ('error' in res) {
+        toast.error(res.error)
+        return
+      }
+      // a foto já foi salva no perfil; reflete no formulário e na prévia
+      setSavedAvatar(res.url)
+      form.setValue('avatarUrl', res.url, { shouldDirty: false })
+      toast.success('Foto atualizada!')
     })
   }
 
@@ -103,9 +125,31 @@ export function ProfileScreen({
               error={form.formState.errors.displayName?.message}
               {...form.register('displayName')}
             />
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="flex w-full items-center justify-center gap-2 rounded-md border border-rule py-3 text-[14px] font-medium text-ink transition-colors hover:bg-bone disabled:opacity-60"
+              >
+                <ImageUp className="size-4 text-sepia" />
+                {isUploading ? 'enviando…' : 'enviar foto do dispositivo'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={onPickFile}
+                className="hidden"
+              />
+              <p className="text-center text-[11px] text-sepia">
+                PNG, JPG, WEBP ou GIF · até 4 MB · a foto é salva na hora
+              </p>
+            </div>
+
             <Field
               id="avatarUrl"
-              label="foto (url)"
+              label="ou cole uma url"
               placeholder="https://…"
               autoComplete="off"
               error={form.formState.errors.avatarUrl?.message}
