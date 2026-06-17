@@ -181,11 +181,19 @@ export function RankingScreen({ data }: { data: RankingData }) {
                     >
                       {String(r.position).padStart(2, '0')}
                     </span>
-                    <Avatar className="size-8 shrink-0">
+                    <Avatar
+                      className={cn(
+                        'shrink-0',
+                        r.position === 1
+                          ? 'size-11 ring-2 ring-trophy ring-offset-2 ring-offset-paper'
+                          : 'size-8',
+                      )}
+                    >
                       {r.avatarUrl && <AvatarImage src={r.avatarUrl} alt="" />}
                       <AvatarFallback
                         className={cn(
-                          'text-[11px] font-semibold',
+                          'font-semibold',
+                          r.position === 1 ? 'text-[13px]' : 'text-[11px]',
                           r.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
                         )}
                       >
