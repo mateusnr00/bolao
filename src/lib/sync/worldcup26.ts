@@ -43,37 +43,89 @@ interface Wc26Game {
 
 // ── parser puro (testável com mock) ─────────────────────────────────────────
 
+// team id (worldcup26) → código FIFA (= nosso teams.code)
+function codeById(teams: Wc26Team[]): Map<string, string> {
+  const map = new Map<string, string>()
+  for (const t of teams) {
+    if (t.id != null && t.fifa_code) map.set(String(t.id), t.fifa_code.toUpperCase())
+  }
+  return map
+}
+
+function isFinished(g: Wc26Game): boolean {
+  return String(g.finished ?? '').toUpperCase() === 'TRUE'
+}
+
+function isStarted(g: Wc26Game): boolean {
+  const elapsed = String(g.time_elapsed ?? '').toLowerCase()
+  return elapsed !== '' && elapsed !== 'notstarted'
+}
+
 /** Cruza teams + games e devolve os updates de placar dos jogos que já
- *  começaram (ao vivo ou encerrados), ignorando o resto. */
+ *  começaram (ao vivo ou encerrados), ignorando o resto. Usado pelo sync. */
 export function parseWorldcup26Games(
   teams: Wc26Team[],
   games: Wc26Game[],
 ): LiveUpdate[] {
-  const codeById = new Map<string, string>()
-  for (const t of teams) {
-    if (t.id != null && t.fifa_code) {
-      codeById.set(String(t.id), t.fifa_code.toUpperCase())
-    }
-  }
+  const codes = codeById(teams)
 
   const out: LiveUpdate[] = []
   for (const g of games) {
-    const homeCode = codeById.get(String(g.home_team_id))
-    const awayCode = codeById.get(String(g.away_team_id))
+    const homeCode = codes.get(String(g.home_team_id))
+    const awayCode = codes.get(String(g.away_team_id))
     // team id "0" (mata-mata ainda indefinido) ou desconhecido → pula
     if (!homeCode || !awayCode) continue
-
-    const finished = String(g.finished ?? '').toUpperCase() === 'TRUE'
-    const elapsed = String(g.time_elapsed ?? '').toLowerCase()
-    const started = elapsed !== '' && elapsed !== 'notstarted'
+    const finished = isFinished(g)
     // ainda não começou → não mexe (deixa o openfootball mandar no agendado)
-    if (!finished && !started) continue
+    if (!finished && !isStarted(g)) continue
 
     const homeGoals = Number(g.home_score)
     const awayGoals = Number(g.away_score)
     if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue
 
     out.push({ homeCode, awayCode, homeGoals, awayGoals, finished })
+  }
+  return out
+}
+
+// ── placar ao vivo pro front (com minuto) ───────────────────────────────────
+
+export interface Wc26Live {
+  homeCode: string
+  awayCode: string
+  homeGoals: number
+  awayGoals: number
+  finished: boolean
+  minute: number | null // minuto numérico, quando dá pra ler de time_elapsed
+  label: string | null // rótulo cru quando não é número (ex.: "HT")
+}
+
+/** Igual ao parser do sync, mas guarda o minuto/rótulo pra exibir no front. */
+export function parseWorldcup26Live(
+  teams: Wc26Team[],
+  games: Wc26Game[],
+): Wc26Live[] {
+  const codes = codeById(teams)
+
+  const out: Wc26Live[] = []
+  for (const g of games) {
+    const homeCode = codes.get(String(g.home_team_id))
+    const awayCode = codes.get(String(g.away_team_id))
+    if (!homeCode || !awayCode) continue
+    const finished = isFinished(g)
+    if (!finished && !isStarted(g)) continue
+
+    const homeGoals = Number(g.home_score)
+    const awayGoals = Number(g.away_score)
+    if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) continue
+
+    const raw = String(g.time_elapsed ?? '').trim()
+    const minMatch = raw.match(/^(\d{1,3})/)
+    const minute = minMatch ? parseInt(minMatch[1], 10) : null
+    const label =
+      minute == null && raw && raw.toLowerCase() !== 'notstarted' ? raw : null
+
+    out.push({ homeCode, awayCode, homeGoals, awayGoals, finished, minute, label })
   }
   return out
 }
@@ -87,15 +139,38 @@ export interface Worldcup26SyncResult {
   unmatched: string[]
 }
 
-async function getJson(url: string, token?: string): Promise<unknown> {
+async function getJson(
+  url: string,
+  token?: string,
+  revalidate?: number,
+): Promise<unknown> {
   const res = await fetch(url, {
     headers: {
       Accept: 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    ...(revalidate != null ? { next: { revalidate } } : {}),
   })
   if (!res.ok) throw new Error(`worldcup26 ${res.status} ${res.statusText} (${url})`)
   return res.json()
+}
+
+/** Busca o placar ao vivo (jogos que já começaram), com minuto, pro front.
+ *  As respostas são cacheadas por `revalidate`s pra não martelar a API quando
+ *  muitos clientes fazem polling. */
+export async function fetchWorldcup26Live(
+  token?: string,
+  baseUrl: string = process.env.WC2026_API_BASE_URL || DEFAULT_BASE_URL,
+  revalidate = 15,
+): Promise<Wc26Live[]> {
+  const [teamsJson, gamesJson] = await Promise.all([
+    getJson(`${baseUrl}/get/teams`, token, revalidate),
+    getJson(`${baseUrl}/get/games`, token, revalidate),
+  ])
+  return parseWorldcup26Live(
+    asArray<Wc26Team>(teamsJson, 'teams'),
+    asArray<Wc26Game>(gamesJson, 'games'),
+  )
 }
 
 // a API pode devolver o array direto ou embrulhado ({ teams }, { games }).

@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { Grid48 } from '@/components/grid-48'
 import { LiveRefresher } from '@/components/live-refresher'
+import { LiveScore } from '@/components/live/live-score'
 import type { DashboardData, LiveMatch } from '@/lib/queries/dashboard'
 import {
   BottomNav,
@@ -24,9 +25,19 @@ function LiveRow({ m }: { m: LiveMatch }) {
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <Flag src={m.home.flagUrl ?? undefined} />
         <span className="font-mono text-sm font-medium text-ink">{m.home.code}</span>
-        <span className="font-mono tabular text-lg font-semibold text-phase-semi">
-          {m.score[0]}<span className="px-0.5 text-sepia">×</span>{m.score[1]}
-        </span>
+        <LiveScore
+          homeCode={m.home.code}
+          awayCode={m.away.code}
+          size="sm"
+          withBadge={false}
+          fallback={
+            <span className="font-mono tabular text-lg font-semibold text-phase-semi">
+              {m.score[0]}
+              <span className="px-0.5 text-sepia">×</span>
+              {m.score[1]}
+            </span>
+          }
+        />
         <span className="font-mono text-sm font-medium text-ink">{m.away.code}</span>
         <Flag src={m.away.flagUrl ?? undefined} />
       </span>

@@ -1,4 +1,5 @@
 import { LiveRefresher } from '@/components/live-refresher'
+import { LiveScore } from '@/components/live/live-score'
 import { Eyebrow, Flag, LiveBadge } from '@/components/we26'
 import { shortKickoff } from '@/lib/date'
 import { cn } from '@/lib/utils'
@@ -46,28 +47,38 @@ function GameCard({ m }: { m: GameCardData }) {
         <TeamCol team={m.home} />
 
         <div className="flex flex-col items-center gap-1.5 px-1">
-          {hasScore ? (
-            <span
-              className={cn(
-                'font-mono text-xl tabular font-semibold',
-                live ? 'text-phase-semi' : 'text-ink',
-              )}
-            >
-              {m.homeScore}
-              <span className="px-1 text-sepia">×</span>
-              {m.awayScore}
-            </span>
-          ) : (
-            <span className="font-mono text-base font-semibold text-sepia">vs</span>
-          )}
-
-          {live ? (
-            <LiveBadge />
-          ) : m.groupName ? (
-            <span className="text-[10px] uppercase tracking-wider text-sepia">
-              grupo {m.groupName}
-            </span>
-          ) : null}
+          <LiveScore
+            homeCode={m.home.code}
+            awayCode={m.away.code}
+            size="md"
+            fallback={
+              <>
+                {hasScore ? (
+                  <span
+                    className={cn(
+                      'font-mono text-xl tabular font-semibold',
+                      live ? 'text-phase-semi' : 'text-ink',
+                    )}
+                  >
+                    {m.homeScore}
+                    <span className="px-1 text-sepia">×</span>
+                    {m.awayScore}
+                  </span>
+                ) : (
+                  <span className="font-mono text-base font-semibold text-sepia">
+                    vs
+                  </span>
+                )}
+                {live ? (
+                  <LiveBadge />
+                ) : m.groupName ? (
+                  <span className="text-[10px] uppercase tracking-wider text-sepia">
+                    grupo {m.groupName}
+                  </span>
+                ) : null}
+              </>
+            }
+          />
         </div>
 
         <TeamCol team={m.away} />

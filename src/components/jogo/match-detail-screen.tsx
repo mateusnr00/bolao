@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { savePrediction } from '@/app/jogo/[id]/actions'
 import { PalpitesDaGalera } from '@/components/jogo/palpites-da-galera'
 import { LiveRefresher } from '@/components/live-refresher'
+import { LiveScore } from '@/components/live/live-score'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   BottomNav,
@@ -19,6 +20,7 @@ import {
   Rule,
   TopNav,
 } from '@/components/we26'
+import { useLivePair } from '@/lib/live-store'
 import type { GaleraGuess } from '@/lib/queries/predictions'
 import { cn } from '@/lib/utils'
 
@@ -106,6 +108,10 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
   const [saved, setSaved] = useState(match.guess != null)
   const [isPending, startTransition] = useTransition()
 
+  // o front sabe do "ao vivo" antes do banco (sync de 10 min) → reflete na hora
+  const frontLive = useLivePair(match.home.code, match.away.code)
+  const liveNow = match.isLive || frontLive != null
+
   function confirm() {
     startTransition(async () => {
       const res = await savePrediction({
@@ -124,7 +130,7 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
 
   return (
     <div className="flex min-h-full flex-col bg-paper">
-      {match.isLive && <LiveRefresher />}
+      {liveNow && <LiveRefresher />}
       <TopNav active="palpites" />
 
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
@@ -213,28 +219,35 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
             /* jogo já começou / encerrado */
             <section className="space-y-4">
               <div className="flex items-center gap-2">
-                <Eyebrow>{match.isLive ? 'ao vivo' : 'resultado'}</Eyebrow>
-                {match.isLive && <LiveBadge />}
+                <Eyebrow>{liveNow ? 'ao vivo' : 'resultado'}</Eyebrow>
+                {liveNow && <LiveBadge />}
               </div>
               <div className="flex items-center justify-between gap-3">
                 <TeamSide team={match.home} align="start" />
                 <div className="shrink-0 text-center">
-                  {match.score ? (
-                    <p
-                      className={cn(
-                        'font-mono text-4xl tabular font-semibold',
-                        match.isLive ? 'text-phase-semi' : 'text-ink',
-                      )}
-                    >
-                      {match.score[0]}<span className="px-1 text-sepia">×</span>{match.score[1]}
-                    </p>
-                  ) : (
-                    <p className="font-mono text-sm text-sepia">aguardando placar</p>
-                  )}
+                  <LiveScore
+                    homeCode={match.home.code}
+                    awayCode={match.away.code}
+                    size="lg"
+                    withBadge={false}
+                    fallback={
+                      match.score ? (
+                        <p className="font-mono text-4xl tabular font-semibold text-ink">
+                          {match.score[0]}
+                          <span className="px-1 text-sepia">×</span>
+                          {match.score[1]}
+                        </p>
+                      ) : (
+                        <p className="font-mono text-sm text-sepia">
+                          aguardando placar
+                        </p>
+                      )
+                    }
+                  />
                 </div>
                 <TeamSide team={match.away} align="end" />
               </div>
-              {!match.isLive && (
+              {!liveNow && (
                 <p className="flex items-center justify-center gap-1.5 text-center text-[12px] text-sepia">
                   <Lock className="size-3" /> palpites encerrados
                 </p>

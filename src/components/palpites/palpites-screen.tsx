@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 
 import { savePrediction } from '@/app/jogo/[id]/actions'
 import { LiveRefresher } from '@/components/live-refresher'
+import { LiveScore } from '@/components/live/live-score'
 import { GaleraInline } from '@/components/palpites/galera-inline'
 import {
   BottomNav,
@@ -409,32 +410,40 @@ function StaticMatchRow({
       <div className="mt-3 flex items-center justify-between gap-2">
         <TeamCol team={m.home} />
         <div className="shrink-0 text-center">
-          {(finished || live) && m.score ? (
-            <>
-              <p
-                className={cn(
-                  'font-mono text-2xl tabular font-semibold',
-                  live ? 'text-phase-semi' : 'text-ink',
-                )}
-              >
-                {m.score[0]}
-                <span className="px-1 text-sepia">×</span>
-                {m.score[1]}
-              </p>
-              {m.guess && (
-                <p className="mt-0.5 font-mono text-[11px] tabular text-sepia">
-                  você: {m.guess[0]} a {m.guess[1]}
-                </p>
-              )}
-            </>
-          ) : m.guess ? (
-            <>
-              <ReadonlyScore guess={m.guess} />
-              <p className="mt-1 text-[11px] text-sepia">seu palpite</p>
-            </>
-          ) : (
-            <p className="font-mono text-[13px] text-sepia">sem palpite</p>
-          )}
+          <LiveScore
+            homeCode={m.home.code}
+            awayCode={m.away.code}
+            size="md"
+            withBadge={false}
+            fallback={
+              (finished || live) && m.score ? (
+                <>
+                  <p
+                    className={cn(
+                      'font-mono text-2xl tabular font-semibold',
+                      live ? 'text-phase-semi' : 'text-ink',
+                    )}
+                  >
+                    {m.score[0]}
+                    <span className="px-1 text-sepia">×</span>
+                    {m.score[1]}
+                  </p>
+                  {m.guess && (
+                    <p className="mt-0.5 font-mono text-[11px] tabular text-sepia">
+                      você: {m.guess[0]} a {m.guess[1]}
+                    </p>
+                  )}
+                </>
+              ) : m.guess ? (
+                <>
+                  <ReadonlyScore guess={m.guess} />
+                  <p className="mt-1 text-[11px] text-sepia">seu palpite</p>
+                </>
+              ) : (
+                <p className="font-mono text-[13px] text-sepia">sem palpite</p>
+              )
+            }
+          />
         </div>
         <TeamCol team={m.away} />
       </div>
