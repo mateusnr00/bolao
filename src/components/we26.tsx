@@ -2,6 +2,7 @@ import { House, ListChecks, Trophy, User } from 'lucide-react'
 import Link from 'next/link'
 
 import { signOut } from '@/app/(auth)/actions'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { cn } from '@/lib/utils'
 
 export type Phase =
@@ -112,27 +113,25 @@ export function TopNav({ active }: { active?: NavKey }) {
         <Link href="/" aria-label="início">
           <Logo />
         </Link>
-        <nav className="hidden items-center gap-6 text-[13px] font-medium md:flex">
-          <Link href="/boloes" className={link('boloes')}>
-            bolões
-          </Link>
-          <Link href="/palpites" className={link('palpites')}>
-            palpites
-          </Link>
-          <Link href="/ranking" className={link('ranking')}>
-            ranking
-          </Link>
+        <div className="flex items-center gap-3 md:gap-4">
+          <nav className="hidden items-center gap-6 text-[13px] font-medium md:flex">
+            <Link href="/boloes" className={link('boloes')}>
+              bolões
+            </Link>
+            <Link href="/palpites" className={link('palpites')}>
+              palpites
+            </Link>
+            <Link href="/ranking" className={link('ranking')}>
+              ranking
+            </Link>
+          </nav>
+          <ThemeToggle />
           <form action={signOut}>
-            <button className="flex size-7 items-center justify-center rounded-md border border-rule text-ink transition-colors hover:bg-bone">
+            <button className="flex size-8 items-center justify-center rounded-md border border-rule text-ink transition-colors hover:bg-bone md:size-7">
               <User className="size-4" />
             </button>
           </form>
-        </nav>
-        <form action={signOut} className="md:hidden">
-          <button className="flex size-8 items-center justify-center rounded-md border border-rule text-ink">
-            <User className="size-4" />
-          </button>
-        </form>
+        </div>
       </div>
     </header>
   )

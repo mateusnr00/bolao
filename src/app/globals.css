@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -96,6 +98,31 @@
   --radius: 6px;
 }
 
+/* Modo noite — mesma identidade We Are 26, base ESCURA (carvão quente).
+   Só a paleta base muda; os tokens semânticos re-resolvem sozinhos. */
+.dark {
+  color-scheme: dark;
+
+  --ink: #f1ece1;       /* texto/foreground off-white quente */
+  --paper: #121215;     /* fundo carvão */
+  --bone: #1d1d22;      /* superfície elevada (cards, hovers) */
+  --trophy: #e0b052;    /* dourado um tom mais vivo p/ contraste */
+  --trophy-deep: #e8c878; /* "deep" vira CLARO no escuro (é cor de texto) */
+  --trophy-light: #f0d78a;
+  --grass: #c2ec3a;
+  --carbon: #e8e8ee;
+  --sepia: #9b958a;     /* texto secundário mais claro */
+  --rule: #2a2a30;      /* divisórias sutis */
+  --rule-dark: #45454f; /* bordas de ênfase (mais claras que rule no escuro) */
+
+  --phase-group: #2bb3e0;
+  --phase-32: #f5dc1e;
+  --phase-16: #ff7547;
+  --phase-quarter: #1b8f95;
+  --phase-semi: #d85f73;
+  --phase-final: #e0b052;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -125,6 +152,110 @@
     letter-spacing: -0.04em;
     line-height: 0.92;
   }
+}
+
+/* toggle sol/lua (Uiverse — andrew-demchenk0), modo noite */
+.switch {
+  font-size: 17px;
+  position: relative;
+  display: inline-block;
+  width: 64px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #73c0fc;
+  transition: 0.4s;
+  border-radius: 30px;
+}
+
+.switch .slider::before {
+  position: absolute;
+  content: "";
+  height: 30px;
+  width: 30px;
+  border-radius: 20px;
+  left: 2px;
+  bottom: 2px;
+  z-index: 2;
+  background-color: #e8e8e8;
+  transition: 0.4s;
+}
+
+.switch .sun svg {
+  position: absolute;
+  top: 6px;
+  left: 36px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  fill: #ffd43b;
+}
+
+.switch .moon svg {
+  fill: #73c0fc;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+}
+
+.switch .sun svg {
+  animation: sun-rotate 15s linear infinite;
+}
+
+@keyframes sun-rotate {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.switch .moon svg {
+  animation: moon-tilt 5s linear infinite;
+}
+
+@keyframes moon-tilt {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.switch .input:checked + .slider {
+  background-color: #183153;
+}
+
+.switch .input:focus + .slider {
+  box-shadow: 0 0 1px #183153;
+}
+
+.switch .input:checked + .slider::before {
+  transform: translateX(30px);
 }
 
 /* skeleton do grid de 48: células pulsam em sequência */

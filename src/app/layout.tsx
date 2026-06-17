@@ -27,8 +27,15 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#f4f0e8',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f4f0e8' },
+    { media: '(prefers-color-scheme: dark)', color: '#121215' },
+  ],
 }
+
+// roda antes da pintura: aplica o tema salvo (ou a preferência do sistema)
+// pra não piscar branco ao carregar no modo noite.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t!=='light'&&m)){document.documentElement.classList.add('dark')}}catch(e){}})()`
 
 export default function RootLayout({
   children,
@@ -38,8 +45,12 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
+      suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} ${anton.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster position="bottom-right" />
