@@ -3,10 +3,14 @@ import Link from 'next/link'
 
 import { ThemeToggle } from '@/components/theme-toggle'
 import { UserMenu } from '@/components/user-menu'
-import { LOGO_EMBLEM_SRC, LOGO_TROPHY_SRC } from '@/lib/brand'
+import {
+  EMBLEM_SRC_DARK,
+  EMBLEM_SRC_LIGHT,
+  LOGO_TROPHY_SRC,
+} from '@/lib/brand'
 import { cn } from '@/lib/utils'
 
-export { LOGO_EMBLEM_SRC, LOGO_TROPHY_SRC }
+export { LOGO_TROPHY_SRC }
 
 export type Phase =
   | 'group'
@@ -38,15 +42,25 @@ export function Logo({ className }: { className?: string }) {
   )
 }
 
-// Emblema oficial da Copa (PNG transparente) — usado direto, sem fundo.
+// Emblema "We Are 26" — troca preta/branca conforme o tema. O `className`
+// controla o tamanho/visibilidade do container; as imagens preenchem a altura.
 export function Emblem({ className }: { className?: string }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={LOGO_EMBLEM_SRC}
-      alt="Copa do Mundo FIFA 2026"
-      className={cn('object-contain', className)}
-    />
+    <span className={cn('inline-block', className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={EMBLEM_SRC_LIGHT}
+        alt="Copa do Mundo FIFA 2026"
+        className="h-full w-auto object-contain dark:hidden"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={EMBLEM_SRC_DARK}
+        alt=""
+        aria-hidden
+        className="hidden h-full w-auto object-contain dark:block"
+      />
+    </span>
   )
 }
 

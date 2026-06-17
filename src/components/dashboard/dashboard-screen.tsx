@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
-import { Grid48 } from '@/components/grid-48'
 import { LiveRefresher } from '@/components/live-refresher'
 import { LiveScore } from '@/components/live/live-score'
 import type { DashboardData, LiveMatch } from '@/lib/queries/dashboard'
 import {
   BottomNav,
+  Emblem,
   Eyebrow,
   ExactDots,
   Flag,
@@ -85,10 +85,6 @@ function ScoreBox({ value }: { value?: number }) {
 
 export function DashboardScreen({ data }: { data: DashboardData }) {
   const { pool, me, live, next, ranking, results } = data
-  const activeCells =
-    data.totalMatches > 0
-      ? Math.round((me.predictionsMade / data.totalMatches) * 48)
-      : 0
   const topRanking = ranking.slice(0, 5)
 
   return (
@@ -138,9 +134,9 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
             </section>
           )}
 
-          {/* progresso (grid de 48) */}
+          {/* progresso */}
           <section className="flex items-center justify-between gap-4">
-            <Grid48 cell={16} gap={3} active={activeCells} aria-label="progresso de palpites" />
+            <Emblem className="h-14 w-auto" />
             <div className="text-right">
               <Eyebrow>meus palpites</Eyebrow>
               <p className="display text-3xl text-ink">
