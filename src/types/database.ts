@@ -368,6 +368,40 @@ export type Database = {
           },
         ]
       }
+      palpite_reactions: {
+        Row: {
+          id: string
+          match_id: string
+          target_user_id: string
+          reactor_id: string
+          emoji: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          match_id: string
+          target_user_id: string
+          reactor_id: string
+          emoji: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          match_id?: string
+          target_user_id?: string
+          reactor_id?: string
+          emoji?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'palpite_reactions_match_id_fkey'
+            columns: ['match_id']
+            referencedRelation: 'matches'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       pool_rankings: {

@@ -3,9 +3,11 @@
 import { ChevronDown, Lock, Users } from 'lucide-react'
 import { useState } from 'react'
 
+import { ReactionBar } from '@/components/reactions/reaction-bar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DONKEY_SRC } from '@/lib/brand'
 import { useLivePair } from '@/lib/live-store'
+import { fetchMatchReactions, type ReactionState } from '@/lib/reactions'
 import { calcPredictionPoints } from '@/lib/scoring'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -49,63 +51,78 @@ function initials(name: string) {
 
 function PersonRow({
   g,
+  matchId,
   hasStarted,
   actual,
   isLast,
+  reactions,
 }: {
   g: Row
+  matchId: string
   hasStarted: boolean
   actual: [number, number] | null
   isLast: boolean
+  reactions: ReactionState
 }) {
   // ao vivo: pontos provisórios calculados sobre o placar atual
   const provisional = actual != null && g.guess != null
   const pts = provisional ? calcPredictionPoints(g.guess!, actual) : g.points
 
   return (
-    <li className={cn('flex items-center gap-3 px-3 py-2.5', g.isMe && 'bg-trophy/8')}>
-      <Avatar className="size-10 shrink-0 md:size-12">
-        {isLast ? (
-          <AvatarImage src={DONKEY_SRC} alt="lanterninha" />
-        ) : (
-          g.avatarUrl && <AvatarImage src={g.avatarUrl} alt="" />
-        )}
-        <AvatarFallback
-          className={cn(
-            'text-[12px] font-semibold md:text-sm',
-            g.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
+    <li className={cn('px-3 py-2.5', g.isMe && 'bg-trophy/8')}>
+      <div className="flex items-center gap-3">
+        <Avatar className="size-10 shrink-0 md:size-12">
+          {isLast ? (
+            <AvatarImage src={DONKEY_SRC} alt="lanterninha" />
+          ) : (
+            g.avatarUrl && <AvatarImage src={g.avatarUrl} alt="" />
           )}
-        >
-          {initials(g.name)}
-        </AvatarFallback>
-      </Avatar>
-      <span className="min-w-0 flex-1 truncate text-[14px] text-ink">
-        {g.name}
-      </span>
+          <AvatarFallback
+            className={cn(
+              'text-[12px] font-semibold md:text-sm',
+              g.isMe ? 'bg-trophy text-ink' : 'bg-bone text-sepia',
+            )}
+          >
+            {initials(g.name)}
+          </AvatarFallback>
+        </Avatar>
+        <span className="min-w-0 flex-1 truncate text-[14px] text-ink">{g.name}</span>
 
-      {hasStarted && g.guess ? (
-        <>
-          <span className="font-mono tabular text-[15px] font-medium text-ink">
-            {g.guess[0]}
-            <span className="px-0.5 text-sepia">×</span>
-            {g.guess[1]}
-          </span>
-          {pts != null && (
-            <span
-              className={cn(
-                'flex w-14 items-center justify-end gap-1 font-mono tabular text-[13px] font-medium',
-                provisional ? 'text-grass' : 'text-trophy-deep',
-              )}
-            >
-              {provisional && (
-                <span className="size-1.5 animate-pulse rounded-full bg-phase-semi" />
-              )}
-              {pts} pt
+        {hasStarted && g.guess ? (
+          <>
+            <span className="font-mono tabular text-[15px] font-medium text-ink">
+              {g.guess[0]}
+              <span className="px-0.5 text-sepia">×</span>
+              {g.guess[1]}
             </span>
-          )}
-        </>
-      ) : (
-        <Lock className="size-3.5 text-rule-dark" aria-label="oculto" />
+            {pts != null && (
+              <span
+                className={cn(
+                  'flex w-14 items-center justify-end gap-1 font-mono tabular text-[13px] font-medium',
+                  provisional ? 'text-grass' : 'text-trophy-deep',
+                )}
+              >
+                {provisional && (
+                  <span className="size-1.5 animate-pulse rounded-full bg-phase-semi" />
+                )}
+                {pts} pt
+              </span>
+            )}
+          </>
+        ) : (
+          <Lock className="size-3.5 text-rule-dark" aria-label="oculto" />
+        )}
+      </div>
+
+      {hasStarted && g.guess && (
+        <div className="mt-1.5 pl-[52px] md:pl-[60px]">
+          <ReactionBar
+            matchId={matchId}
+            targetUserId={g.userId}
+            canReact={!g.isMe}
+            initial={reactions}
+          />
+        </div>
       )}
     </li>
   )
@@ -130,6 +147,7 @@ export function GaleraInline({
   const [loading, setLoading] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
   const [rows, setRows] = useState<Row[]>([])
+  const [reactions, setReactions] = useState<Map<string, ReactionState>>(new Map())
 
   // placar atual pros pontos provisórios: prioriza o front (/api/live, mais
   // fresco); se ele der um soluço e voltar vazio, cai pro placar do banco
@@ -153,9 +171,11 @@ export function GaleraInline({
 
     setLoading(true)
     const supabase = createClient()
-    const { data, error } = await supabase.rpc('match_predictions', {
-      p_match_id: matchId,
-    })
+    const [predRes, rmap] = await Promise.all([
+      supabase.rpc('match_predictions', { p_match_id: matchId }),
+      fetchMatchReactions(matchId),
+    ])
+    const { data, error } = predRes
     if (!error && data) {
       setRows(
         data.map((r) => ({
@@ -172,6 +192,7 @@ export function GaleraInline({
       )
       setHasStarted(data[0]?.has_started ?? false)
     }
+    setReactions(rmap)
     setLoaded(true)
     setLoading(false)
   }
@@ -224,9 +245,11 @@ export function GaleraInline({
                   <PersonRow
                     key={g.userId}
                     g={g}
+                    matchId={matchId}
                     hasStarted={hasStarted}
                     actual={actual}
                     isLast={hasStarted && g.userId === lastId}
+                    reactions={reactions.get(g.userId) ?? {}}
                   />
                 ))}
               </ul>

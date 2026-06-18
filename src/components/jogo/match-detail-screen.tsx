@@ -284,6 +284,7 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
           )}
 
           <PalpitesDaGalera
+            matchId={match.id}
             rows={match.galera.rows}
             hasStarted={match.galera.hasStarted}
             actual={actual}
