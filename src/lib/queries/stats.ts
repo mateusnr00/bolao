@@ -92,7 +92,7 @@ function assignTrophies(members: MemberStat[]) {
         key: 'perdidinho',
         emoji: '🧭',
         label: 'Perdidinho',
-        desc: 'pior média de pontos (tá perdidão)',
+        desc: 'pior média de pontos (tá todo perdidinho)',
       })
     }
     if (maxBurro > 0 && m.burrinhoCount === maxBurro) {
