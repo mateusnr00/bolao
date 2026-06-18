@@ -59,6 +59,7 @@ function assignTrophies(members: MemberStat[]) {
   const maxBurro = Math.max(...members.map((m) => m.burrinhoCount))
   const eligible = members.filter((m) => m.predictionsMade >= 3)
   const bestAvg = eligible.length ? Math.max(...eligible.map((m) => m.average)) : -1
+  const worstAvg = eligible.length ? Math.min(...eligible.map((m) => m.average)) : -1
 
   for (const m of members) {
     if (m.position === 1) {
@@ -74,10 +75,24 @@ function assignTrophies(members: MemberStat[]) {
     }
     if (bestAvg >= 0 && m.predictionsMade >= 3 && m.average === bestAvg) {
       m.trophies.push({
-        key: 'nostra',
+        key: 'maedina',
         emoji: '🔮',
-        label: 'Nostradamus',
-        desc: 'melhor média de pontos',
+        label: 'Mãe Dina',
+        desc: 'melhor média de pontos (prevê tudo)',
+      })
+    }
+    // pior média do bolão (precisa de pelo menos 2 elegíveis e um pior de fato)
+    if (
+      eligible.length >= 2 &&
+      worstAvg < bestAvg &&
+      m.predictionsMade >= 3 &&
+      m.average === worstAvg
+    ) {
+      m.trophies.push({
+        key: 'perdidinho',
+        emoji: '🧭',
+        label: 'Perdidinho',
+        desc: 'pior média de pontos (tá perdidão)',
       })
     }
     if (maxBurro > 0 && m.burrinhoCount === maxBurro) {
