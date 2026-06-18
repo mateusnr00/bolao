@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BottomNav, Eyebrow, ExactDots, LiveBadge, Rule, TopNav } from '@/components/we26'
 import { LiveRefresher } from '@/components/live-refresher'
@@ -112,15 +114,23 @@ export function RankingScreen({ data }: { data: RankingData }) {
 
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
         <div className="space-y-6">
-          <section className="space-y-1">
-            <div className="flex items-center gap-2.5">
-              <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">ranking</h1>
-              {liveOn && <LiveBadge />}
+          <section className="flex items-end justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5">
+                <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">ranking</h1>
+                {liveOn && <LiveBadge />}
+              </div>
+              <p className="text-[13px] text-sepia">
+                {data.poolName} · {data.memberCount}{' '}
+                {data.memberCount === 1 ? 'membro' : 'membros'}
+              </p>
             </div>
-            <p className="text-[13px] text-sepia">
-              {data.poolName} · {data.memberCount}{' '}
-              {data.memberCount === 1 ? 'membro' : 'membros'}
-            </p>
+            <Link
+              href="/vergonha"
+              className="shrink-0 text-[13px] font-medium text-phase-semi transition-colors hover:text-ink"
+            >
+              hall da vergonha 🫏
+            </Link>
           </section>
 
           {me && (
@@ -170,13 +180,14 @@ export function RankingScreen({ data }: { data: RankingData }) {
             ) : (
               <ul className="-mx-2">
                 {computed.map((r) => (
-                  <li
-                    key={r.userId}
-                    className={cn(
-                      'flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-bone',
-                      r.isMe && 'bg-bone',
-                    )}
-                  >
+                  <li key={r.userId}>
+                    <Link
+                      href={`/membro/${r.userId}`}
+                      className={cn(
+                        'flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-bone',
+                        r.isMe && 'bg-bone',
+                      )}
+                    >
                     <span
                       className={cn(
                         'w-6 font-mono text-sm tabular font-medium',
@@ -230,6 +241,7 @@ export function RankingScreen({ data }: { data: RankingData }) {
                       {r.total}
                     </span>
                     <span className="w-4 text-trophy">{r.isMe ? '←' : ''}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>
