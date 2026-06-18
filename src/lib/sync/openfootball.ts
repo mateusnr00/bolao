@@ -14,6 +14,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+import { applyLiveUpdates, type LiveUpdate } from '@/lib/sync/live'
 import type { Database, MatchStage } from '@/types/database'
 
 const SOURCE =
@@ -249,4 +250,45 @@ export async function runOpenfootballSync(
     skipped,
     unknown: [...unknown],
   }
+}
+
+export interface OpenfootballFinalsResult {
+  finals: number
+  applied: number
+  unmatched: string[]
+}
+
+/**
+ * GARANTIA dos resultados finais: lê os placares finais (score.ft) da fase de
+ * grupos no openfootball e marca os jogos como encerrados (disparando o
+ * recálculo dos pontos via trigger). Não reseme o calendário — só fecha os
+ * jogos que já têm placar final, casando pelo par de seleções (código FIFA).
+ * Roda mesmo se as fontes ao vivo falharem.
+ */
+export async function runOpenfootballFinals(
+  supabase: SupabaseClient<Database>,
+): Promise<OpenfootballFinalsResult> {
+  const res = await fetch(SOURCE, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`Falha ao buscar fonte: ${res.status} ${res.statusText}`)
+  const data = (await res.json()) as { matches: OpenfootballMatch[] }
+
+  const updates: LiveUpdate[] = []
+  for (const mt of data.matches) {
+    if (!mt.group) continue // só fase de grupos
+    if (!isReal(mt.team1) || !isReal(mt.team2)) continue
+    const ft = mt.score?.ft
+    if (!(Array.isArray(ft) && ft.length === 2 && ft[0] != null && ft[1] != null)) {
+      continue
+    }
+    updates.push({
+      homeCode: NATIONS[mt.team1].code,
+      awayCode: NATIONS[mt.team2].code,
+      homeGoals: ft[0] as number,
+      awayGoals: ft[1] as number,
+      finished: true,
+    })
+  }
+
+  const applied = await applyLiveUpdates(supabase, updates)
+  return { finals: updates.length, applied: applied.finished, unmatched: applied.unmatched }
 }
