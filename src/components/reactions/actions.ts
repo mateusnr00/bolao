@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 
-const ALLOWED = new Set(['😂', '🤡', '🐟', '🐐'])
+const ALLOWED = new Set(['😂', '🤡', '💩', '🫏', '🤮'])
 
 export type ToggleReactionResult =
   | { error: string }

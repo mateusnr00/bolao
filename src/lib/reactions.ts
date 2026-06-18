@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 
 // emojis de zoeira disponíveis pra reagir nos palpites
-export const REACTION_EMOJIS = ['😂', '🤡', '🐟', '🐐'] as const
+export const REACTION_EMOJIS = ['😂', '🤡', '💩', '🫏', '🤮'] as const
 export type ReactionEmoji = (typeof REACTION_EMOJIS)[number]
 
 // estado das reações de um palpite: por emoji, quantos e se eu reagi
