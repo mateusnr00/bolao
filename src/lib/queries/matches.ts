@@ -56,14 +56,13 @@ function one<T>(rel: T | T[] | null): T | null {
 }
 
 function toTeam(raw: RawTeam): TeamLite {
-  // `flagUrl` é o brasão a exibir: emblema oficial da federação quando houver,
-  // senão a bandeira (fallback). Tudo no app passa por aqui, então a troca
-  // propaga pra todas as telas sem mexer em cada uma.
+  // Exibindo a BANDEIRA. Os emblemas (crest_url) ficam guardados no banco; pra
+  // voltar a usá-los é só trocar por: `raw.crest_url ?? raw.flag_url`.
   return {
     id: raw.id,
     code: raw.code,
     name: raw.name,
-    flagUrl: raw.crest_url ?? raw.flag_url,
+    flagUrl: raw.flag_url,
   }
 }
 

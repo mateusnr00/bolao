@@ -99,7 +99,7 @@ export function Flag({
       alt=""
       width={28}
       height={21}
-      className={cn('h-[15px] w-5 shrink-0 object-contain', className)}
+      className={cn('h-[15px] w-5 shrink-0 object-cover', className)}
     />
   )
 }
