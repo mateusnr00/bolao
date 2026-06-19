@@ -5,7 +5,15 @@ import type { Database } from '@/types/database'
 
 // Rotas públicas que não exigem sessão (landing + auth + APIs, que cuidam da
 // própria autenticação — ex.: cron protegido por CRON_SECRET).
-const PUBLIC_PATHS = ['/', '/login', '/signup', '/auth', '/api']
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/signup',
+  '/recuperar',
+  '/redefinir-senha',
+  '/auth',
+  '/api',
+]
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

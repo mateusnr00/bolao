@@ -124,6 +124,14 @@ export function LoginForm() {
             error={passwordForm.formState.errors.password?.message}
             {...passwordForm.register('password')}
           />
+          <div className="-mt-1 text-right">
+            <Link
+              href="/recuperar"
+              className="text-[12px] text-sepia underline-offset-4 transition-colors hover:text-ink hover:underline"
+            >
+              esqueci minha senha
+            </Link>
+          </div>
           <Button
             type="submit"
             disabled={isPending}

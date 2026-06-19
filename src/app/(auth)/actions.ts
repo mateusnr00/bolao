@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import {
   loginSchema,
   magicLinkSchema,
+  newPasswordSchema,
   signupSchema,
 } from '@/lib/validations'
 
@@ -139,6 +140,71 @@ export async function signInWithMagicLink(
   }
 
   return { ok: true, message: 'Link mágico enviado! Confira seu email.' }
+}
+
+// "Esqueci minha senha": dispara o email de recuperação. O link volta pra
+// /auth/callback (que troca o code por sessão de recuperação) e cai na tela
+// /redefinir-senha. Por segurança não revela se o email existe ou não.
+export async function requestPasswordReset(
+  _prev: AuthResult | null,
+  formData: FormData,
+): Promise<AuthResult> {
+  const parsed = magicLinkSchema.safeParse({ email: formData.get('email') })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Email inválido' }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${await appUrl()}/auth/callback?next=/redefinir-senha`,
+  })
+  if (error && error.status === 429) {
+    return { error: 'Muitas tentativas. Espere um pouco e tente de novo.' }
+  }
+
+  // mensagem genérica de propósito (não vaza quais emails têm conta)
+  return {
+    ok: true,
+    message: 'Se houver uma conta com esse email, enviamos um link de redefinição.',
+  }
+}
+
+// Grava a nova senha. Só funciona dentro de uma sessão válida (a de recuperação,
+// criada pelo callback; ou a do usuário já logado trocando a própria senha).
+export async function updatePassword(
+  _prev: AuthResult | null,
+  formData: FormData,
+): Promise<AuthResult> {
+  const parsed = newPasswordSchema.safeParse({
+    password: formData.get('password'),
+    confirm: formData.get('confirm'),
+  })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+  }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Sessão de recuperação expirada. Peça um novo link.' }
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password })
+  if (error) {
+    const msg = error.message?.toLowerCase() ?? ''
+    if (msg.includes('different from the old')) {
+      return { error: 'A nova senha precisa ser diferente da atual.' }
+    }
+    if (error.status === 429 || msg.includes('rate')) {
+      return { error: 'Muitas tentativas. Espere um pouco e tente de novo.' }
+    }
+    return { error: 'Não foi possível trocar a senha. Tente de novo.' }
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/')
 }
 
 export async function signOut() {
