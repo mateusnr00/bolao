@@ -60,6 +60,7 @@ export type Database = {
           name: string
           code: string
           flag_url: string | null
+          crest_url: string | null
           group_name: string | null
           created_at: string
         }
@@ -69,6 +70,7 @@ export type Database = {
           name: string
           code: string
           flag_url?: string | null
+          crest_url?: string | null
           group_name?: string | null
           created_at?: string
         }
@@ -78,6 +80,7 @@ export type Database = {
           name?: string
           code?: string
           flag_url?: string | null
+          crest_url?: string | null
           group_name?: string | null
           created_at?: string
         }

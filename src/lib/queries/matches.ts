@@ -30,6 +30,7 @@ interface RawTeam {
   code: string
   name: string
   flag_url: string | null
+  crest_url: string | null
 }
 interface RawMatch {
   id: string
@@ -46,8 +47,8 @@ interface RawMatch {
 
 const SELECT = `
   id, kickoff_at, stage, group_name, venue, status, home_score, away_score,
-  home:teams!matches_home_team_id_fkey ( id, code, name, flag_url ),
-  away:teams!matches_away_team_id_fkey ( id, code, name, flag_url )
+  home:teams!matches_home_team_id_fkey ( id, code, name, flag_url, crest_url ),
+  away:teams!matches_away_team_id_fkey ( id, code, name, flag_url, crest_url )
 ` as const
 
 function one<T>(rel: T | T[] | null): T | null {
@@ -55,7 +56,15 @@ function one<T>(rel: T | T[] | null): T | null {
 }
 
 function toTeam(raw: RawTeam): TeamLite {
-  return { id: raw.id, code: raw.code, name: raw.name, flagUrl: raw.flag_url }
+  // `flagUrl` é o brasão a exibir: emblema oficial da federação quando houver,
+  // senão a bandeira (fallback). Tudo no app passa por aqui, então a troca
+  // propaga pra todas as telas sem mexer em cada uma.
+  return {
+    id: raw.id,
+    code: raw.code,
+    name: raw.name,
+    flagUrl: raw.crest_url ?? raw.flag_url,
+  }
 }
 
 function toView(raw: RawMatch): MatchView | null {

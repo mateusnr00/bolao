@@ -19,10 +19,7 @@ export interface GameCardData {
 function TeamCol({ team }: { team: { code: string; flagUrl: string | null } }) {
   return (
     <div className="flex w-1/3 flex-col items-center gap-2">
-      <Flag
-        src={team.flagUrl ?? undefined}
-        className="size-10 rounded-full object-cover ring-1 ring-rule"
-      />
+      <Flag src={team.flagUrl ?? undefined} className="size-10 object-contain" />
       <span className="font-mono text-xs font-semibold text-ink">{team.code}</span>
     </div>
   )

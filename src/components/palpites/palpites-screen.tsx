@@ -83,10 +83,7 @@ function TeamCol({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-2">
-      <Flag
-        src={team.flagUrl ?? undefined}
-        className="size-12 rounded-full object-cover ring-1 ring-rule"
-      />
+      <Flag src={team.flagUrl ?? undefined} className="size-12 object-contain" />
       <span className="font-mono text-[14px] font-semibold text-ink">{team.code}</span>
     </div>
   )
