@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Bell } from 'lucide-react'
+import { Bell, X } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -26,6 +26,7 @@ interface Notif {
 export function NotificationsBell() {
   const [items, setItems] = useState<Notif[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -38,6 +39,7 @@ export function NotificationsBell() {
         if (active) setLoaded(true)
         return
       }
+      if (active) setUserId(user.id)
       const { data } = await supabase
         .from('notifications')
         .select('id, title, body, match_id, read_at, created_at')
@@ -73,6 +75,21 @@ export function NotificationsBell() {
     void supabase.from('notifications').update({ read_at: stamp }).in('id', ids)
   }
 
+  // dispensa uma notificação (apaga do banco; RLS garante que é a sua)
+  function dismiss(id: string) {
+    setItems((prev) => prev.filter((n) => n.id !== id))
+    const supabase = createClient()
+    void supabase.from('notifications').delete().eq('id', id)
+  }
+
+  // limpa todas as suas notificações
+  function clearAll() {
+    if (!userId || items.length === 0) return
+    setItems([])
+    const supabase = createClient()
+    void supabase.from('notifications').delete().eq('user_id', userId)
+  }
+
   function when(iso: string) {
     return formatDistanceToNow(new Date(iso), { addSuffix: true, locale: ptBR })
   }
@@ -96,10 +113,19 @@ export function NotificationsBell() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" sideOffset={8} className="w-80 p-0">
-        <div className="border-b border-rule px-3 py-2.5">
+        <div className="flex items-center justify-between border-b border-rule px-3 py-2.5">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink">
             notificações
           </p>
+          {items.length > 0 && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="text-[12px] font-medium text-sepia transition-colors hover:text-ink"
+            >
+              limpar tudo
+            </button>
+          )}
         </div>
 
         {!loaded ? (
@@ -133,12 +159,15 @@ export function NotificationsBell() {
                   </span>
                 </>
               )
-              const cls = cn(
-                'flex items-start gap-2.5 px-3 py-2.5',
-                !n.readAt && 'bg-phase-semi/5',
-              )
+              const cls = 'flex min-w-0 flex-1 items-start gap-2.5 px-3 py-2.5'
               return (
-                <li key={n.id}>
+                <li
+                  key={n.id}
+                  className={cn(
+                    'flex items-stretch',
+                    !n.readAt && 'bg-phase-semi/5',
+                  )}
+                >
                   {n.matchId ? (
                     <Link
                       href={`/jogo/${n.matchId}`}
@@ -149,6 +178,14 @@ export function NotificationsBell() {
                   ) : (
                     <div className={cls}>{inner}</div>
                   )}
+                  <button
+                    type="button"
+                    aria-label="dispensar"
+                    onClick={() => dismiss(n.id)}
+                    className="shrink-0 px-2.5 text-sepia transition-colors hover:text-ink"
+                  >
+                    <X className="size-3.5" />
+                  </button>
                 </li>
               )
             })}
