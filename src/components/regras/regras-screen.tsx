@@ -2,22 +2,23 @@ import { BottomNav, Eyebrow, Rule, TopNav } from '@/components/we26'
 import { cn } from '@/lib/utils'
 
 const SCORING = [
-  { label: 'placar exato', pts: 25, hint: 'acertou o placar dos dois times' },
-  { label: 'vencedor + placar do vencedor', pts: 18, hint: 'acertou quem ganha e quantos gols ele fez' },
-  { label: 'vencedor + diferença de gols', pts: 15, hint: 'acertou quem ganha e por quantos de diferença' },
-  { label: 'empate (placar errado)', pts: 15, hint: 'cravou empate, mas no número errado' },
-  { label: 'vencedor + placar do perdedor', pts: 12, hint: 'acertou quem ganha e os gols do perdedor' },
-  { label: 'só o vencedor', pts: 10, hint: 'acertou só quem ganha o jogo' },
-  { label: 'errou o resultado', pts: 0, hint: 'errou quem venceu' },
+  { label: 'placar exato', pts: 30, hint: 'erro 0' },
+  { label: 'erro de 1 gol', pts: 24, hint: 'erro ponderado = 1' },
+  { label: 'erro de 2', pts: 20, hint: 'erro ponderado = 2' },
+  { label: 'erro de 3', pts: 16, hint: 'erro ponderado = 3' },
+  { label: 'erro de 4', pts: 12, hint: 'erro ponderado = 4' },
+  { label: 'erro de 5 ou mais', pts: 8, hint: 'erro ponderado >= 5' },
+  { label: 'errou o resultado', pts: 0, hint: 'apostou no time/empate errado' },
 ]
 
+// resultado real 3 × 0
 const EXAMPLES = [
-  { guess: '2 × 1', pts: 25, why: 'placar exato' },
-  { guess: '2 × 0', pts: 18, why: 'acertou o vencedor e que ele faria 2 gols' },
-  { guess: '3 × 2', pts: 15, why: 'acertou o vencedor e a diferença de 1 gol' },
-  { guess: '3 × 1', pts: 12, why: 'acertou o vencedor e o placar do perdedor (1)' },
-  { guess: '4 × 0', pts: 10, why: 'só acertou que o mandante venceria' },
-  { guess: '1 × 2', pts: 0, why: 'errou quem venceu' },
+  { guess: '3 × 0', pts: 30, why: 'placar exato' },
+  { guess: '4 × 0', pts: 24, why: 'errou só 1 gol do vencedor (cravou o 0 do perdedor)' },
+  { guess: '5 × 0', pts: 20, why: 'errou 2 gols do vencedor, manteve o 0' },
+  { guess: '4 × 1', pts: 16, why: 'errou 1 do vencedor + inventou 1 gol (conta dobrado)' },
+  { guess: '3 × 1', pts: 20, why: 'cravou o vencedor, mas inventou 1 gol (dobra)' },
+  { guess: '1 × 1', pts: 0, why: 'apostou empate, mas o jogo teve vencedor' },
 ]
 
 function PtsTag({ pts }: { pts: number }) {
@@ -83,8 +84,14 @@ export function RegrasScreen() {
           <section className="space-y-3">
             <Eyebrow>pontuação (por jogo)</Eyebrow>
             <p className="text-[14px] leading-relaxed text-ink">
-              Vale <strong>só o maior acerto</strong> de cada jogo — os níveis não somam.
-              Não tem bônus por fase: grupos, oitavas e final valem o mesmo.
+              <strong>Só pontua quem acerta o resultado</strong> (mandante,
+              visitante ou empate). Depois conta a proximidade: o{' '}
+              <strong>erro no time que perdeu pesa o dobro</strong> — cravar que o
+              adversário não fez gol vale mais do que inventar um gol pra ele.
+              <span className="block text-[12px] text-sepia">
+                vale a partir de Holanda × Suécia. jogos anteriores usaram a regra
+                antiga.
+              </span>
             </p>
             <ul className="divide-y divide-rule rounded-lg border border-rule">
               {SCORING.map((s) => (
@@ -101,7 +108,7 @@ export function RegrasScreen() {
 
           {/* exemplos */}
           <section className="space-y-3">
-            <Eyebrow>exemplos · resultado real 2 × 1</Eyebrow>
+            <Eyebrow>exemplos · resultado real 3 × 0</Eyebrow>
             <ul className="divide-y divide-rule rounded-lg border border-rule bg-bone/40">
               {EXAMPLES.map((e) => (
                 <li key={e.guess} className="flex items-center gap-3 px-3 py-2.5">
@@ -114,8 +121,9 @@ export function RegrasScreen() {
               ))}
             </ul>
             <p className="text-[12px] text-sepia">
-              empate: cravar o placar exato vale 25; acertar que foi empate mas no número
-              errado (ex.: 0 × 0 quando deu 1 × 1) vale 15.
+              empate: cravar o exato vale 30; acertar que foi empate no número
+              errado conta pelo erro (ex.: 0 × 0 quando deu 1 × 1 → erro 2 → 20).
+              apostar vitória num jogo que empatou vale 0.
             </p>
           </section>
 

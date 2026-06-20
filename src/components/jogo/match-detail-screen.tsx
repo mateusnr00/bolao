@@ -43,13 +43,13 @@ export interface MatchDetail {
 }
 
 const SCORING = [
-  { label: 'placar exato', pts: '25' },
-  { label: 'vencedor + placar do vencedor', pts: '18' },
-  { label: 'vencedor + diferença de gols', pts: '15' },
-  { label: 'empate (placar errado)', pts: '15' },
-  { label: 'vencedor + placar do perdedor', pts: '12' },
-  { label: 'só o vencedor', pts: '10' },
-  { label: 'errou', pts: '0' },
+  { label: 'placar exato', pts: '30' },
+  { label: 'erro de 1 gol (ponderado)', pts: '24' },
+  { label: 'erro de 2', pts: '20' },
+  { label: 'erro de 3', pts: '16' },
+  { label: 'erro de 4', pts: '12' },
+  { label: 'erro de 5 ou mais', pts: '8' },
+  { label: 'errou o resultado', pts: '0' },
 ]
 
 function TeamSide({
@@ -303,6 +303,12 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 </li>
               ))}
             </ul>
+            <p className="text-[12px] leading-relaxed text-sepia">
+              só pontua quem acerta o resultado. o erro conta os gols errados,
+              contando <span className="font-medium text-ink">em dobro</span> o
+              erro no time que perdeu — cravar que o adversário não fez gol vale
+              mais. (vale a partir de Holanda × Suécia)
+            </p>
           </section>
         </div>
       </main>

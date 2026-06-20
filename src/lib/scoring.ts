@@ -1,27 +1,30 @@
-// Pontuação v2 — espelha calculate_prediction_points do banco (migration 0007).
-// Usado pra mostrar pontos PROVISÓRIOS ao vivo (o cálculo oficial/definitivo
-// segue sendo o trigger no banco quando o jogo encerra).
+// Pontuação v3 — vale a partir de Holanda × Suécia (ver migration 0021).
 //
-// Regras padrão, sem multiplicador de fase:
-//   placar exato ........................ 25
-//   vencedor + placar do vencedor ....... 18
-//   vencedor + diferença de gols ........ 15
-//   empate (placar errado) .............. 15
-//   vencedor + placar do perdedor ....... 12
-//   só o vencedor ....................... 10
-//   errou ............................... 0
-
-const RULES = {
-  exact: 25,
-  winnerWithWinnerGoals: 18,
-  winnerWithDiff: 15,
-  drawWrongScore: 15,
-  winnerWithLoserGoals: 12,
-  winnerOnly: 10,
-} as const
+// 1) Só pontua se acertar o RESULTADO (vitória mandante / visitante / empate).
+//    Errou o resultado → 0.
+// 2) Proximidade por erro ponderado: o erro no time PERDEDOR pesa o DOBRO do
+//    erro no time VENCEDOR. Assim cravar que o adversário não marcou (clean
+//    sheet) vale mais do que inventar um gol pra ele.
+//      erro = |Δvencedor| * 1 + |Δperdedor| * 2
+//    Empate (sem vencedor/perdedor): erro = |ΔtimeA| + |ΔtimeB|.
+// 3) Tabela do erro:
+//      0 → 30 | 1 → 24 | 2 → 20 | 3 → 16 | 4 → 12 | >=5 → 8
+//
+// Usado pros pontos PROVISÓRIOS ao vivo. Como jogo ao vivo é sempre posterior
+// ao corte (Holanda × Suécia), aqui não precisa diferenciar regra antiga/nova;
+// o cálculo oficial/definitivo (com o corte por data) é o trigger no banco.
 
 function sign(n: number): number {
   return n > 0 ? 1 : n < 0 ? -1 : 0
+}
+
+function pointsForError(erro: number): number {
+  if (erro <= 0) return 30
+  if (erro === 1) return 24
+  if (erro === 2) return 20
+  if (erro === 3) return 16
+  if (erro === 4) return 12
+  return 8
 }
 
 /** Pontos de um palpite [casa, fora] contra um placar real [casa, fora]. */
@@ -32,19 +35,21 @@ export function calcPredictionPoints(
   const [ph, pa] = pred
   const [ah, aa] = actual
 
-  if (ph === ah && pa === aa) return RULES.exact
+  // 1) precisa acertar o resultado (mandante / visitante / empate)
+  if (sign(ph - pa) !== sign(ah - aa)) return 0
 
-  const pw = sign(ph - pa)
-  const aw = sign(ah - aa)
-
-  if (pw === 0 && aw === 0) return RULES.drawWrongScore
-
-  if (pw === aw && pw !== 0) {
-    if (Math.max(ph, pa) === Math.max(ah, aa)) return RULES.winnerWithWinnerGoals
-    if (ph - pa === ah - aa) return RULES.winnerWithDiff
-    if (Math.min(ph, pa) === Math.min(ah, aa)) return RULES.winnerWithLoserGoals
-    return RULES.winnerOnly
+  // 2) empate: erro simples (não há vencedor/perdedor)
+  if (ah === aa) {
+    return pointsForError(Math.abs(ph - ah) + Math.abs(pa - aa))
   }
 
-  return 0
+  // 3) com vencedor: o erro do perdedor pesa o dobro
+  const homeWon = ah > aa
+  const winnerPred = homeWon ? ph : pa
+  const winnerAct = homeWon ? ah : aa
+  const loserPred = homeWon ? pa : ph
+  const loserAct = homeWon ? aa : ah
+
+  const erro = Math.abs(winnerPred - winnerAct) + 2 * Math.abs(loserPred - loserAct)
+  return pointsForError(erro)
 }
