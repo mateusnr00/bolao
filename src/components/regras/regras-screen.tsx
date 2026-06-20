@@ -16,8 +16,8 @@ const EXAMPLES = [
   { guess: '3 × 0', pts: 30, why: 'placar exato' },
   { guess: '4 × 0', pts: 22, why: 'errou só 1 gol do vencedor (cravou o 0 do perdedor)' },
   { guess: '5 × 0', pts: 18, why: 'errou 2 gols do vencedor, manteve o 0' },
-  { guess: '4 × 1', pts: 15, why: 'errou 1 do vencedor + inventou 1 gol (conta dobrado)' },
-  { guess: '3 × 1', pts: 18, why: 'cravou o vencedor, mas inventou 1 gol (dobra)' },
+  { guess: '3 × 1', pts: 15, why: 'cravou o vencedor, mas inventou 1 gol (peso 3)' },
+  { guess: '4 × 1', pts: 12, why: 'errou 1 do vencedor + inventou 1 gol (peso 3)' },
   { guess: '1 × 1', pts: 0, why: 'apostou empate, mas o jogo teve vencedor' },
 ]
 
@@ -85,9 +85,10 @@ export function RegrasScreen() {
             <Eyebrow>pontuação (por jogo)</Eyebrow>
             <p className="text-[14px] leading-relaxed text-ink">
               <strong>Só pontua quem acerta o resultado</strong> (mandante,
-              visitante ou empate). Depois conta a proximidade: o{' '}
-              <strong>erro no time que perdeu pesa o dobro</strong> — cravar que o
-              adversário não fez gol vale mais do que inventar um gol pra ele.
+              visitante ou empate). Depois conta a proximidade, por gol: errar o{' '}
+              <strong>vencedor</strong> pesa 1; chutar gols <strong>a menos</strong>{' '}
+              pro perdedor pesa 2; e <strong>inventar gol</strong> pra quem não fez
+              pesa 3 (o pior erro).
               <span className="block text-[12px] text-sepia">
                 vale a partir de Holanda × Suécia. jogos anteriores usaram a regra
                 antiga.

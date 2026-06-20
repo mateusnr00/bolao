@@ -23,7 +23,7 @@ begin
     return 0;
   end if;
 
-  -- 2) erro
+  -- 2) erro: vencedor peso 1; perdedor peso 2 (a menos) ou 3 (gol inventado)
   if actual_home = actual_away then
     erro := abs(pred_home - actual_home) + abs(pred_away - actual_away);
   else
@@ -34,7 +34,11 @@ begin
       winner_pred := pred_away; winner_act := actual_away;
       loser_pred  := pred_home; loser_act  := actual_home;
     end if;
-    erro := abs(winner_pred - winner_act) + 2 * abs(loser_pred - loser_act);
+    erro := abs(winner_pred - winner_act)
+          + case when loser_pred > loser_act
+                 then (loser_pred - loser_act) * 3   -- inventou gol pro perdedor
+                 else (loser_act - loser_pred) * 2   -- chutou gols a menos
+            end;
   end if;
 
   -- 3) tabela

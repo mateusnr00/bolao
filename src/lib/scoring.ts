@@ -2,10 +2,10 @@
 //
 // 1) Só pontua se acertar o RESULTADO (vitória mandante / visitante / empate).
 //    Errou o resultado → 0.
-// 2) Proximidade por erro ponderado: o erro no time PERDEDOR pesa o DOBRO do
-//    erro no time VENCEDOR. Assim cravar que o adversário não marcou (clean
-//    sheet) vale mais do que inventar um gol pra ele.
-//      erro = |Δvencedor| * 1 + |Δperdedor| * 2
+// 2) Proximidade por erro ponderado, por gol:
+//      - erro no time VENCEDOR ........................ peso 1 (aceitável)
+//      - chutar gols A MENOS pro perdedor ............. peso 2
+//      - INVENTAR gol pro perdedor (chutar a mais) .... peso 3 (o pior erro)
 //    Empate (sem vencedor/perdedor): erro = |ΔtimeA| + |ΔtimeB|.
 // 3) Tabela do erro:
 //      0 → 30 | 1 → 22 | 2 → 18 | 3 → 15 | 4 → 12 | >=5 → 8
@@ -43,13 +43,18 @@ export function calcPredictionPoints(
     return pointsForError(Math.abs(ph - ah) + Math.abs(pa - aa))
   }
 
-  // 3) com vencedor: o erro do perdedor pesa o dobro
+  // 3) com vencedor: erro do vencedor peso 1; do perdedor peso 2 (a menos) ou
+  //    peso 3 quando se INVENTA gol (chutar mais do que o perdedor fez)
   const homeWon = ah > aa
   const winnerPred = homeWon ? ph : pa
   const winnerAct = homeWon ? ah : aa
   const loserPred = homeWon ? pa : ph
   const loserAct = homeWon ? aa : ah
 
-  const erro = Math.abs(winnerPred - winnerAct) + 2 * Math.abs(loserPred - loserAct)
-  return pointsForError(erro)
+  const winnerErr = Math.abs(winnerPred - winnerAct)
+  const loserErr =
+    loserPred > loserAct
+      ? (loserPred - loserAct) * 3 // inventou gol pro perdedor
+      : (loserAct - loserPred) * 2 // chutou gols a menos
+  return pointsForError(winnerErr + loserErr)
 }

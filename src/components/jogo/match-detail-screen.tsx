@@ -304,10 +304,10 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
               ))}
             </ul>
             <p className="text-[12px] leading-relaxed text-sepia">
-              só pontua quem acerta o resultado. o erro conta os gols errados,
-              contando <span className="font-medium text-ink">em dobro</span> o
-              erro no time que perdeu — cravar que o adversário não fez gol vale
-              mais. (vale a partir de Holanda × Suécia)
+              só pontua quem acerta o resultado. erro do vencedor pesa 1; chutar
+              gols a menos pro perdedor pesa 2; e{' '}
+              <span className="font-medium text-ink">inventar gol</span> pra quem
+              não fez pesa 3 (o pior erro). (vale a partir de Holanda × Suécia)
             </p>
           </section>
         </div>
