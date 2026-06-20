@@ -4,7 +4,7 @@
 --   1) só pontua se acertar o RESULTADO (mandante / visitante / empate); senão 0
 --   2) erro ponderado: erro do PERDEDOR pesa o dobro do erro do VENCEDOR
 --        erro = |Δvencedor|*1 + |Δperdedor|*2   (empate: |ΔA| + |ΔB|)
---   3) erro 0→30 · 1→24 · 2→20 · 3→16 · 4→12 · >=5→8
+--   3) erro 0→30 · 1→22 · 2→18 · 3→15 · 4→12 · >=5→8
 --
 -- Vale só pra jogos com kickoff >= o de Holanda × Suécia. Jogos anteriores
 -- mantêm a regra antiga (v2) — NÃO são recalculados.
@@ -40,9 +40,9 @@ begin
   -- 3) tabela
   return case
     when erro = 0 then 30
-    when erro = 1 then 24
-    when erro = 2 then 20
-    when erro = 3 then 16
+    when erro = 1 then 22
+    when erro = 2 then 18
+    when erro = 3 then 15
     when erro = 4 then 12
     else 8
   end;

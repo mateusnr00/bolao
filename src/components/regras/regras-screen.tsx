@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils'
 
 const SCORING = [
   { label: 'placar exato', pts: 30, hint: 'erro 0' },
-  { label: 'erro de 1 gol', pts: 24, hint: 'erro ponderado = 1' },
-  { label: 'erro de 2', pts: 20, hint: 'erro ponderado = 2' },
-  { label: 'erro de 3', pts: 16, hint: 'erro ponderado = 3' },
+  { label: 'erro de 1 gol', pts: 22, hint: 'erro ponderado = 1' },
+  { label: 'erro de 2', pts: 18, hint: 'erro ponderado = 2' },
+  { label: 'erro de 3', pts: 15, hint: 'erro ponderado = 3' },
   { label: 'erro de 4', pts: 12, hint: 'erro ponderado = 4' },
   { label: 'erro de 5 ou mais', pts: 8, hint: 'erro ponderado >= 5' },
   { label: 'errou o resultado', pts: 0, hint: 'apostou no time/empate errado' },
@@ -14,10 +14,10 @@ const SCORING = [
 // resultado real 3 × 0
 const EXAMPLES = [
   { guess: '3 × 0', pts: 30, why: 'placar exato' },
-  { guess: '4 × 0', pts: 24, why: 'errou só 1 gol do vencedor (cravou o 0 do perdedor)' },
-  { guess: '5 × 0', pts: 20, why: 'errou 2 gols do vencedor, manteve o 0' },
-  { guess: '4 × 1', pts: 16, why: 'errou 1 do vencedor + inventou 1 gol (conta dobrado)' },
-  { guess: '3 × 1', pts: 20, why: 'cravou o vencedor, mas inventou 1 gol (dobra)' },
+  { guess: '4 × 0', pts: 22, why: 'errou só 1 gol do vencedor (cravou o 0 do perdedor)' },
+  { guess: '5 × 0', pts: 18, why: 'errou 2 gols do vencedor, manteve o 0' },
+  { guess: '4 × 1', pts: 15, why: 'errou 1 do vencedor + inventou 1 gol (conta dobrado)' },
+  { guess: '3 × 1', pts: 18, why: 'cravou o vencedor, mas inventou 1 gol (dobra)' },
   { guess: '1 × 1', pts: 0, why: 'apostou empate, mas o jogo teve vencedor' },
 ]
 
@@ -122,7 +122,7 @@ export function RegrasScreen() {
             </ul>
             <p className="text-[12px] text-sepia">
               empate: cravar o exato vale 30; acertar que foi empate no número
-              errado conta pelo erro (ex.: 0 × 0 quando deu 1 × 1 → erro 2 → 20).
+              errado conta pelo erro (ex.: 0 × 0 quando deu 1 × 1 → erro 2 → 18).
               apostar vitória num jogo que empatou vale 0.
             </p>
           </section>

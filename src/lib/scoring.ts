@@ -8,7 +8,7 @@
 //      erro = |Δvencedor| * 1 + |Δperdedor| * 2
 //    Empate (sem vencedor/perdedor): erro = |ΔtimeA| + |ΔtimeB|.
 // 3) Tabela do erro:
-//      0 → 30 | 1 → 24 | 2 → 20 | 3 → 16 | 4 → 12 | >=5 → 8
+//      0 → 30 | 1 → 22 | 2 → 18 | 3 → 15 | 4 → 12 | >=5 → 8
 //
 // Usado pros pontos PROVISÓRIOS ao vivo. Como jogo ao vivo é sempre posterior
 // ao corte (Holanda × Suécia), aqui não precisa diferenciar regra antiga/nova;
@@ -20,9 +20,9 @@ function sign(n: number): number {
 
 function pointsForError(erro: number): number {
   if (erro <= 0) return 30
-  if (erro === 1) return 24
-  if (erro === 2) return 20
-  if (erro === 3) return 16
+  if (erro === 1) return 22
+  if (erro === 2) return 18
+  if (erro === 3) return 15
   if (erro === 4) return 12
   return 8
 }

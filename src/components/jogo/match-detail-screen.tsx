@@ -44,9 +44,9 @@ export interface MatchDetail {
 
 const SCORING = [
   { label: 'placar exato', pts: '30' },
-  { label: 'erro de 1 gol (ponderado)', pts: '24' },
-  { label: 'erro de 2', pts: '20' },
-  { label: 'erro de 3', pts: '16' },
+  { label: 'erro de 1 gol (ponderado)', pts: '22' },
+  { label: 'erro de 2', pts: '18' },
+  { label: 'erro de 3', pts: '15' },
   { label: 'erro de 4', pts: '12' },
   { label: 'erro de 5 ou mais', pts: '8' },
   { label: 'errou o resultado', pts: '0' },
