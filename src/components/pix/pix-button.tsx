@@ -11,7 +11,6 @@ import { DONKEY_SRC } from '@/lib/brand'
 
 export function PixButton() {
   const [open, setOpen] = useState(false)
-  const [amount, setAmount] = useState('')
   const [pix, setPix] = useState<string | null>(null)
   const [qr, setQr] = useState<string | null>(null)
   const [paymentId, setPaymentId] = useState<string | null>(null)
@@ -25,7 +24,6 @@ export function PixButton() {
     setQr(null)
     setPaymentId(null)
     setApproved(false)
-    setAmount('')
     setCopied(false)
   }
 
@@ -40,13 +38,8 @@ export function PixButton() {
   }, [paymentId, approved])
 
   function gerar() {
-    const value = parseFloat(amount.replace(',', '.'))
-    if (!value || value <= 0) {
-      toast.error('Informe um valor')
-      return
-    }
     start(async () => {
-      const res = await createPix(value)
+      const res = await createPix()
       if ('error' in res) {
         toast.error(res.error)
         return
@@ -113,33 +106,28 @@ export function PixButton() {
                   </Link>
                 </div>
               ) : !pix ? (
-                /* ── digitar valor ──────────────────────────────────── */
+                /* ── valor fixo: R$ 20,00 ───────────────────────────── */
                 <>
                   <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-[17px] font-semibold text-ink">pagar via PIX</h2>
+                    <h2 className="text-[17px] font-semibold text-ink">pagar o bolão</h2>
                     <button type="button" onClick={reset} aria-label="fechar">
                       <X className="size-4 text-sepia transition-colors hover:text-ink" />
                     </button>
                   </div>
                   <div className="space-y-3">
-                    <label htmlFor="pix-amount" className="block text-[13px] text-sepia">
-                      valor (R$)
-                    </label>
-                    <input
-                      id="pix-amount"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      inputMode="decimal"
-                      placeholder="0,00"
-                      className="h-11 w-full rounded-md border border-rule-dark bg-paper px-3 font-mono text-[16px] text-ink outline-none focus:border-trophy"
-                    />
+                    <div className="rounded-md border border-rule bg-bone/40 px-4 py-5 text-center">
+                      <p className="text-[12px] uppercase tracking-[0.12em] text-sepia">
+                        valor da entrada
+                      </p>
+                      <p className="display mt-1 text-[40px] leading-none text-ink">R$ 20,00</p>
+                    </div>
                     <button
                       type="button"
                       onClick={gerar}
                       disabled={isPending}
                       className="h-11 w-full rounded-md bg-ink text-[15px] font-medium text-paper transition-opacity disabled:opacity-50"
                     >
-                      {isPending ? 'gerando…' : 'gerar PIX'}
+                      {isPending ? 'gerando…' : 'gerar PIX de R$ 20'}
                     </button>
                   </div>
                 </>

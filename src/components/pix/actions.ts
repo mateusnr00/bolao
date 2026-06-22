@@ -9,11 +9,12 @@ export type PixResult =
   | { error: string }
   | { ok: true; pixCode: string; qr: string; paymentId: string }
 
-/** Gera uma cobrança PIX (CodePay) pro usuário logado, no valor informado. */
-export async function createPix(amountReais: number): Promise<PixResult> {
-  if (!Number.isFinite(amountReais) || amountReais <= 0) {
-    return { error: 'Informe um valor válido' }
-  }
+// Entrada do bolão: valor FIXO. Não dá pra confiar em valor vindo do front,
+// então a cobrança é sempre R$ 20,00 — definido só aqui no servidor.
+const PIX_AMOUNT = 20
+
+/** Gera uma cobrança PIX (CodePay) de R$ 20 pro usuário logado. */
+export async function createPix(): Promise<PixResult> {
   const creds = getCredentials()
   if (!creds) return { error: 'Pagamento não configurado (credenciais ausentes)' }
 
@@ -31,7 +32,7 @@ export async function createPix(amountReais: number): Promise<PixResult> {
     .limit(1)
     .maybeSingle()
 
-  const amount = Math.round(amountReais * 100) / 100
+  const amount = PIX_AMOUNT
 
   // registra o pagamento PENDING (o id vira nossa referência externa)
   const { data: payment, error } = await supabase

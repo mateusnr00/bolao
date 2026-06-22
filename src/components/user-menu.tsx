@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOpen, ChevronDown, LogOut, UserRound } from 'lucide-react'
+import { BookOpen, ChevronDown, Coins, LogOut, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 
@@ -30,6 +30,7 @@ function initialsOf(name: string) {
 
 export function UserMenu() {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [isOwner, setIsOwner] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -40,18 +41,26 @@ export function UserMenu() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase
-        .from('profiles')
-        .select('username, display_name, avatar_url')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (active && data) {
+      const [{ data }, { count }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('username, display_name, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('pools')
+          .select('id', { count: 'exact', head: true })
+          .eq('owner_id', user.id),
+      ])
+      if (!active) return
+      if (data) {
         setProfile({
           username: data.username,
           displayName: data.display_name,
           avatarUrl: data.avatar_url,
         })
       }
+      setIsOwner((count ?? 0) > 0)
     })()
     return () => {
       active = false
@@ -103,6 +112,14 @@ export function UserMenu() {
         >
           <UserRound className="size-4 text-sepia" /> editar perfil
         </DropdownMenuItem>
+        {isOwner && (
+          <DropdownMenuItem
+            render={<Link href="/pagamentos" />}
+            className="gap-2.5 px-2 py-2 text-[14px]"
+          >
+            <Coins className="size-4 text-sepia" /> cobrança
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           render={<Link href="/regras" />}
           className="gap-2.5 px-2 py-2 text-[14px]"
