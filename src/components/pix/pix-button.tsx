@@ -119,7 +119,8 @@ export function PixButton() {
                       <p className="text-[12px] uppercase tracking-[0.12em] text-sepia">
                         valor da entrada
                       </p>
-                      <p className="display mt-1 text-[40px] leading-none text-ink">R$ 20,00</p>
+                      <p className="display mt-1 text-[40px] leading-none text-ink">R$ 20,44</p>
+                      <p className="mt-1 text-[11px] text-sepia">R$ 20 + R$ 0,44 de taxa</p>
                     </div>
                     <button
                       type="button"
@@ -127,7 +128,7 @@ export function PixButton() {
                       disabled={isPending}
                       className="h-11 w-full rounded-md bg-ink text-[15px] font-medium text-paper transition-opacity disabled:opacity-50"
                     >
-                      {isPending ? 'gerando…' : 'gerar PIX de R$ 20'}
+                      {isPending ? 'gerando…' : 'gerar PIX de R$ 20,44'}
                     </button>
                   </div>
                 </>

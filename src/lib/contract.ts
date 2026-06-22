@@ -17,7 +17,7 @@ export const CONTRACT_CLAUSES: ContractClause[] = [
   {
     icon: '💰',
     title: 'Valor',
-    items: ['R$ 20 por pessoa, válido até o final da Copa.'],
+    items: ['R$ 20,44 por pessoa, válido até o final da Copa.'],
   },
   {
     icon: '🐴',

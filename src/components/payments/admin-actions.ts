@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export type AdminPayResult = { ok: true } | { error: string }
 
-const MANUAL_AMOUNT = 20
+const MANUAL_AMOUNT = 20.44
 
 // Confirma que quem chamou é o DONO do bolão e que o alvo é membro dele.
 type OwnerCtx =

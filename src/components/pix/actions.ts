@@ -9,11 +9,11 @@ export type PixResult =
   | { error: string }
   | { ok: true; pixCode: string; qr: string; paymentId: string }
 
-// Entrada do bolão: valor FIXO. Não dá pra confiar em valor vindo do front,
-// então a cobrança é sempre R$ 20,00 — definido só aqui no servidor.
-const PIX_AMOUNT = 20
+// Entrada do bolão: valor FIXO (R$ 20 + R$ 0,44 da taxa administrativa). Não
+// dá pra confiar em valor vindo do front, então é definido só aqui no servidor.
+const PIX_AMOUNT = 20.44
 
-/** Gera uma cobrança PIX (CodePay) de R$ 20 pro usuário logado. */
+/** Gera uma cobrança PIX (CodePay) de R$ 20,44 pro usuário logado. */
 export async function createPix(): Promise<PixResult> {
   const creds = getCredentials()
   if (!creds) return { error: 'Pagamento não configurado (credenciais ausentes)' }
