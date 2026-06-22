@@ -129,9 +129,44 @@ export type PaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
 function classifyStatus(raw: string): PaymentStatus {
   const s = raw.toLowerCase()
-  if (/(approved|paid|completed|success|aprovad|pago|conclu)/.test(s)) return 'APPROVED'
-  if (/(rejected|failed|cancel|expired|recus|falh|expir)/.test(s)) return 'REJECTED'
+  // CodePay manda "CONFIRMED" no PIX IN — precisa contar como aprovado.
+  if (/(approved|paid|completed|success|confirmed|aprovad|pago|conclu|confirmad)/.test(s))
+    return 'APPROVED'
+  if (/(rejected|failed|cancel|expired|refused|recus|falh|expir)/.test(s)) return 'REJECTED'
   return 'PENDING'
+}
+
+// Formato documentado do PIX IN (cash-in confirmado). Campos no topo do corpo.
+export interface CodePayWebhook {
+  paymentId: string | null // id da CodePay (guardamos em payments.external_id)
+  externalId: string | null // NOSSA referência (= payments.id)
+  movId: string | null
+  status: PaymentStatus
+  securityParaphrase: string | null
+}
+
+function str(v: unknown): string | null {
+  if (typeof v === 'string') return v.length ? v : null
+  if (typeof v === 'number') return String(v)
+  return null
+}
+
+/** Lê os campos documentados do webhook do CodePay (case-insensitive no topo). */
+export function parseCodePayWebhook(payload: unknown): CodePayWebhook {
+  const o = (payload && typeof payload === 'object' ? payload : {}) as Record<string, unknown>
+  const get = (want: string): unknown => {
+    for (const k of Object.keys(o)) {
+      if (k.toLowerCase() === want.toLowerCase()) return o[k]
+    }
+    return undefined
+  }
+  return {
+    paymentId: str(get('paymentId')),
+    externalId: str(get('externalId')),
+    movId: str(get('movId')),
+    status: classifyStatus(str(get('status')) ?? ''),
+    securityParaphrase: str(get('securityParaphrase')),
+  }
 }
 
 /** Procura recursivamente por uma chave "id-like" e por qualquer key terminada

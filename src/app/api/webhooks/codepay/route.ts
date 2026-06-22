@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server'
 
-import { extractWebhookInfo } from '@/lib/codepay'
+import { parseCodePayWebhook } from '@/lib/codepay'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Json } from '@/types/database'
 
-// Webhook GLOBAL da CodePay — URL ESTÁVEL, sem token no path:
+// Webhook do PIX IN da CodePay — URL ESTÁVEL, sem token no path:
 //   https://<APP_URL>/api/webhooks/codepay
 // É essa a URL que vai no campo "Url de notificação" do painel codepay.one.
-// Autenticação (opcional) pela "Frase de segurança": se CODEPAY_WEBHOOK_PHRASE
-// estiver setada, a frase precisa aparecer no corpo OU em algum header da
-// chamada; senão a gente ignora (mas SEMPRE loga, pra ter evidência).
 //
-// Diferente do /[token], aqui a gente LOGA TUDO antes de qualquer rejeição —
-// assim, se a CodePay chamar e a auth falhar, ainda fica registro em
-// payment_webhook_events pra diagnóstico (o /[token] dava 403 mudo).
+// Formato documentado do corpo (POST JSON):
+//   { movId, paymentId, value, externalId, status: "CONFIRMED",
+//     securityParaphrase, ... }
+// - paymentId  = id da CodePay (guardamos em payments.external_id)
+// - externalId = NOSSA referência (= payments.id) — o casamento mais confiável
+// - securityParaphrase = a "Frase de segurança" (validada se CODEPAY_WEBHOOK_PHRASE)
+//
+// LOGA TUDO antes de qualquer rejeição, pra termos evidência se a CodePay chamar.
 export const dynamic = 'force-dynamic'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -21,16 +23,6 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // Teste de saúde: abra a URL no navegador → { ok: true } = pronta pra receber.
 export async function GET() {
   return NextResponse.json({ ok: true, message: 'webhook codepay ativo' })
-}
-
-function phraseMatches(raw: string, headers: Headers): boolean {
-  const phrase = process.env.CODEPAY_WEBHOOK_PHRASE
-  if (!phrase) return true // sem frase configurada → não bloqueia
-  if (raw.includes(phrase)) return true
-  for (const value of headers.values()) {
-    if (value.includes(phrase)) return true
-  }
-  return false
 }
 
 export async function POST(req: Request) {
@@ -43,16 +35,16 @@ export async function POST(req: Request) {
   }
 
   const supabase = createAdminClient()
-  const { identifier, status } = body
-    ? extractWebhookInfo(body)
-    : { identifier: null as string | null, status: 'PENDING' as const }
+  const wh = parseCodePayWebhook(body)
+  // referência usada pra logar/identificar (prioriza o nosso externalId)
+  const logRef = wh.externalId ?? wh.paymentId ?? wh.movId ?? ''
 
   // SEMPRE loga primeiro (auditoria + a prova de que a CodePay chamou)
   const { data: event } = await supabase
     .from('payment_webhook_events')
     .insert({
       provider: 'CODEPAY',
-      external_id: identifier ?? '',
+      external_id: logRef,
       payload: (body ?? { _raw: raw.slice(0, 4000) }) as Json,
     })
     .select('id')
@@ -67,30 +59,32 @@ export async function POST(req: Request) {
     }
   }
 
-  if (!phraseMatches(raw, req.headers)) {
+  // valida a frase de segurança (se configurada) — vem em securityParaphrase
+  const phrase = process.env.CODEPAY_WEBHOOK_PHRASE
+  if (phrase && wh.securityParaphrase !== phrase && !raw.includes(phrase)) {
     await finish('frase de segurança não confere')
     return NextResponse.json({ ok: true, ignored: 'bad phrase' })
   }
 
-  if (!identifier) {
-    await finish('sem identifier')
-    return NextResponse.json({ ok: true, ignored: 'no identifier' })
+  // casa o pagamento na ordem mais confiável:
+  //   1) nosso externalId  → payments.id   (é a nossa própria referência)
+  //   2) paymentId         → payments.external_id
+  //   3) movId             → payments.mov_id
+  const byId = async (col: 'id' | 'external_id' | 'mov_id', val: string | null) => {
+    if (!val) return null
+    if (col === 'id' && !UUID_RE.test(val)) return null
+    const { data } = await supabase
+      .from('payments')
+      .select('id, status')
+      .eq(col, val)
+      .maybeSingle()
+    return data
   }
 
-  // casa por paymentId (external_id) ou, se vier o nosso ref, pelo id da linha
-  let payment =
-    (
-      await supabase
-        .from('payments')
-        .select('id, status')
-        .eq('external_id', identifier)
-        .maybeSingle()
-    ).data
-  if (!payment && UUID_RE.test(identifier)) {
-    payment = (
-      await supabase.from('payments').select('id, status').eq('id', identifier).maybeSingle()
-    ).data
-  }
+  const payment =
+    (await byId('id', wh.externalId)) ??
+    (await byId('external_id', wh.paymentId)) ??
+    (await byId('mov_id', wh.movId))
 
   if (!payment) {
     await finish('payment não encontrada')
@@ -98,12 +92,12 @@ export async function POST(req: Request) {
   }
 
   // idempotente: só transiciona de PENDING
-  if (status === 'APPROVED' && payment.status !== 'APPROVED') {
+  if (wh.status === 'APPROVED' && payment.status !== 'APPROVED') {
     await supabase
       .from('payments')
       .update({ status: 'APPROVED', updated_at: new Date().toISOString() })
       .eq('id', payment.id)
-  } else if (status === 'REJECTED' && payment.status === 'PENDING') {
+  } else if (wh.status === 'REJECTED' && payment.status === 'PENDING') {
     await supabase
       .from('payments')
       .update({ status: 'REJECTED', updated_at: new Date().toISOString() })
@@ -111,5 +105,5 @@ export async function POST(req: Request) {
   }
 
   await finish()
-  return NextResponse.json({ ok: true, status })
+  return NextResponse.json({ ok: true, status: wh.status })
 }
