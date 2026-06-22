@@ -12,6 +12,26 @@ export const dynamic = 'force-dynamic'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+// Teste de saúde: abra a URL do webhook no navegador. Se voltar { ok: true },
+// a URL + token + deploy estão corretos e prontos pra receber a CodePay.
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ token: string }> },
+) {
+  const { token } = await params
+  const expected = process.env.CODEPAY_WEBHOOK_TOKEN
+  if (!expected) {
+    return NextResponse.json(
+      { ok: false, error: 'CODEPAY_WEBHOOK_TOKEN não configurado no servidor' },
+      { status: 500 },
+    )
+  }
+  if (token !== expected) {
+    return new NextResponse('forbidden', { status: 403 })
+  }
+  return NextResponse.json({ ok: true, message: 'webhook ativo' })
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ token: string }> },
