@@ -332,6 +332,7 @@ export type Database = {
           match_id: string | null
           pool_id: string | null
           read_at: string | null
+          dismissed_at: string | null
           created_at: string
         }
         Insert: {
@@ -343,6 +344,7 @@ export type Database = {
           match_id?: string | null
           pool_id?: string | null
           read_at?: string | null
+          dismissed_at?: string | null
           created_at?: string
         }
         Update: {
@@ -354,6 +356,7 @@ export type Database = {
           match_id?: string | null
           pool_id?: string | null
           read_at?: string | null
+          dismissed_at?: string | null
           created_at?: string
         }
         Relationships: [

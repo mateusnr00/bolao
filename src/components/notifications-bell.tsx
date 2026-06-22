@@ -43,6 +43,7 @@ export function NotificationsBell() {
       const { data } = await supabase
         .from('notifications')
         .select('id, title, body, match_id, read_at, created_at')
+        .is('dismissed_at', null)
         .order('created_at', { ascending: false })
         .limit(20)
       if (active) {
@@ -75,19 +76,26 @@ export function NotificationsBell() {
     void supabase.from('notifications').update({ read_at: stamp }).in('id', ids)
   }
 
-  // dispensa uma notificação (apaga do banco; RLS garante que é a sua)
+  // dispensa uma notificação: marca dismissed_at (não apaga) pra não voltar
   function dismiss(id: string) {
     setItems((prev) => prev.filter((n) => n.id !== id))
     const supabase = createClient()
-    void supabase.from('notifications').delete().eq('id', id)
+    void supabase
+      .from('notifications')
+      .update({ dismissed_at: new Date().toISOString() })
+      .eq('id', id)
   }
 
-  // limpa todas as suas notificações
+  // dispensa todas as suas notificações (some e não volta)
   function clearAll() {
     if (!userId || items.length === 0) return
     setItems([])
     const supabase = createClient()
-    void supabase.from('notifications').delete().eq('user_id', userId)
+    void supabase
+      .from('notifications')
+      .update({ dismissed_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .is('dismissed_at', null)
   }
 
   function when(iso: string) {
