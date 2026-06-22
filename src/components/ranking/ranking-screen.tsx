@@ -27,6 +27,7 @@ export interface RankingData {
   memberCount: number
   rows: RankRow[]
   liveMatches: LiveMatchGuesses[]
+  isOwner: boolean
 }
 
 interface ComputedRow extends RankRow {
@@ -125,12 +126,22 @@ export function RankingScreen({ data }: { data: RankingData }) {
                 {data.memberCount === 1 ? 'membro' : 'membros'}
               </p>
             </div>
-            <Link
-              href="/vergonha"
-              className="shrink-0 text-[13px] font-medium text-phase-semi transition-colors hover:text-ink"
-            >
-              hall da vergonha 🫏
-            </Link>
+            <div className="flex shrink-0 flex-col items-end gap-1.5">
+              <Link
+                href="/vergonha"
+                className="text-[13px] font-medium text-phase-semi transition-colors hover:text-ink"
+              >
+                hall da vergonha 🫏
+              </Link>
+              {data.isOwner && (
+                <Link
+                  href="/pagamentos"
+                  className="text-[13px] font-medium text-sepia transition-colors hover:text-ink"
+                >
+                  cobrança 💸
+                </Link>
+              )}
+            </div>
           </section>
 
           {me && (

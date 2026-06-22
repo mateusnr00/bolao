@@ -29,6 +29,7 @@ export default async function RankingPage() {
         memberCount: pool.memberCount,
         rows,
         liveMatches,
+        isOwner: pool.isOwner,
       }}
     />
   )
