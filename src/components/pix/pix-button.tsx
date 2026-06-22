@@ -2,6 +2,7 @@
 
 import { Check, Copy, QrCode, X } from 'lucide-react'
 import { useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 
 import { createPix } from '@/components/pix/actions'
@@ -58,11 +59,12 @@ export function PixButton() {
         <span className="hidden sm:inline">pagar</span>
       </button>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm"
-          onClick={reset}
-        >
+      {open &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/50 p-4 backdrop-blur-sm"
+            onClick={reset}
+          >
           <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-[380px] rounded-xl border border-rule bg-paper p-5 shadow-xl"
@@ -133,8 +135,9 @@ export function PixButton() {
               </div>
             )}
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
     </>
   )
 }
