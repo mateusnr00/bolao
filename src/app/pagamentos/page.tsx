@@ -22,6 +22,7 @@ export default async function PagamentosPage() {
   return (
     <PaymentsScreen
       poolName={pool.name}
+      isOwner={data?.isOwner ?? false}
       paid={data?.paid ?? []}
       unpaid={data?.unpaid ?? []}
     />

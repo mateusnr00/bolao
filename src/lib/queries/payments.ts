@@ -9,10 +9,12 @@ export interface MemberPayment {
   username: string
   avatarUrl: string | null
   paid: boolean
+  manual: boolean // pago confirmado na mão pelo dono (dá pra desfazer)
   isMe: boolean
 }
 
 export interface PoolPayments {
+  isOwner: boolean
   paid: MemberPayment[]
   unpaid: MemberPayment[]
 }
@@ -37,13 +39,19 @@ export async function getPoolPayments(poolId: string): Promise<PoolPayments | nu
   if (!user) return null
 
   // confirma que o usuário é membro desse bolão antes de revelar a lista
+  const { data: pool } = await supabase
+    .from('pools')
+    .select('owner_id')
+    .eq('id', poolId)
+    .maybeSingle()
   const { data: membership } = await supabase
     .from('pool_members')
     .select('user_id')
     .eq('pool_id', poolId)
     .eq('user_id', user.id)
     .maybeSingle()
-  if (!membership) return { paid: [], unpaid: [] }
+  const isOwner = pool?.owner_id === user.id
+  if (!membership) return { isOwner, paid: [], unpaid: [] }
 
   const admin = createAdminClient()
 
@@ -56,27 +64,39 @@ export async function getPoolPayments(poolId: string): Promise<PoolPayments | nu
       .eq('pool_id', poolId),
     admin
       .from('payments')
-      .select('user_id')
+      .select('user_id, external_id, mov_id')
       .eq('status', 'APPROVED')
       .or(`pool_id.eq.${poolId},pool_id.is.null`),
   ])
 
-  const paidSet = new Set((pays ?? []).map((p) => p.user_id).filter(Boolean))
+  // "pago de verdade" = tem cobrança da CodePay (external_id preenchido);
+  // "manual" = só confirmação na mão do dono (mov_id = 'MANUAL').
+  const realSet = new Set<string>()
+  const manualSet = new Set<string>()
+  for (const p of pays ?? []) {
+    if (!p.user_id) continue
+    if (p.external_id) realSet.add(p.user_id)
+    else if (p.mov_id === 'MANUAL') manualSet.add(p.user_id)
+  }
 
   const rows: MemberPayment[] = ((members as unknown as RawMember[]) ?? []).map((m) => {
     const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
+    const real = realSet.has(m.user_id)
+    const manual = !real && manualSet.has(m.user_id)
     return {
       userId: m.user_id,
       name: prof?.display_name?.trim() || prof?.username || 'sem nome',
       username: prof?.username ?? '',
       avatarUrl: prof?.avatar_url ?? null,
-      paid: paidSet.has(m.user_id),
+      paid: real || manual,
+      manual,
       isMe: m.user_id === user.id,
     }
   })
 
   const byName = (a: MemberPayment, b: MemberPayment) => a.name.localeCompare(b.name, 'pt-BR')
   return {
+    isOwner,
     paid: rows.filter((r) => r.paid).sort(byName),
     unpaid: rows.filter((r) => !r.paid).sort(byName),
   }
