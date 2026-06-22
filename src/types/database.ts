@@ -477,6 +477,49 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_signatures: {
+        Row: {
+          id: string
+          user_id: string
+          pool_id: string | null
+          full_name: string
+          signature: string
+          contract_text: string
+          contract_version: string
+          signed_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          pool_id?: string | null
+          full_name: string
+          signature: string
+          contract_text: string
+          contract_version?: string
+          signed_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          pool_id?: string | null
+          full_name?: string
+          signature?: string
+          contract_text?: string
+          contract_version?: string
+          signed_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'contract_signatures_pool_id_fkey'
+            columns: ['pool_id']
+            referencedRelation: 'pools'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       pool_rankings: {

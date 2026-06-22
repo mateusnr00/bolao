@@ -1,6 +1,13 @@
 'use client'
 
-import { BookOpen, ChevronDown, Coins, LogOut, UserRound } from 'lucide-react'
+import {
+  BookOpen,
+  ChevronDown,
+  Coins,
+  FileSignature,
+  LogOut,
+  UserRound,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
 
@@ -112,6 +119,14 @@ export function UserMenu() {
         >
           <UserRound className="size-4 text-sepia" /> editar perfil
         </DropdownMenuItem>
+        {isMember && (
+          <DropdownMenuItem
+            render={<Link href="/contrato" />}
+            className="gap-2.5 px-2 py-2 text-[14px]"
+          >
+            <FileSignature className="size-4 text-sepia" /> contrato
+          </DropdownMenuItem>
+        )}
         {isMember && (
           <DropdownMenuItem
             render={<Link href="/pagamentos" />}
