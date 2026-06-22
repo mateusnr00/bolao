@@ -11,6 +11,11 @@ import { LiveRefresher } from '@/components/live-refresher'
 import { LiveScore } from '@/components/live/live-score'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   BottomNav,
   Eyebrow,
   Flag,
@@ -45,52 +50,75 @@ export interface MatchDetail {
   awayForm: FormMatch[]
 }
 
-/* forma recente de uma seleção: bolinhas V/E/D + últimos placares */
+/* forma recente: V/E/D + placares, num popover ao clicar na bandeira */
 function outcomeMeta(o: FormMatch['outcome']) {
   if (o === 'W') return { label: 'V', cls: 'bg-grass text-paper' }
   if (o === 'L') return { label: 'D', cls: 'bg-phase-semi text-paper' }
   return { label: 'E', cls: 'bg-rule-dark text-paper' }
 }
 
-function TeamForm({
+function TeamFlag({
   team,
   form,
-  align,
+  className,
 }: {
-  team: { code: string; flagUrl: string | null }
+  team: { code: string; name?: string; flagUrl: string | null }
   form: FormMatch[]
-  align: 'start' | 'end'
+  className?: string
 }) {
-  if (form.length === 0) return null
   return (
-    <div className={cn('flex flex-1 flex-col gap-2', align === 'end' && 'items-end')}>
-      <div className="flex items-center gap-1.5">
-        <Flag src={team.flagUrl ?? undefined} className="h-4 w-5" />
-        <span className="font-mono text-[12px] font-semibold text-ink">{team.code}</span>
-      </div>
-      {/* bolinhas de forma (mais recente primeiro) */}
-      <div className={cn('flex gap-1', align === 'end' && 'flex-row-reverse')}>
-        {form.map((f, i) => {
-          const m = outcomeMeta(f.outcome)
-          return (
-            <span
-              key={i}
-              title={`${f.forGoals}-${f.againstGoals} vs ${f.opponentCode}`}
-              className={cn(
-                'flex size-5 items-center justify-center rounded-full text-[10px] font-bold',
-                m.cls,
-              )}
-            >
-              {m.label}
-            </span>
-          )
-        })}
-      </div>
-      {/* último resultado por extenso */}
-      <p className="text-[11px] text-sepia">
-        último: {form[0].forGoals}–{form[0].againstGoals} vs {form[0].opponentCode}
-      </p>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`últimos jogos de ${team.code}`}
+        className="rounded-sm ring-offset-2 ring-offset-paper transition hover:ring-2 hover:ring-trophy focus-visible:ring-2 focus-visible:ring-trophy"
+      >
+        <Flag src={team.flagUrl ?? undefined} className={className} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" sideOffset={8} className="w-60 p-0">
+        <div className="flex items-center gap-2 border-b border-rule px-3 py-2.5">
+          <Flag src={team.flagUrl ?? undefined} className="h-4 w-6" />
+          <span className="text-[13px] font-semibold text-ink">
+            {team.name ?? team.code} · últimos jogos
+          </span>
+        </div>
+        {form.length === 0 ? (
+          <p className="px-3 py-4 text-center text-[12px] text-sepia">
+            ainda sem jogos nesta Copa.
+          </p>
+        ) : (
+          <ul className="divide-y divide-rule">
+            {form.map((f, i) => {
+              const m = outcomeMeta(f.outcome)
+              return (
+                <li key={i} className="flex items-center gap-2.5 px-3 py-2 text-[13px]">
+                  <span
+                    className={cn(
+                      'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                      m.cls,
+                    )}
+                  >
+                    {m.label}
+                  </span>
+                  <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                    <span className="text-sepia">vs</span>
+                    <Flag src={f.opponentFlag ?? undefined} className="h-3.5 w-5" />
+                    <span className="font-mono font-medium text-ink">{f.opponentCode}</span>
+                  </span>
+                  <span className="font-mono tabular font-semibold text-ink">
+                    {f.forGoals}
+                    <span className="px-0.5 text-sepia">–</span>
+                    {f.againstGoals}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+        <p className="border-t border-rule px-3 py-2 text-center text-[11px] text-sepia">
+          V = vitória · E = empate · D = derrota
+        </p>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -106,14 +134,16 @@ const SCORING = [
 
 function TeamSide({
   team,
+  form,
   align,
 }: {
   team: { flagUrl: string | null; code: string; name: string }
+  form: FormMatch[]
   align: 'start' | 'end'
 }) {
   return (
     <div className={cn('flex flex-1 flex-col gap-1.5', align === 'end' ? 'items-end' : 'items-start')}>
-      <Flag src={team.flagUrl ?? undefined} className="h-8 w-11" />
+      <TeamFlag team={team} form={form} className="h-8 w-11" />
       <span className="font-mono text-lg font-semibold leading-none text-ink">{team.code}</span>
       <span className="text-[12px] text-sepia">{team.name}</span>
     </div>
@@ -236,13 +266,13 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 )}
               </div>
               <div className="flex items-start justify-between gap-3">
-                <TeamSide team={match.home} align="start" />
+                <TeamSide team={match.home} form={match.homeForm} align="start" />
                 <div className="flex shrink-0 items-center gap-3 pt-1">
                   <Stepper value={home} onChange={setHome} label={match.home.code} />
                   <span className="font-display pt-5 text-2xl text-sepia">×</span>
                   <Stepper value={away} onChange={setAway} label={match.away.code} />
                 </div>
-                <TeamSide team={match.away} align="end" />
+                <TeamSide team={match.away} form={match.awayForm} align="end" />
               </div>
 
               {match.hasPools ? (
@@ -287,7 +317,7 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 {liveNow && <LiveBadge />}
               </div>
               <div className="flex items-center justify-between gap-3">
-                <TeamSide team={match.home} align="start" />
+                <TeamSide team={match.home} form={match.homeForm} align="start" />
                 <div className="shrink-0 text-center">
                   <LiveScore
                     homeCode={match.home.code}
@@ -309,7 +339,7 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                     }
                   />
                 </div>
-                <TeamSide team={match.away} align="end" />
+                <TeamSide team={match.away} form={match.awayForm} align="end" />
               </div>
               {match.guess && (
                 <p className="text-center text-[13px] text-sepia">
@@ -332,20 +362,6 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                   <Lock className="size-3" /> palpites encerrados
                 </p>
               )}
-            </section>
-          )}
-
-          {(match.homeForm.length > 0 || match.awayForm.length > 0) && (
-            <section className="space-y-3">
-              <Eyebrow>forma recente</Eyebrow>
-              <div className="flex items-start gap-4 rounded-lg border border-rule p-4">
-                <TeamForm team={match.home} form={match.homeForm} align="start" />
-                <div className="mt-1 w-px self-stretch bg-rule" />
-                <TeamForm team={match.away} form={match.awayForm} align="end" />
-              </div>
-              <p className="text-center text-[11px] text-sepia">
-                V = vitória · E = empate · D = derrota (jogos mais recentes primeiro)
-              </p>
             </section>
           )}
 
