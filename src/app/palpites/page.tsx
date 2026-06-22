@@ -6,7 +6,7 @@ import {
   type Status,
 } from '@/components/palpites/palpites-screen'
 import { dayKey, dayLabel, fullKickoff, timeLabel } from '@/lib/date'
-import { getMatches, type MatchView } from '@/lib/queries/matches'
+import { getAllTeamForms, getMatches, type MatchView } from '@/lib/queries/matches'
 import { getUserGuesses, getUserPoolIds } from '@/lib/queries/predictions'
 import type { MatchStage } from '@/types/database'
 
@@ -46,10 +46,11 @@ function statusOf(m: MatchView, hasGuess: boolean, now: Date): Status {
 }
 
 export default async function PalpitesPage() {
-  const [matches, guesses, poolIds] = await Promise.all([
+  const [matches, guesses, poolIds, forms] = await Promise.all([
     getMatches(),
     getUserGuesses(),
     getUserPoolIds(),
+    getAllTeamForms(),
   ])
   const now = new Date()
   const hasPools = poolIds.length > 0
@@ -85,6 +86,8 @@ export default async function PalpitesPage() {
       venue: m.venue,
       home: { code: m.home.code, flagUrl: m.home.flagUrl },
       away: { code: m.away.code, flagUrl: m.away.flagUrl },
+      homeForm: forms.get(m.home.id) ?? [],
+      awayForm: forms.get(m.away.id) ?? [],
       guess,
       score:
         (finished || m.status === 'live') &&

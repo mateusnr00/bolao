@@ -18,15 +18,16 @@ import { savePrediction } from '@/app/jogo/[id]/actions'
 import { LiveRefresher } from '@/components/live-refresher'
 import { LiveScore } from '@/components/live/live-score'
 import { GaleraInline } from '@/components/palpites/galera-inline'
+import { TeamFlag } from '@/components/team-flag'
 import {
   BottomNav,
-  Flag,
   LiveBadge,
   type Phase,
   PHASE_META,
   PhaseBadge,
   TopNav,
 } from '@/components/we26'
+import type { FormMatch } from '@/lib/queries/matches'
 import { randomFootballScore } from '@/lib/score'
 import { cn } from '@/lib/utils'
 
@@ -41,6 +42,8 @@ export interface PalpiteMatch {
   venue: string | null
   home: { code: string; flagUrl: string | null }
   away: { code: string; flagUrl: string | null }
+  homeForm: FormMatch[]
+  awayForm: FormMatch[]
   guess?: [number, number]
   score?: [number, number]
   points?: number
@@ -75,16 +78,19 @@ function matchesFilter(m: PalpiteMatch, f: FilterKey) {
   return true
 }
 
-/* bandeira redonda estilo "card de jogo" */
+/* bandeira clicável (abre últimos jogos) estilo "card de jogo" */
 function TeamCol({
   team,
+  form,
 }: {
   team: { code: string; flagUrl: string | null }
+  form: FormMatch[]
 }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-2">
-      <Flag
-        src={team.flagUrl ?? undefined}
+      <TeamFlag
+        team={team}
+        form={form}
         className="h-10 w-14 rounded object-cover ring-1 ring-rule"
       />
       <span className="font-mono text-[14px] font-semibold text-ink">{team.code}</span>
@@ -315,7 +321,7 @@ function EditableMatchRow({
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        <TeamCol team={m.home} />
+        <TeamCol team={m.home} form={m.homeForm} />
         <ScorePill>
           <ScoreSlot
             value={home}
@@ -331,7 +337,7 @@ function EditableMatchRow({
             ariaLabel={`gols ${m.away.code}`}
           />
         </ScorePill>
-        <TeamCol team={m.away} />
+        <TeamCol team={m.away} form={m.awayForm} />
       </div>
 
       <div className="mt-3">
@@ -408,7 +414,7 @@ function StaticMatchRow({
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2">
-        <TeamCol team={m.home} />
+        <TeamCol team={m.home} form={m.homeForm} />
         <div className="shrink-0 text-center">
           <LiveScore
             homeCode={m.home.code}
@@ -445,7 +451,7 @@ function StaticMatchRow({
             }
           />
         </div>
-        <TeamCol team={m.away} />
+        <TeamCol team={m.away} form={m.awayForm} />
       </div>
 
       {hasPools && (

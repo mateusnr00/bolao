@@ -164,3 +164,48 @@ export async function getTeamForm(
   }
   return out
 }
+
+/** Forma recente de TODAS as seleções numa query só (pra lista de palpites).
+ *  Mapa teamId → últimos `limit` jogos encerrados, mais recentes primeiro. */
+export async function getAllTeamForms(limit = 5): Promise<Map<string, FormMatch[]>> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('matches')
+    .select(
+      `home_score, away_score, home_team_id, away_team_id,
+       home:teams!matches_home_team_id_fkey ( code, flag_url ),
+       away:teams!matches_away_team_id_fkey ( code, flag_url )`,
+    )
+    .eq('status', 'finished')
+    .order('kickoff_at', { ascending: false })
+  if (error) return new Map()
+
+  const map = new Map<string, FormMatch[]>()
+  const add = (teamId: string, entry: FormMatch) => {
+    const arr = map.get(teamId) ?? []
+    if (arr.length < limit) {
+      arr.push(entry)
+      map.set(teamId, arr)
+    }
+  }
+  for (const r of (data as unknown as RawFormMatch[]) ?? []) {
+    if (r.home_score == null || r.away_score == null) continue
+    const h = one(r.home)
+    const a = one(r.away)
+    add(r.home_team_id, {
+      opponentCode: a?.code ?? '',
+      opponentFlag: a?.flag_url ?? null,
+      forGoals: r.home_score,
+      againstGoals: r.away_score,
+      outcome: r.home_score > r.away_score ? 'W' : r.home_score < r.away_score ? 'L' : 'D',
+    })
+    add(r.away_team_id, {
+      opponentCode: h?.code ?? '',
+      opponentFlag: h?.flag_url ?? null,
+      forGoals: r.away_score,
+      againstGoals: r.home_score,
+      outcome: r.away_score > r.home_score ? 'W' : r.away_score < r.home_score ? 'L' : 'D',
+    })
+  }
+  return map
+}
