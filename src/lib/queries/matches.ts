@@ -105,3 +105,62 @@ export async function getMatchById(id: string): Promise<MatchView | null> {
   if (!data) return null
   return toView(data as unknown as RawMatch)
 }
+
+// ── forma recente (últimos resultados da seleção) ───────────────────────────
+
+export interface FormMatch {
+  opponentCode: string
+  opponentFlag: string | null
+  forGoals: number
+  againstGoals: number
+  outcome: 'W' | 'D' | 'L'
+}
+
+interface RawFormMatch {
+  home_score: number | null
+  away_score: number | null
+  home_team_id: string
+  away_team_id: string
+  home: { code: string; flag_url: string | null } | { code: string; flag_url: string | null }[] | null
+  away: { code: string; flag_url: string | null } | { code: string; flag_url: string | null }[] | null
+}
+
+/** Últimos jogos ENCERRADOS de uma seleção antes de `beforeIso`, do ponto de
+ *  vista dela (placar dela × adversário + vitória/empate/derrota). */
+export async function getTeamForm(
+  teamId: string,
+  beforeIso: string,
+  limit = 5,
+): Promise<FormMatch[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('matches')
+    .select(
+      `home_score, away_score, home_team_id, away_team_id,
+       home:teams!matches_home_team_id_fkey ( code, flag_url ),
+       away:teams!matches_away_team_id_fkey ( code, flag_url )`,
+    )
+    .eq('status', 'finished')
+    .lt('kickoff_at', beforeIso)
+    .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
+    .order('kickoff_at', { ascending: false })
+    .limit(limit)
+  if (error) return []
+
+  const out: FormMatch[] = []
+  for (const r of (data as unknown as RawFormMatch[]) ?? []) {
+    if (r.home_score == null || r.away_score == null) continue
+    const isHome = r.home_team_id === teamId
+    const forGoals = isHome ? r.home_score : r.away_score
+    const againstGoals = isHome ? r.away_score : r.home_score
+    const opp = one(isHome ? r.away : r.home)
+    out.push({
+      opponentCode: opp?.code ?? '',
+      opponentFlag: opp?.flag_url ?? null,
+      forGoals,
+      againstGoals,
+      outcome: forGoals > againstGoals ? 'W' : forGoals < againstGoals ? 'L' : 'D',
+    })
+  }
+  return out
+}

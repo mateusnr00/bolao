@@ -21,6 +21,7 @@ import {
   TopNav,
 } from '@/components/we26'
 import { useLivePair } from '@/lib/live-store'
+import type { FormMatch } from '@/lib/queries/matches'
 import type { GaleraGuess } from '@/lib/queries/predictions'
 import { calcPredictionPoints } from '@/lib/scoring'
 import { cn } from '@/lib/utils'
@@ -40,6 +41,57 @@ export interface MatchDetail {
   away: { code: string; name: string; flagUrl: string | null }
   score?: [number, number]
   galera: { rows: GaleraGuess[]; hasStarted: boolean }
+  homeForm: FormMatch[]
+  awayForm: FormMatch[]
+}
+
+/* forma recente de uma seleção: bolinhas V/E/D + últimos placares */
+function outcomeMeta(o: FormMatch['outcome']) {
+  if (o === 'W') return { label: 'V', cls: 'bg-grass text-paper' }
+  if (o === 'L') return { label: 'D', cls: 'bg-phase-semi text-paper' }
+  return { label: 'E', cls: 'bg-rule-dark text-paper' }
+}
+
+function TeamForm({
+  team,
+  form,
+  align,
+}: {
+  team: { code: string; flagUrl: string | null }
+  form: FormMatch[]
+  align: 'start' | 'end'
+}) {
+  if (form.length === 0) return null
+  return (
+    <div className={cn('flex flex-1 flex-col gap-2', align === 'end' && 'items-end')}>
+      <div className="flex items-center gap-1.5">
+        <Flag src={team.flagUrl ?? undefined} className="h-4 w-5" />
+        <span className="font-mono text-[12px] font-semibold text-ink">{team.code}</span>
+      </div>
+      {/* bolinhas de forma (mais recente primeiro) */}
+      <div className={cn('flex gap-1', align === 'end' && 'flex-row-reverse')}>
+        {form.map((f, i) => {
+          const m = outcomeMeta(f.outcome)
+          return (
+            <span
+              key={i}
+              title={`${f.forGoals}-${f.againstGoals} vs ${f.opponentCode}`}
+              className={cn(
+                'flex size-5 items-center justify-center rounded-full text-[10px] font-bold',
+                m.cls,
+              )}
+            >
+              {m.label}
+            </span>
+          )
+        })}
+      </div>
+      {/* último resultado por extenso */}
+      <p className="text-[11px] text-sepia">
+        último: {form[0].forGoals}–{form[0].againstGoals} vs {form[0].opponentCode}
+      </p>
+    </div>
+  )
 }
 
 const SCORING = [
@@ -280,6 +332,20 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                   <Lock className="size-3" /> palpites encerrados
                 </p>
               )}
+            </section>
+          )}
+
+          {(match.homeForm.length > 0 || match.awayForm.length > 0) && (
+            <section className="space-y-3">
+              <Eyebrow>forma recente</Eyebrow>
+              <div className="flex items-start gap-4 rounded-lg border border-rule p-4">
+                <TeamForm team={match.home} form={match.homeForm} align="start" />
+                <div className="mt-1 w-px self-stretch bg-rule" />
+                <TeamForm team={match.away} form={match.awayForm} align="end" />
+              </div>
+              <p className="text-center text-[11px] text-sepia">
+                V = vitória · E = empate · D = derrota (jogos mais recentes primeiro)
+              </p>
             </section>
           )}
 
