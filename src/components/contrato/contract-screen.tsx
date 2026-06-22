@@ -1,6 +1,7 @@
 'use client'
 
 import { Check, Eraser, Lock } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import {
   forwardRef,
   useImperativeHandle,
@@ -12,13 +13,14 @@ import {
 import { toast } from 'sonner'
 
 import { signContract } from '@/components/contrato/actions'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BottomNav, Eyebrow, Rule, TopNav } from '@/components/we26'
 import {
   CONTRACT_ACCEPT,
   CONTRACT_CLAUSES,
   CONTRACT_INTRO,
 } from '@/lib/contract'
-import type { MySignature } from '@/lib/queries/contracts'
+import type { MemberSign, MySignature } from '@/lib/queries/contracts'
 
 // ── área de assinatura (canvas) ─────────────────────────────────────────────
 interface PadHandle {
@@ -142,7 +144,51 @@ function ContractBody() {
   )
 }
 
-export function ContractScreen({ signed }: { signed: MySignature | null }) {
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/)
+  const a = parts[0]?.[0] ?? ''
+  const b = parts.length > 1 ? (parts[parts.length - 1][0] ?? '') : ''
+  return (a + b).toUpperCase()
+}
+
+function SignRow({ m, ok }: { m: MemberSign; ok: boolean }) {
+  return (
+    <li className="flex items-center gap-3 rounded-md px-2 py-2.5">
+      <Avatar className="size-10 shrink-0">
+        {m.avatarUrl && <AvatarImage src={m.avatarUrl} alt="" />}
+        <AvatarFallback className="bg-bone text-[13px] font-semibold text-sepia">
+          {initials(m.name)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[15px] text-ink">{m.isMe ? 'você' : m.name}</p>
+        {m.username && (
+          <p className="truncate font-mono text-[12px] text-sepia">@{m.username}</p>
+        )}
+      </div>
+      {ok ? (
+        <span className="flex items-center gap-1.5 rounded-full bg-grass/12 px-2.5 py-1 text-[12px] font-semibold text-grass">
+          <Check className="size-3.5" /> assinou
+        </span>
+      ) : (
+        <span className="rounded-full bg-phase-semi/12 px-2.5 py-1 text-[12px] font-semibold text-phase-semi">
+          falta assinar
+        </span>
+      )}
+    </li>
+  )
+}
+
+export function ContractScreen({
+  signed,
+  signedMembers,
+  unsignedMembers,
+}: {
+  signed: MySignature | null
+  signedMembers: MemberSign[]
+  unsignedMembers: MemberSign[]
+}) {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [hasInk, setHasInk] = useState(false)
   const [done, setDone] = useState(false)
@@ -165,6 +211,7 @@ export function ContractScreen({ signed }: { signed: MySignature | null }) {
         return
       }
       setDone(true)
+      router.refresh() // atualiza a lista de quem assinou
     })
   }
 
@@ -272,6 +319,56 @@ export function ContractScreen({ signed }: { signed: MySignature | null }) {
                 {isPending ? 'assinando…' : 'aceitar e assinar contrato'}
               </button>
             </section>
+          )}
+
+          {(signedMembers.length > 0 || unsignedMembers.length > 0) && (
+            <>
+              <Rule />
+              <section className="space-y-5">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-rule bg-bone/50 p-4">
+                    <Eyebrow>assinaram</Eyebrow>
+                    <p className="display text-3xl text-grass tabular">{signedMembers.length}</p>
+                  </div>
+                  <div className="rounded-lg border border-rule bg-bone/50 p-4">
+                    <Eyebrow>faltam assinar</Eyebrow>
+                    <p className="display text-3xl text-phase-semi tabular">
+                      {unsignedMembers.length}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Eyebrow>não assinou</Eyebrow>
+                  {unsignedMembers.length === 0 ? (
+                    <p className="py-8 text-center text-[14px] text-sepia">
+                      todo mundo assinou. 🤝
+                    </p>
+                  ) : (
+                    <ul className="-mx-2">
+                      {unsignedMembers.map((m) => (
+                        <SignRow key={m.userId} m={m} ok={false} />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Eyebrow>já assinou</Eyebrow>
+                  {signedMembers.length === 0 ? (
+                    <p className="py-8 text-center text-[14px] text-sepia">
+                      ninguém assinou ainda.
+                    </p>
+                  ) : (
+                    <ul className="-mx-2">
+                      {signedMembers.map((m) => (
+                        <SignRow key={m.userId} m={m} ok />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </section>
+            </>
           )}
         </div>
       </main>
