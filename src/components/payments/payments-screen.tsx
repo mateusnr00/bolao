@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Clipboard, Lock } from 'lucide-react'
+import { Check, Clipboard } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -48,12 +48,10 @@ function Row({ m, kind }: { m: MemberPayment; kind: 'paid' | 'unpaid' }) {
 
 export function PaymentsScreen({
   poolName,
-  isOwner,
   paid,
   unpaid,
 }: {
   poolName: string
-  isOwner: boolean
   paid: MemberPayment[]
   unpaid: MemberPayment[]
 }) {
@@ -81,15 +79,7 @@ export function PaymentsScreen({
             <p className="text-[13px] text-sepia">{poolName}</p>
           </section>
 
-          {!isOwner ? (
-            <div className="flex flex-col items-center gap-3 rounded-lg border border-rule bg-bone/40 px-4 py-12 text-center">
-              <Lock className="size-6 text-sepia" />
-              <p className="text-[15px] text-sepia">
-                só o dono do bolão vê quem pagou e quem falta cobrar.
-              </p>
-            </div>
-          ) : (
-            <>
+          <>
               <section className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg border border-rule bg-bone/50 p-4">
                   <Eyebrow>pagaram</Eyebrow>
@@ -157,8 +147,7 @@ export function PaymentsScreen({
               <p className="pt-2 text-center text-[12px] text-sepia">
                 marca quem pagou automaticamente quando o PIX é confirmado.
               </p>
-            </>
-          )}
+          </>
         </div>
       </main>
 

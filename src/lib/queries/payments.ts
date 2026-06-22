@@ -13,7 +13,6 @@ export interface MemberPayment {
 }
 
 export interface PoolPayments {
-  isOwner: boolean
   paid: MemberPayment[]
   unpaid: MemberPayment[]
 }
@@ -26,9 +25,10 @@ interface RawMember {
     | null
 }
 
-// Quem pagou (APPROVED) x quem não pagou, num bolão. Só o DONO enxerga isso —
-// é a tela pra cobrar a galera. Usa service role porque a RLS de payments só
-// libera a linha do próprio usuário; o dono precisa ver de todo mundo.
+// Quem pagou (APPROVED) x quem não pagou, num bolão. Todo membro enxerga —
+// a ideia é a galera se cobrar sozinha. Usa service role porque a RLS de
+// payments só libera a linha do próprio usuário; aqui mostramos de todos
+// (só o STATUS pago/não, nada de valor ou código PIX de ninguém).
 export async function getPoolPayments(poolId: string): Promise<PoolPayments | null> {
   const supabase = await createClient()
   const {
@@ -36,13 +36,14 @@ export async function getPoolPayments(poolId: string): Promise<PoolPayments | nu
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: pool } = await supabase
-    .from('pools')
-    .select('owner_id')
-    .eq('id', poolId)
+  // confirma que o usuário é membro desse bolão antes de revelar a lista
+  const { data: membership } = await supabase
+    .from('pool_members')
+    .select('user_id')
+    .eq('pool_id', poolId)
+    .eq('user_id', user.id)
     .maybeSingle()
-  const isOwner = pool?.owner_id === user.id
-  if (!isOwner) return { isOwner: false, paid: [], unpaid: [] }
+  if (!membership) return { paid: [], unpaid: [] }
 
   const admin = createAdminClient()
 
@@ -76,7 +77,6 @@ export async function getPoolPayments(poolId: string): Promise<PoolPayments | nu
 
   const byName = (a: MemberPayment, b: MemberPayment) => a.name.localeCompare(b.name, 'pt-BR')
   return {
-    isOwner: true,
     paid: rows.filter((r) => r.paid).sort(byName),
     unpaid: rows.filter((r) => !r.paid).sort(byName),
   }

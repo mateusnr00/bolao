@@ -30,7 +30,7 @@ function initialsOf(name: string) {
 
 export function UserMenu() {
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [isOwner, setIsOwner] = useState(false)
+  const [isMember, setIsMember] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -48,9 +48,9 @@ export function UserMenu() {
           .eq('id', user.id)
           .maybeSingle(),
         supabase
-          .from('pools')
-          .select('id', { count: 'exact', head: true })
-          .eq('owner_id', user.id),
+          .from('pool_members')
+          .select('pool_id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
       ])
       if (!active) return
       if (data) {
@@ -60,7 +60,7 @@ export function UserMenu() {
           avatarUrl: data.avatar_url,
         })
       }
-      setIsOwner((count ?? 0) > 0)
+      setIsMember((count ?? 0) > 0)
     })()
     return () => {
       active = false
@@ -112,7 +112,7 @@ export function UserMenu() {
         >
           <UserRound className="size-4 text-sepia" /> editar perfil
         </DropdownMenuItem>
-        {isOwner && (
+        {isMember && (
           <DropdownMenuItem
             render={<Link href="/pagamentos" />}
             className="gap-2.5 px-2 py-2 text-[14px]"
