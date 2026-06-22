@@ -1,9 +1,13 @@
 'use server'
 
+import QRCode from 'qrcode'
+
 import { createPixCharge, getCredentials } from '@/lib/codepay'
 import { createClient } from '@/lib/supabase/server'
 
-export type PixResult = { error: string } | { ok: true; pixCode: string }
+export type PixResult =
+  | { error: string }
+  | { ok: true; pixCode: string; qr: string; paymentId: string }
 
 /** Gera uma cobrança PIX (CodePay) pro usuário logado, no valor informado. */
 export async function createPix(amountReais: number): Promise<PixResult> {
@@ -48,7 +52,8 @@ export async function createPix(amountReais: number): Promise<PixResult> {
         updated_at: new Date().toISOString(),
       })
       .eq('id', payment.id)
-    return { ok: true, pixCode: charge.pix_code }
+    const qr = await QRCode.toDataURL(charge.pix_code, { margin: 1, width: 260 })
+    return { ok: true, pixCode: charge.pix_code, qr, paymentId: payment.id }
   } catch (e) {
     await supabase
       .from('payments')
@@ -56,4 +61,20 @@ export async function createPix(amountReais: number): Promise<PixResult> {
       .eq('id', payment.id)
     return { error: e instanceof Error ? e.message : 'Erro ao gerar o PIX' }
   }
+}
+
+/** Status de um pagamento (pro modal "puxar" a aprovação do webhook). */
+export async function checkPayment(paymentId: string): Promise<{ status: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { status: 'PENDING' }
+  const { data } = await supabase
+    .from('payments')
+    .select('status')
+    .eq('id', paymentId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+  return { status: data?.status ?? 'PENDING' }
 }
