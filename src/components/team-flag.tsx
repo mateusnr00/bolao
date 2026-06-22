@@ -74,9 +74,6 @@ export function TeamFlag({
             })}
           </ul>
         )}
-        <p className="border-t border-rule px-3 py-2 text-center text-[11px] text-sepia">
-          V = vitória · E = empate · D = derrota
-        </p>
       </DropdownMenuContent>
     </DropdownMenu>
   )
