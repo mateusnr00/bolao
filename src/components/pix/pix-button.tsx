@@ -120,7 +120,6 @@ export function PixButton() {
                         valor da entrada
                       </p>
                       <p className="display mt-1 text-[40px] leading-none text-ink">R$ 20,44</p>
-                      <p className="mt-1 text-[11px] text-sepia">R$ 20 + R$ 0,44 de taxa</p>
                     </div>
                     <button
                       type="button"
