@@ -408,6 +408,75 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          id: string
+          user_id: string | null
+          pool_id: string | null
+          amount: number
+          status: string
+          external_id: string | null
+          mov_id: string | null
+          pix_code: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          pool_id?: string | null
+          amount: number
+          status?: string
+          external_id?: string | null
+          mov_id?: string | null
+          pix_code?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          pool_id?: string | null
+          amount?: number
+          status?: string
+          external_id?: string | null
+          mov_id?: string | null
+          pix_code?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_webhook_events: {
+        Row: {
+          id: string
+          provider: string
+          external_id: string
+          payload: Json
+          processed_at: string | null
+          processing_error: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          provider?: string
+          external_id: string
+          payload: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          provider?: string
+          external_id?: string
+          payload?: Json
+          processed_at?: string | null
+          processing_error?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       pool_rankings: {

@@ -2,6 +2,7 @@ import { House, ListChecks, Trophy, Users } from 'lucide-react'
 import Link from 'next/link'
 
 import { NotificationsBell } from '@/components/notifications-bell'
+import { PixButton } from '@/components/pix/pix-button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { UserMenu } from '@/components/user-menu'
 import {
@@ -187,6 +188,7 @@ export function TopNav({ active }: { active?: NavKey }) {
               regras
             </Link>
           </nav>
+          <PixButton />
           <NotificationsBell />
           <ThemeToggle />
           <UserMenu />
