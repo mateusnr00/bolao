@@ -66,7 +66,7 @@ export function PixButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-full bg-grass px-3 py-1.5 text-[13px] font-semibold text-ink shadow-sm transition-opacity hover:opacity-90"
+        className="flex items-center gap-1.5 rounded-full bg-trophy px-3 py-1.5 text-[13px] font-semibold text-ink shadow-sm transition-opacity hover:opacity-90 dark:text-paper"
       >
         <QrCode className="size-4" />
         <span>pagar</span>
