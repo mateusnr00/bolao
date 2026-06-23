@@ -1,14 +1,14 @@
-// Pontuação v3 — vale a partir de Holanda × Suécia (ver migration 0021).
+// Pontuação v3 — vale a partir de Holanda × Suécia (ver migration 0021/0025).
 //
 // 1) Só pontua se acertar o RESULTADO (vitória mandante / visitante / empate).
 //    Errou o resultado → 0.
-// 2) Proximidade por erro ponderado, por gol:
+// 2) EMPATE: escala pela distância do placar (d = |palpite − real|):
+//      0 → 30 | 1 (1×1 p/ 0×0) → 20 | 2 → 15 | 3 → 10 | >=4 → 8
+// 3) COM VENCEDOR: proximidade por erro ponderado, por gol:
 //      - erro no time VENCEDOR ........................ peso 1 (aceitável)
 //      - chutar gols A MENOS pro perdedor ............. peso 2
 //      - INVENTAR gol pro perdedor (chutar a mais) .... peso 3 (o pior erro)
-//    Empate (sem vencedor/perdedor): erro = |ΔtimeA| + |ΔtimeB|.
-// 3) Tabela do erro:
-//      0 → 30 | 1 → 22 | 2 → 18 | 3 → 15 | 4 → 12 | >=5 → 8
+//    Tabela do erro: 0 → 30 | 1 → 22 | 2 → 18 | 3 → 15 | 4 → 12 | >=5 → 8
 //
 // Usado pros pontos PROVISÓRIOS ao vivo. Como jogo ao vivo é sempre posterior
 // ao corte (Holanda × Suécia), aqui não precisa diferenciar regra antiga/nova;
@@ -27,6 +27,15 @@ function pointsForError(erro: number): number {
   return 8
 }
 
+// Empate certo: pontua pela distância do placar (0×0→0×0 = 30; 1×1 = 20; …)
+function pointsForDraw(dist: number): number {
+  if (dist <= 0) return 30
+  if (dist === 1) return 20
+  if (dist === 2) return 15
+  if (dist === 3) return 10
+  return 8
+}
+
 /** Pontos de um palpite [casa, fora] contra um placar real [casa, fora]. */
 export function calcPredictionPoints(
   pred: [number, number],
@@ -38,9 +47,9 @@ export function calcPredictionPoints(
   // 1) precisa acertar o resultado (mandante / visitante / empate)
   if (sign(ph - pa) !== sign(ah - aa)) return 0
 
-  // 2) empate: erro simples (não há vencedor/perdedor)
+  // 2) empate: escala pela distância do placar (palpite de empate vs real)
   if (ah === aa) {
-    return pointsForError(Math.abs(ph - ah) + Math.abs(pa - aa))
+    return pointsForDraw(Math.abs(ph - ah))
   }
 
   // 3) com vencedor: erro do vencedor peso 1; do perdedor peso 2 (a menos) ou

@@ -123,8 +123,8 @@ export function RegrasScreen() {
             </ul>
             <p className="text-[12px] text-sepia">
               empate: cravar o exato vale 30; acertar que foi empate no número
-              errado conta pelo erro (ex.: 0 × 0 quando deu 1 × 1 → erro 2 → 18).
-              apostar vitória num jogo que empatou vale 0.
+              errado escala pela distância do placar (1×1 p/ 0×0 → 20 · 2×2 → 15
+              · 3×3 → 10). apostar vitória num jogo que empatou vale 0.
             </p>
           </section>
 
