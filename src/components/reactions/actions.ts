@@ -1,8 +1,7 @@
 'use server'
 
+import { isSingleEmoji } from '@/lib/emoji'
 import { createClient } from '@/lib/supabase/server'
-
-const ALLOWED = new Set(['😂', '🤡', '💩', '🫏', '🤮'])
 
 export type ToggleReactionResult =
   | { error: string }
@@ -13,7 +12,8 @@ export async function toggleReaction(input: {
   targetUserId: string
   emoji: string
 }): Promise<ToggleReactionResult> {
-  if (!ALLOWED.has(input.emoji)) return { error: 'Reação inválida' }
+  const emoji = input.emoji?.trim() ?? ''
+  if (!isSingleEmoji(emoji)) return { error: 'Reação inválida' }
 
   const supabase = await createClient()
   const {
@@ -41,7 +41,7 @@ export async function toggleReaction(input: {
     .eq('match_id', input.matchId)
     .eq('target_user_id', input.targetUserId)
     .eq('reactor_id', user.id)
-    .eq('emoji', input.emoji)
+    .eq('emoji', emoji)
     .maybeSingle()
 
   if (existing) {
@@ -57,7 +57,7 @@ export async function toggleReaction(input: {
     match_id: input.matchId,
     target_user_id: input.targetUserId,
     reactor_id: user.id,
-    emoji: input.emoji,
+    emoji,
   })
   if (error) return { error: 'Não deu pra reagir' }
   return { ok: true, active: true }
