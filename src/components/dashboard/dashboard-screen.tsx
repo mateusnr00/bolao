@@ -140,7 +140,13 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
 
           {/* progresso */}
           <section className="flex items-center justify-between gap-4">
-            <Emblem className="h-14 w-auto" />
+            <Link
+              href="/grupos"
+              aria-label="ver a tabela dos grupos"
+              className="shrink-0 transition-opacity hover:opacity-80"
+            >
+              <Emblem className="h-14 w-auto" />
+            </Link>
             <div className="text-right">
               <Eyebrow>meus palpites</Eyebrow>
               <p className="display text-3xl text-ink">
