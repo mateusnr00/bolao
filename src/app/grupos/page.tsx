@@ -1,4 +1,4 @@
-import { BottomNav, Eyebrow, TopNav } from '@/components/we26'
+import { BottomNav, TopNav } from '@/components/we26'
 
 export const metadata = { title: 'Tabela dos grupos · Copa 2026' }
 
@@ -24,7 +24,7 @@ function widgetSrc(tournament: number, letter: string) {
   const g = encodeURIComponent(`Group ${letter}`)
   return (
     `https://widgets.sofascore.com/pt-BR/embed/tournament/${tournament}/season/${SEASON}/standings/${g}` +
-    `?widgetTitle=${g}&showCompetitionLogo=true`
+    `?widgetTitle=${g}&showCompetitionLogo=true&theme=dark`
   )
 }
 
@@ -44,14 +44,18 @@ export default function GruposPage() {
             </p>
           </section>
 
-          <section className="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-2">
+          <section className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2">
             {GROUPS.map((g) => (
-              <div key={g.letter} className="space-y-1.5">
-                <Eyebrow>grupo {g.letter}</Eyebrow>
+              // caixa recortada: o widget tem 431px, mostramos só ~345px pra
+              // esconder o rodapé de propaganda do SofaScore (logo + botão).
+              <div
+                key={g.letter}
+                className="h-[345px] w-full max-w-[768px] overflow-hidden rounded-lg border border-rule"
+              >
                 <iframe
                   title={`Classificação do Grupo ${g.letter}`}
                   src={widgetSrc(g.tournament, g.letter)}
-                  className="h-[431px] w-full max-w-[768px] rounded-lg border border-rule"
+                  className="block h-[431px] w-full"
                   scrolling="no"
                 />
               </div>
