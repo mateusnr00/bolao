@@ -2,14 +2,28 @@ import { BottomNav, Eyebrow, TopNav } from '@/components/we26'
 
 export const metadata = { title: 'Tabela dos grupos · Copa 2026' }
 
-// Copa do Mundo 2026: 12 grupos (A–L). Widgets de classificação do SofaScore
-// (torneio 3954 / temporada 58210) — embed estático por grupo.
-const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'] as const
+// Copa do Mundo 2026: 12 grupos (A–L). Cada grupo é um "tournament" próprio
+// no SofaScore (ids abaixo), todos na temporada 58210.
+const SEASON = 58210
+const GROUPS: { letter: string; tournament: number }[] = [
+  { letter: 'A', tournament: 3954 },
+  { letter: 'B', tournament: 3955 },
+  { letter: 'C', tournament: 3956 },
+  { letter: 'D', tournament: 3957 },
+  { letter: 'E', tournament: 3958 },
+  { letter: 'F', tournament: 3959 },
+  { letter: 'G', tournament: 3960 },
+  { letter: 'H', tournament: 3961 },
+  { letter: 'I', tournament: 139403 },
+  { letter: 'J', tournament: 139404 },
+  { letter: 'K', tournament: 139405 },
+  { letter: 'L', tournament: 139406 },
+]
 
-function widgetSrc(group: string) {
-  const g = encodeURIComponent(`Group ${group}`)
+function widgetSrc(tournament: number, letter: string) {
+  const g = encodeURIComponent(`Group ${letter}`)
   return (
-    `https://widgets.sofascore.com/pt-BR/embed/tournament/3954/season/58210/standings/${g}` +
+    `https://widgets.sofascore.com/pt-BR/embed/tournament/${tournament}/season/${SEASON}/standings/${g}` +
     `?widgetTitle=${g}&showCompetitionLogo=true`
   )
 }
@@ -32,11 +46,11 @@ export default function GruposPage() {
 
           <section className="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-2">
             {GROUPS.map((g) => (
-              <div key={g} className="space-y-1.5">
-                <Eyebrow>grupo {g}</Eyebrow>
+              <div key={g.letter} className="space-y-1.5">
+                <Eyebrow>grupo {g.letter}</Eyebrow>
                 <iframe
-                  title={`Classificação do Grupo ${g}`}
-                  src={widgetSrc(g)}
+                  title={`Classificação do Grupo ${g.letter}`}
+                  src={widgetSrc(g.tournament, g.letter)}
                   className="h-[431px] w-full max-w-[768px] rounded-lg border border-rule"
                   scrolling="no"
                 />
