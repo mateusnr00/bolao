@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Coins,
   FileSignature,
+  Globe,
   LogOut,
   UserRound,
 } from 'lucide-react'
@@ -118,6 +119,12 @@ export function UserMenu() {
           className="gap-2.5 px-2 py-2 text-[14px]"
         >
           <UserRound className="size-4 text-sepia" /> editar perfil
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link href="/grupos" />}
+          className="gap-2.5 px-2 py-2 text-[14px]"
+        >
+          <Globe className="size-4 text-sepia" /> Copa do Mundo
         </DropdownMenuItem>
         {isMember && (
           <DropdownMenuItem
