@@ -57,19 +57,6 @@ export default function GruposPage() {
               </div>
             ))}
           </section>
-
-          <p className="text-[12px] text-sepia">
-            Classificação fornecida por{' '}
-            <a
-              target="_blank"
-              rel="noreferrer"
-              href="https://www.sofascore.com/pt/football/tournament/world/world-championship-gr-a/16#id:58210"
-              className="underline transition-colors hover:text-ink"
-            >
-              Sofascore
-            </a>
-            .
-          </p>
         </div>
       </main>
 
