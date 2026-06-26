@@ -118,14 +118,21 @@ export default async function PalpitesPage() {
     presentRounds[presentRounds.length - 1] ??
     null
 
-  const rounds: PalpiteRound[] = presentRounds.map((rid) => ({
-    id: rid,
-    label: ROUND_LABEL[rid],
-    isCurrent: rid === currentId,
-    days: [...byRound.get(rid)!.values()].sort((a, b) =>
-      a.id.localeCompare(b.id),
-    ),
-  }))
+  // Mostra TODAS as rodadas no seletor. As fases de mata-mata cujos jogos ainda
+  // não foram definidos aparecem como "em breve" (sem jogos), pra já deixar a
+  // estrutura inteira visível e facilitar depois.
+  const rounds: PalpiteRound[] = ROUND_ORDER.map((rid) => {
+    const byDay = byRound.get(rid)
+    return {
+      id: rid,
+      label: ROUND_LABEL[rid],
+      isCurrent: rid === currentId,
+      pending: !byDay,
+      days: byDay
+        ? [...byDay.values()].sort((a, b) => a.id.localeCompare(b.id))
+        : [],
+    }
+  })
 
   const hasLive = matches.some((m) => m.status === 'live')
 

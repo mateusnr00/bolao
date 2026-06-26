@@ -61,7 +61,14 @@ export interface PalpiteRound {
   id: string
   label: string
   isCurrent: boolean
+  pending?: boolean // fase de mata-mata ainda sem jogos definidos
   days: PalpiteDay[]
+}
+
+function roundHint(r: PalpiteRound) {
+  if (r.isCurrent) return '(atual)'
+  if (r.pending) return '(em breve)'
+  return null
 }
 
 const FILTERS = [
@@ -508,9 +515,9 @@ function RoundSelector({
         <CalendarDays className="size-4 shrink-0 text-trophy-deep" />
         <span className="flex-1 text-[15px] font-medium text-ink">
           {selected?.label ?? 'rodada'}
-          {selected?.isCurrent && (
+          {selected && roundHint(selected) && (
             <span className="ml-1.5 text-[12px] font-normal text-sepia">
-              (atual)
+              {roundHint(selected)}
             </span>
           )}
         </span>
@@ -537,14 +544,16 @@ function RoundSelector({
                     'flex w-full items-center justify-between px-3.5 py-2.5 text-left text-[15px] transition-colors hover:bg-bone',
                     r.id === selectedId
                       ? 'font-semibold text-trophy-deep'
-                      : 'text-ink',
+                      : r.pending
+                        ? 'text-sepia'
+                        : 'text-ink',
                   )}
                 >
                   <span>
                     {r.label}
-                    {r.isCurrent && (
+                    {roundHint(r) && (
                       <span className="ml-1.5 text-[12px] font-normal text-sepia">
-                        (atual)
+                        {roundHint(r)}
                       </span>
                     )}
                   </span>
@@ -616,7 +625,11 @@ export function PalpitesScreen({
           </div>
 
           {days.length === 0 ? (
-            <p className="py-12 text-center text-[14px] text-sepia">nenhum jogo aqui.</p>
+            <p className="py-12 text-center text-[14px] text-sepia">
+              {round?.pending
+                ? 'os confrontos desta fase ainda não foram definidos. assim que saírem, eles aparecem aqui pra você palpitar.'
+                : 'nenhum jogo aqui.'}
+            </p>
           ) : (
             <div className="space-y-7">
               {days.map((d) => (
