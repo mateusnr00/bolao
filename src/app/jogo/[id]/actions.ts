@@ -28,11 +28,18 @@ export async function savePrediction(input: {
   // Trava no apito: precisa estar agendado e ainda não ter começado.
   const { data: match, error: matchErr } = await supabase
     .from('matches')
-    .select('kickoff_at, status')
+    .select(
+      'kickoff_at, status, home:teams!matches_home_team_id_fkey(code), away:teams!matches_away_team_id_fkey(code)',
+    )
     .eq('id', matchId)
     .maybeSingle()
   if (matchErr) return { error: 'Erro ao validar o jogo' }
   if (!match) return { error: 'Jogo não encontrado' }
+  // mata-mata ainda sem adversário definido (placeholder "A definir")
+  const teamCode = (t: unknown) => (Array.isArray(t) ? t[0]?.code : (t as { code?: string })?.code)
+  if (teamCode(match.home) === 'TBD' || teamCode(match.away) === 'TBD') {
+    return { error: 'O confronto ainda não foi definido' }
+  }
   if (match.status !== 'scheduled' || new Date(match.kickoff_at) <= new Date()) {
     return { error: 'Palpites encerrados para este jogo' }
   }

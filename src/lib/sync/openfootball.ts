@@ -176,6 +176,9 @@ export async function runOpenfootballSync(
   const { data: teams, error: selErr } = await supabase.from('teams').select('id, code')
   if (selErr) throw new Error(`Erro ao ler teams: ${selErr.message}`)
   const idByCode = new Map(teams!.map((t) => [t.code, t.id]))
+  // placeholder "A definir" (migration 0026) pro lado ainda indefinido do
+  // mata-mata. Quando o adversário sai, o upsert troca o TBD pelo time real.
+  const tbdId = idByCode.get('TBD') ?? null
 
   // Jogos que o sync ao vivo (worldcup26) já marcou como 'live'/'finished'. O
   // openfootball pode estar atrasado e ainda não ter o placar final desses; sem
@@ -190,16 +193,31 @@ export async function runOpenfootballSync(
       .map((m) => m.external_id),
   )
 
-  // Jogos: só os com ambos os times reais (FK NOT NULL).
+  // Jogos: fase de grupos exige os dois times reais. Mata-mata pode entrar com
+  // só um lado conhecido (o outro vira o placeholder "A definir").
   const matchRows: Database['public']['Tables']['matches']['Insert'][] = []
   let skipped = 0
   for (const mt of data.matches) {
-    if (!isReal(mt.team1) || !isReal(mt.team2)) {
+    const isKO = !mt.group
+    const real1 = isReal(mt.team1)
+    const real2 = isReal(mt.team2)
+    if (isKO) {
+      // precisa de ao menos um time real; se UM lado é desconhecido, precisa do
+      // placeholder TBD no banco (senão pula e espera a migration/o adversário).
+      if (!real1 && !real2) {
+        skipped++
+        continue
+      }
+      if ((!real1 || !real2) && !tbdId) {
+        skipped++
+        continue
+      }
+    } else if (!real1 || !real2) {
       skipped++
       continue
     }
-    const homeId = idByCode.get(NATIONS[mt.team1].code)
-    const awayId = idByCode.get(NATIONS[mt.team2].code)
+    const homeId = real1 ? idByCode.get(NATIONS[mt.team1].code) : tbdId
+    const awayId = real2 ? idByCode.get(NATIONS[mt.team2].code) : tbdId
     const kickoff = toUtcIso(mt.date, mt.time)
     if (!homeId || !awayId || !kickoff) {
       skipped++

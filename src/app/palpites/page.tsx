@@ -76,6 +76,8 @@ export default async function PalpitesPage() {
 
   for (const m of matches) {
     const finished = m.status === 'finished'
+    // mata-mata com adversário ainda indefinido (placeholder "A definir")
+    const tbd = m.home.code === 'TBD' || m.away.code === 'TBD'
     const guess = guesses.get(m.id)
     const item: PalpiteMatch = {
       id: m.id,
@@ -95,11 +97,13 @@ export default async function PalpitesPage() {
         m.awayScore != null
           ? [m.homeScore, m.awayScore]
           : undefined,
-      status: statusOf(m, guess != null, now),
+      status: tbd ? 'tbd' : statusOf(m, guess != null, now),
     }
 
     const rid = roundIdOf(m.stage, m.groupName)
-    if (!finished) openByRound.set(rid, true)
+    // 'tbd' não conta como "aberto" (não dá pra palpitar ainda), então não
+    // deixa a fase virar a "rodada atual" antes da hora.
+    if (!finished && !tbd) openByRound.set(rid, true)
 
     if (!byRound.has(rid)) byRound.set(rid, new Map())
     const byDay = byRound.get(rid)!

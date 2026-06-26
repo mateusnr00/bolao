@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  Clock,
   Info,
   Lock,
   MapPin,
@@ -31,7 +32,7 @@ import type { FormMatch } from '@/lib/queries/matches'
 import { randomFootballScore } from '@/lib/score'
 import { cn } from '@/lib/utils'
 
-export type Status = 'open' | 'predicted' | 'locked' | 'live' | 'finished'
+export type Status = 'open' | 'predicted' | 'locked' | 'live' | 'finished' | 'tbd'
 
 export interface PalpiteMatch {
   id: string
@@ -476,7 +477,50 @@ function StaticMatchRow({
   )
 }
 
+/* lado "A definir" do mata-mata (adversário ainda não saiu) */
+function TbdSlot() {
+  return (
+    <div className="flex flex-1 flex-col items-center gap-2 opacity-70">
+      <div className="flex h-10 w-14 items-center justify-center rounded bg-bone font-mono text-lg text-sepia ring-1 ring-rule">
+        ?
+      </div>
+      <span className="font-mono text-[14px] font-semibold text-sepia">a definir</span>
+    </div>
+  )
+}
+
+/* card de jogo de mata-mata com um lado ainda indefinido (read-only, vira
+   palpitável sozinho quando o adversário for definido) */
+function TbdMatchRow({ m }: { m: PalpiteMatch }) {
+  const homeTbd = m.home.code === 'TBD'
+  const awayTbd = m.away.code === 'TBD'
+  return (
+    <li className="rounded-xl border border-dashed border-rule bg-paper p-4">
+      <CardHeader
+        m={m}
+        right={
+          <span className="flex items-center gap-1 text-[12px] text-sepia">
+            <Clock className="size-3" /> a definir
+          </span>
+        }
+      />
+      <div className="mt-2">
+        <SobreJogo m={m} />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        {homeTbd ? <TbdSlot /> : <TeamCol team={m.home} form={m.homeForm} />}
+        <span className="font-mono text-sm text-sepia">×</span>
+        {awayTbd ? <TbdSlot /> : <TeamCol team={m.away} form={m.awayForm} />}
+      </div>
+      <p className="mt-3 text-center text-[12px] text-sepia">
+        aguardando o confronto — dá pra palpitar quando os dois times saírem.
+      </p>
+    </li>
+  )
+}
+
 function MatchCard({ m, hasPools }: { m: PalpiteMatch; hasPools: boolean }) {
+  if (m.status === 'tbd') return <TbdMatchRow m={m} />
   if (m.status === 'open' || m.status === 'predicted') {
     return <EditableMatchRow m={m} hasPools={hasPools} />
   }
