@@ -2,18 +2,20 @@ import { NextResponse } from 'next/server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runEspnSync } from '@/lib/sync/espn'
-import { runOpenfootballFinals } from '@/lib/sync/openfootball'
+import { runOpenfootballFinals, runOpenfootballSync } from '@/lib/sync/openfootball'
 import { runWorldcup26Sync } from '@/lib/sync/worldcup26'
 
 // Lê headers e escreve no banco → sempre dinâmica, nunca cacheada.
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-// Três fontes, independentes (uma falhando não derruba a outra):
+// Fontes, independentes (uma falhando não derruba a outra):
 //  1) AO VIVO: worldcup26.ir (principal, com minuto). Se falhar/vier vazia,
 //     usa a ESPN (reserva, sem chave).
-//  2) FINAIS:  openfootball (garantia) — fecha os jogos de grupos com placar
-//     final e dispara o recálculo dos pontos, mesmo se o ao vivo falhar.
+//  2) CALENDÁRIO: openfootball seed — insere jogos novos no banco (ex.: os de
+//     mata-mata aparecem sozinhos quando os times saem da fase de grupos).
+//  3) FINAIS:  openfootball — fecha os jogos com placar final e dispara o
+//     recálculo dos pontos, mesmo se o ao vivo falhar.
 function msg(err: unknown): string {
   return err instanceof Error ? err.message : 'erro desconhecido'
 }
@@ -52,7 +54,15 @@ export async function GET(request: Request) {
     }
   }
 
-  // 2) FINAIS — openfootball (garantia dos placares finais)
+  // 2) CALENDÁRIO — openfootball seed (insere jogos novos, ex.: mata-mata
+  //    quando os times são definidos). Idempotente (upsert por external_id).
+  try {
+    result.seed = await runOpenfootballSync(supabase)
+  } catch (err) {
+    result.seed = { error: msg(err) }
+  }
+
+  // 3) FINAIS — openfootball (garantia dos placares finais)
   try {
     result.openfootball = await runOpenfootballFinals(supabase)
   } catch (err) {

@@ -46,11 +46,11 @@ export default function GruposPage() {
 
           <section className="grid grid-cols-1 gap-x-6 gap-y-6 md:grid-cols-2">
             {GROUPS.map((g) => (
-              // caixa recortada: o widget tem 431px, mostramos só ~345px pra
-              // esconder o rodapé de propaganda do SofaScore (logo + botão).
+              // caixa recortada: o widget tem 431px, mostramos só ~330px pra
+              // esconder o divisor + o rodapé de propaganda do SofaScore.
               <div
                 key={g.letter}
-                className="h-[345px] w-full max-w-[768px] overflow-hidden rounded-lg border border-rule"
+                className="h-[330px] w-full max-w-[768px] overflow-hidden rounded-lg border border-rule"
               >
                 <iframe
                   title={`Classificação do Grupo ${g.letter}`}
