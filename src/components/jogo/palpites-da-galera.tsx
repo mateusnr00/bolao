@@ -21,22 +21,16 @@ function effectivePoints(
   return points ?? 0
 }
 
-// userId do último colocado (menor pontuação); empate → o último da lista
-function lastPlaceUserId(
+// TODOS que zeraram (0 pontos) levam o burrinho — pode ser 2+ no mesmo jogo.
+function donkeyUserIds(
   rows: GaleraGuess[],
   actual: [number, number] | null,
-): string | null {
-  if (rows.length < 2) return null
-  let min = Infinity
-  let found: string | null = null
+): Set<string> {
+  const set = new Set<string>()
   for (const g of rows) {
-    const p = effectivePoints(g.guess, g.points, actual)
-    if (p <= min) {
-      min = p
-      found = g.userId
-    }
+    if (effectivePoints(g.guess, g.points, actual) === 0) set.add(g.userId)
   }
-  return found
+  return set
 }
 
 function initials(name: string) {
@@ -137,7 +131,7 @@ export function PalpitesDaGalera({
 }) {
   const [open, setOpen] = useState(false)
   const [reactions, setReactions] = useState<Map<string, ReactionState>>(new Map())
-  const lastId = hasStarted ? lastPlaceUserId(rows, actual) : null
+  const donkeySet = hasStarted ? donkeyUserIds(rows, actual) : new Set<string>()
 
   // carrega as reações na primeira vez que abre (já com a bola rolando)
   useEffect(() => {
@@ -199,7 +193,7 @@ export function PalpitesDaGalera({
                     matchId={matchId}
                     hasStarted={hasStarted}
                     actual={actual}
-                    isLast={g.userId === lastId}
+                    isLast={donkeySet.has(g.userId)}
                     reactions={reactions.get(g.userId) ?? {}}
                   />
                 ))}

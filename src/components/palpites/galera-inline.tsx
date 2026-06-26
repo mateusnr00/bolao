@@ -27,19 +27,19 @@ function effectivePoints(g: Row, actual: [number, number] | null): number {
   return g.points ?? 0
 }
 
-// userId do último colocado (menor pontuação); empate → o último da lista
-function lastPlaceUserId(rows: Row[], actual: [number, number] | null): string | null {
-  if (rows.length < 2) return null
-  let min = Infinity
-  let found: string | null = null
+// TODOS que zeraram (0 pontos) levam o burrinho — pode ser 2+ no mesmo jogo.
+// Só depois do apito (senão antes do jogo todo mundo estaria com 0).
+function donkeyUserIds(
+  rows: Row[],
+  actual: [number, number] | null,
+  hasStarted: boolean,
+): Set<string> {
+  const set = new Set<string>()
+  if (!hasStarted) return set
   for (const g of rows) {
-    const p = effectivePoints(g, actual)
-    if (p <= min) {
-      min = p
-      found = g.userId
-    }
+    if (effectivePoints(g, actual) === 0) set.add(g.userId)
   }
-  return found
+  return set
 }
 
 function initials(name: string) {
@@ -161,8 +161,8 @@ export function GaleraInline({
       ? dbScore
       : null
 
-  // lanterninha (último colocado) ganha o burrinho
-  const lastId = lastPlaceUserId(rows, actual)
+  // todos que zeraram (0 pts) ganham o burrinho
+  const donkeySet = donkeyUserIds(rows, actual, hasStarted)
 
   async function toggle() {
     const next = !open
@@ -248,7 +248,7 @@ export function GaleraInline({
                     matchId={matchId}
                     hasStarted={hasStarted}
                     actual={actual}
-                    isLast={hasStarted && g.userId === lastId}
+                    isLast={donkeySet.has(g.userId)}
                     reactions={reactions.get(g.userId) ?? {}}
                   />
                 ))}
