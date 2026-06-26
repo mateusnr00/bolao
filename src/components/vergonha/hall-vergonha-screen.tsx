@@ -46,10 +46,10 @@ export function HallVergonhaScreen({
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <Eyebrow className="text-phase-semi">lanterninha da temporada</Eyebrow>
+                <Eyebrow className="text-phase-semi">rei do burrinho 🫏</Eyebrow>
                 <p className="truncate text-[18px] font-semibold text-ink">{champ.name}</p>
                 <p className="text-[13px] text-sepia">
-                  {champ.burrinhoCount}× o pior da partida · {champ.zeroCount} jogos zerados
+                  zerou {champ.zeroCount} {champ.zeroCount === 1 ? 'jogo' : 'jogos'}
                 </p>
               </div>
             </section>
@@ -60,7 +60,7 @@ export function HallVergonhaScreen({
           <section className="space-y-2">
             <div className="flex items-center justify-between">
               <Eyebrow>ranking da vergonha</Eyebrow>
-              <Eyebrow className="text-[10px]">🫏 · 0pts</Eyebrow>
+              <Eyebrow className="text-[10px]">🫏 jogos zerados</Eyebrow>
             </div>
             <ul className="-mx-2">
               {rows.map((m, i) => (
@@ -81,11 +81,8 @@ export function HallVergonhaScreen({
                       </AvatarFallback>
                     </Avatar>
                     <span className="min-w-0 flex-1 truncate text-[15px] text-ink">{m.name}</span>
-                    <span className="flex items-center gap-1 font-mono text-[13px] tabular font-medium text-phase-semi">
-                      🫏 {m.burrinhoCount}
-                    </span>
-                    <span className="w-14 text-right font-mono text-[13px] tabular text-sepia">
-                      {m.zeroCount} zeros
+                    <span className="flex items-center gap-1.5 font-mono text-[13px] tabular font-medium text-phase-semi">
+                      🫏 {m.zeroCount} {m.zeroCount === 1 ? 'zero' : 'zeros'}
                     </span>
                   </Link>
                 </li>

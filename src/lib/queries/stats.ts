@@ -100,7 +100,7 @@ function assignTrophies(members: MemberStat[]) {
         key: 'burro',
         emoji: '🫏',
         label: 'Burrinho-mor',
-        desc: `mais vezes o pior da partida (${maxBurro})`,
+        desc: `mais vezes burrinho — zerou ${maxBurro}×`,
       })
     }
     // marcos (não relativos)
@@ -108,7 +108,7 @@ function assignTrophies(members: MemberStat[]) {
       m.trophies.push({ key: 'sniper', emoji: '🎖️', label: 'Sniper', desc: '3+ placares exatos' })
     }
     if (m.burrinhoCount >= 3) {
-      m.trophies.push({ key: 'burrao', emoji: '📉', label: 'Burrão', desc: '3+ vezes lanterninha' })
+      m.trophies.push({ key: 'burrao', emoji: '📉', label: 'Burrão', desc: 'zerou 3+ vezes' })
     }
   }
 }
@@ -139,33 +139,21 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
     return m && m.status === 'finished' && m.homeScore != null && m.awayScore != null
   })
 
-  // por jogo: menor/maior pontuação e quantos palpitaram (pra achar o "pior")
-  const perMatch = new Map<string, { min: number; max: number; count: number }>()
-  for (const p of finished) {
-    const a = perMatch.get(p.match_id) ?? { min: Infinity, max: -Infinity, count: 0 }
-    a.min = Math.min(a.min, p.points)
-    a.max = Math.max(a.max, p.points)
-    a.count += 1
-    perMatch.set(p.match_id, a)
-  }
-
-  // por membro: soma, melhor palpite, burrinhos, zeros
+  // por membro: soma, melhor palpite, zeros (= burrinhos). Burrinho agora é
+  // simplesmente quem ZEROU no jogo (mesma regra da lista da galera).
   interface Acc {
     sum: number
     count: number
-    burrinho: number
     zeros: number
     best: BestPalpite | null
   }
   const perUser = new Map<string, Acc>()
   for (const p of finished) {
     const m = matchById.get(p.match_id)!
-    const u = perUser.get(p.user_id) ?? { sum: 0, count: 0, burrinho: 0, zeros: 0, best: null }
+    const u = perUser.get(p.user_id) ?? { sum: 0, count: 0, zeros: 0, best: null }
     u.sum += p.points
     u.count += 1
     if (p.points === 0) u.zeros += 1
-    const agg = perMatch.get(p.match_id)!
-    if (agg.count >= 2 && agg.min < agg.max && p.points === agg.min) u.burrinho += 1
     if (!u.best || p.points > u.best.points) {
       u.best = {
         points: p.points,
@@ -190,7 +178,7 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
       predictionsMade: r.predictions_made,
       exactScores: r.exact_scores,
       average: u && u.count > 0 ? u.sum / u.count : 0,
-      burrinhoCount: u?.burrinho ?? 0,
+      burrinhoCount: u?.zeros ?? 0, // burrinho = zerou
       zeroCount: u?.zeros ?? 0,
       best: u?.best ?? null,
       trophies: [],

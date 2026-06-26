@@ -115,8 +115,7 @@ export function MemberScreen({
               <Stat label="posição" value={`${member.position}º`} />
               <Stat label="média/jogo" value={member.average.toFixed(1)} />
               <Stat label="placares exatos" value={member.exactScores} />
-              <Stat label="vezes burrinho 🫏" value={member.burrinhoCount} accent="burro" />
-              <Stat label="jogos zerados" value={member.zeroCount} accent="burro" />
+              <Stat label="jogos zerados 🫏" value={member.zeroCount} accent="burro" />
             </div>
             <p className="text-[12px] text-sepia">
               {member.predictionsMade} palpites em jogos já encerrados.
