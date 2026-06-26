@@ -87,9 +87,13 @@ export async function getDashboard(
   ])
   const exactScorePoints = rulesRes.data?.exact_score_points ?? 25
 
+  // mata-mata ainda sem confronto definido (placeholder "A definir") não conta
+  // como jogo a palpitar.
+  const isTbd = (m: MatchView) => m.home.code === 'TBD' || m.away.code === 'TBD'
+
   // próximo jogo aberto
   const upcoming = matches
-    .filter((m) => m.status === 'scheduled' && new Date(m.kickoffAt) > now)
+    .filter((m) => m.status === 'scheduled' && new Date(m.kickoffAt) > now && !isTbd(m))
     .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt))[0]
 
   // jogos de HOJE ainda abertos (pro aviso "falta palpitar")
@@ -99,7 +103,8 @@ export async function getDashboard(
       (m) =>
         m.status === 'scheduled' &&
         new Date(m.kickoffAt) > now &&
-        dayKey(m.kickoffAt) === todayKey,
+        dayKey(m.kickoffAt) === todayKey &&
+        !isTbd(m),
     )
     .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt))
 

@@ -202,12 +202,9 @@ export async function runOpenfootballSync(
     const real1 = isReal(mt.team1)
     const real2 = isReal(mt.team2)
     if (isKO) {
-      // precisa de ao menos um time real; se UM lado é desconhecido, precisa do
-      // placeholder TBD no banco (senão pula e espera a migration/o adversário).
-      if (!real1 && !real2) {
-        skipped++
-        continue
-      }
+      // mata-mata entra SEMPRE (chaveamento completo, mesmo "a definir × a
+      // definir"). Lado desconhecido usa o placeholder "A definir" (precisa
+      // existir no banco — migration 0026).
       if ((!real1 || !real2) && !tbdId) {
         skipped++
         continue
