@@ -378,6 +378,7 @@ function StaticMatchRow({
 
   return (
     <li
+      data-live={live ? 'true' : undefined}
       className={cn(
         'rounded-xl border bg-paper p-4',
         live ? 'border-phase-semi/40' : 'border-rule',
@@ -625,6 +626,8 @@ export function PalpitesScreen({
   const [roundId, setRoundId] = useState<string>(
     () => rounds.find((r) => r.isCurrent)?.id ?? rounds[0]?.id ?? '',
   )
+  const mainRef = useRef<HTMLElement>(null)
+  const scrolledRef = useRef(false)
 
   const round = rounds.find((r) => r.id === roundId) ?? rounds[0]
   const days = (round?.days ?? [])
@@ -634,12 +637,26 @@ export function PalpitesScreen({
     }))
     .filter((d) => d.matches.length > 0)
 
+  // ao abrir, desce até o primeiro jogo AO VIVO (uma vez só, pra não brigar
+  // com o scroll do usuário depois).
+  useEffect(() => {
+    if (scrolledRef.current || !hasLive) return
+    const el = mainRef.current?.querySelector('[data-live="true"]')
+    if (el) {
+      scrolledRef.current = true
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [hasLive, days])
+
   return (
     <div className="flex min-h-full flex-col bg-paper">
       {hasLive && <LiveRefresher />}
       <TopNav active="palpites" />
 
-      <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
+      <main
+        ref={mainRef}
+        className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10"
+      >
         <div className="space-y-5">
           <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">palpites</h1>
 
