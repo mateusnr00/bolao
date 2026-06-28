@@ -535,6 +535,19 @@ export type Database = {
         }
         Relationships: []
       }
+      pool_knockout_rankings: {
+        Row: {
+          pool_id: string
+          user_id: string
+          display_name: string | null
+          username: string
+          avatar_url: string | null
+          total_points: number
+          predictions_made: number
+          exact_scores: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_pool_member: {

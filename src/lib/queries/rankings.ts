@@ -23,16 +23,20 @@ interface RawRanking {
   exact_scores: number
 }
 
-// Ranking de um bolão a partir da view pool_rankings (RLS via security_invoker).
+// Ranking de um bolão a partir de uma view (pool_rankings = geral;
+// pool_knockout_rankings = só mata-mata). RLS via security_invoker.
 // Ordena por pontos → exatos → palpites, e calcula a posição.
-export async function getPoolRanking(poolId: string): Promise<RankingRow[]> {
+async function rankingFromView(
+  view: 'pool_rankings' | 'pool_knockout_rankings',
+  poolId: string,
+): Promise<RankingRow[]> {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   const { data, error } = await supabase
-    .from('pool_rankings')
+    .from(view)
     .select(
       'user_id, display_name, username, avatar_url, total_points, predictions_made, exact_scores',
     )
@@ -54,12 +58,31 @@ export async function getPoolRanking(poolId: string): Promise<RankingRow[]> {
   }))
 }
 
+export function getPoolRanking(poolId: string): Promise<RankingRow[]> {
+  return rankingFromView('pool_rankings', poolId)
+}
+
+/** Ranking paralelo do mata-mata (16-avos → final). */
+export function getPoolKnockoutRanking(poolId: string): Promise<RankingRow[]> {
+  return rankingFromView('pool_knockout_rankings', poolId)
+}
+
 // ── pontuação provisória ao vivo ────────────────────────────────────────────
+
+const KNOCKOUT_STAGES = new Set([
+  'round_of_32',
+  'round_of_16',
+  'quarter_final',
+  'semi_final',
+  'third_place',
+  'final',
+])
 
 export interface LiveMatchGuesses {
   matchId: string
   homeCode: string
   awayCode: string
+  isKnockout: boolean // conta no ranking do mata-mata
   // placar do banco (orientado casa/fora), fallback quando o front pisca
   dbScore: [number, number] | null
   // palpite de cada membro pra esse jogo (já liberado, jogo em andamento)
@@ -70,6 +93,7 @@ interface RawLiveMatch {
   id: string
   home_score: number | null
   away_score: number | null
+  stage: string
   home: { code: string } | { code: string }[] | null
   away: { code: string } | { code: string }[] | null
 }
@@ -86,7 +110,7 @@ export async function getLiveMatchGuesses(): Promise<LiveMatchGuesses[]> {
   const { data: matches, error } = await supabase
     .from('matches')
     .select(
-      `id, home_score, away_score,
+      `id, home_score, away_score, stage,
        home:teams!matches_home_team_id_fkey ( code ),
        away:teams!matches_away_team_id_fkey ( code )`,
     )
@@ -113,6 +137,7 @@ export async function getLiveMatchGuesses(): Promise<LiveMatchGuesses[]> {
       matchId: m.id,
       homeCode: code(m.home),
       awayCode: code(m.away),
+      isKnockout: KNOCKOUT_STAGES.has(m.stage),
       dbScore:
         m.home_score != null && m.away_score != null
           ? [m.home_score, m.away_score]

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BottomNav, Eyebrow, ExactDots, LiveBadge, Rule, TopNav } from '@/components/we26'
@@ -25,9 +26,12 @@ export interface RankRow {
 export interface RankingData {
   poolName: string
   memberCount: number
-  rows: RankRow[]
+  rows: RankRow[] // ranking geral (já existente)
+  knockout: RankRow[] // ranking paralelo do mata-mata (16-avos → final)
   liveMatches: LiveMatchGuesses[]
 }
+
+type Tab = 'geral' | 'mata'
 
 interface ComputedRow extends RankRow {
   livePoints: number // pontos provisórios (jogos ao vivo)
@@ -77,6 +81,7 @@ function computeLiveDelta(
 
 export function RankingScreen({ data }: { data: RankingData }) {
   const { liveMatches } = data
+  const [tab, setTab] = useState<Tab>('geral')
 
   // placar ao vivo do front (re-renderiza sozinho a cada atualização)
   const liveEntries = useAllLive()
@@ -84,11 +89,22 @@ export function RankingScreen({ data }: { data: RankingData }) {
     liveEntries.map((e) => [pairKey(e.homeCode, e.awayCode), e]),
   )
 
-  const delta = computeLiveDelta(liveMatches, liveByPair)
-  const liveOn = liveMatches.length > 0
+  // o mata-mata só conta jogos de mata-mata; o geral conta tudo
+  const baseRows = tab === 'geral' ? data.rows : data.knockout
+  const liveForTab =
+    tab === 'geral' ? liveMatches : liveMatches.filter((m) => m.isKnockout)
+
+  const delta = computeLiveDelta(liveForTab, liveByPair)
+  const liveAny = liveMatches.length > 0
+  const liveOn = liveForTab.length > 0
+
+  // o mata-mata "começa" quando rola o 1º jogo dos 16-avos
+  const knockoutStarted =
+    data.knockout.some((r) => r.points > 0) ||
+    liveMatches.some((m) => m.isKnockout)
 
   // recompõe a tabela com os pontos provisórios e reordena
-  const computed: ComputedRow[] = data.rows
+  const computed: ComputedRow[] = baseRows
     .map((r) => {
       const livePoints = delta.get(r.userId) ?? 0
       return { ...r, livePoints, total: r.points + livePoints }
@@ -103,13 +119,17 @@ export function RankingScreen({ data }: { data: RankingData }) {
 
   const me = computed.find((r) => r.isMe)
   const leader = computed[0]?.total ?? 0
-  // lanterninha: último colocado (só faz sentido com mais de um membro)
+  // lanterninha: último colocado — só com mais de um membro E alguém já pontuou
   const lastUserId =
-    computed.length > 1 ? computed[computed.length - 1].userId : null
+    computed.length > 1 && leader > 0
+      ? computed[computed.length - 1].userId
+      : null
+
+  const showEmptyKnockout = tab === 'mata' && !knockoutStarted
 
   return (
     <div className="flex min-h-full flex-col bg-paper">
-      {liveOn && <LiveRefresher />}
+      {liveAny && <LiveRefresher />}
       <TopNav active="ranking" />
 
       <main className="mx-auto w-full max-w-[680px] flex-1 px-4 pb-24 pt-6 md:pb-10">
@@ -133,14 +153,42 @@ export function RankingScreen({ data }: { data: RankingData }) {
             </Link>
           </section>
 
-          {me && (
+          {/* abas: geral × mata-mata */}
+          <div className="flex gap-1 rounded-full border border-rule p-1">
+            {(
+              [
+                { key: 'geral', label: '🏆 geral' },
+                { key: 'mata', label: '🔥 mata-mata' },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setTab(t.key)}
+                className={cn(
+                  'flex-1 rounded-full py-1.5 text-[13px] font-semibold transition-colors',
+                  tab === t.key ? 'bg-ink text-paper' : 'text-sepia hover:text-ink',
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'mata' && (
+            <p className="text-center text-[12px] text-sepia">
+              competição paralela · só os jogos do mata-mata (16-avos → final)
+            </p>
+          )}
+
+          {me && !showEmptyKnockout && (
             <section className="grid grid-cols-3 gap-3 rounded-lg border border-rule bg-bone/50 p-4">
               <div>
                 <Eyebrow>posição</Eyebrow>
                 <p className="display text-3xl text-ink">{me.position}º</p>
               </div>
               <div>
-                <Eyebrow>pontos</Eyebrow>
+                <Eyebrow>{tab === 'mata' ? 'pts mata-mata' : 'pontos'}</Eyebrow>
                 <p className="display text-3xl text-ink tabular">
                   {me.total}
                   {me.livePoints > 0 && (
@@ -173,7 +221,12 @@ export function RankingScreen({ data }: { data: RankingData }) {
               <Eyebrow>classificação</Eyebrow>
               <Eyebrow className="text-[10px]">pts</Eyebrow>
             </div>
-            {computed.length === 0 ? (
+            {showEmptyKnockout ? (
+              <p className="py-10 text-center text-[14px] text-sepia">
+                🔥 o mata-mata começa nos 16-avos. todo mundo zerado até a bola
+                rolar no primeiro jogo eliminatório.
+              </p>
+            ) : computed.length === 0 ? (
               <p className="py-10 text-center text-[14px] text-sepia">
                 ninguém pontuou ainda. os pontos aparecem quando os jogos terminam.
               </p>
