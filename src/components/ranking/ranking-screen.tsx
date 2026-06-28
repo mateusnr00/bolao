@@ -1,7 +1,8 @@
 'use client'
 
+import { Check, ChevronDown, Trophy } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BottomNav, Eyebrow, ExactDots, LiveBadge, Rule, TopNav } from '@/components/we26'
@@ -79,6 +80,71 @@ function computeLiveDelta(
   return delta
 }
 
+const TAB_OPTIONS: { key: Tab; label: string }[] = [
+  { key: 'geral', label: '🏆 ranking geral' },
+  { key: 'mata', label: '🔥 mata-mata' },
+]
+
+// dropdown no mesmo estilo do seletor de rodada dos palpites
+function RankTabSelector({ tab, onSelect }: { tab: Tab; onSelect: (t: Tab) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const selected = TAB_OPTIONS.find((o) => o.key === tab) ?? TAB_OPTIONS[0]
+
+  useEffect(() => {
+    if (!open) return
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2.5 rounded-lg border border-rule-dark bg-paper px-3.5 py-2.5 text-left transition-colors hover:bg-bone"
+      >
+        <Trophy className="size-4 shrink-0 text-trophy-deep" />
+        <span className="flex-1 text-[15px] font-medium text-ink">{selected.label}</span>
+        <ChevronDown
+          className={cn(
+            'size-4 shrink-0 text-sepia transition-transform',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 overflow-hidden rounded-lg border border-rule-dark bg-paper shadow-lg">
+          <ul className="py-1">
+            {TAB_OPTIONS.map((o) => (
+              <li key={o.key}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelect(o.key)
+                    setOpen(false)
+                  }}
+                  className={cn(
+                    'flex w-full items-center justify-between px-3.5 py-2.5 text-left text-[15px] transition-colors hover:bg-bone',
+                    o.key === tab ? 'font-semibold text-trophy-deep' : 'text-ink',
+                  )}
+                >
+                  <span>{o.label}</span>
+                  {o.key === tab && <Check className="size-4" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function RankingScreen({ data }: { data: RankingData }) {
   const { liveMatches } = data
   const [tab, setTab] = useState<Tab>('geral')
@@ -153,27 +219,8 @@ export function RankingScreen({ data }: { data: RankingData }) {
             </Link>
           </section>
 
-          {/* abas: geral × mata-mata */}
-          <div className="flex gap-1 rounded-full border border-rule p-1">
-            {(
-              [
-                { key: 'geral', label: '🏆 geral' },
-                { key: 'mata', label: '🔥 mata-mata' },
-              ] as const
-            ).map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => setTab(t.key)}
-                className={cn(
-                  'flex-1 rounded-full py-1.5 text-[13px] font-semibold transition-colors',
-                  tab === t.key ? 'bg-ink text-paper' : 'text-sepia hover:text-ink',
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {/* seletor geral × mata-mata (mesmo estilo do seletor de rodada) */}
+          <RankTabSelector tab={tab} onSelect={setTab} />
 
           {tab === 'mata' && (
             <p className="text-center text-[12px] text-sepia">
