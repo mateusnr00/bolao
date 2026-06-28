@@ -24,7 +24,7 @@ export const CONTRACT_CLAUSES: ContractClause[] = [
     title: 'Castigos para quem ficar em último',
     items: [
       'Fase de grupos completa: 1 vídeo falando que é o “burrinho da fase de grupos”.',
-      '16 avos de final: 1 vídeo.',
+      '32 avos de final: 1 vídeo.',
       'Oitavas de final: 1 vídeo.',
       'Quartas, semifinal e final: 1 único vídeo, considerando as três fases juntas.',
       'Em caso de empate na última colocação, todos os empatados deverão gravar o vídeo.',

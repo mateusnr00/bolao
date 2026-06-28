@@ -30,7 +30,7 @@ const ROUND_LABEL: Record<RoundId, string> = {
   g1: 'rodada 1',
   g2: 'rodada 2',
   g3: 'rodada 3',
-  round_of_32: '16-avos',
+  round_of_32: '32-avos',
   round_of_16: 'oitavas',
   quarter_final: 'quartas',
   semi_final: 'semi',
