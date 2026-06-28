@@ -28,11 +28,17 @@ export interface RankingData {
   poolName: string
   memberCount: number
   rows: RankRow[] // ranking geral (já existente)
-  knockout: RankRow[] // ranking paralelo do mata-mata (16-avos → final)
+  stages: Record<string, RankRow[]> // ranking por fase do mata-mata
   liveMatches: LiveMatchGuesses[]
 }
 
-type Tab = 'geral' | 'mata'
+type Tab =
+  | 'geral'
+  | 'round_of_32'
+  | 'round_of_16'
+  | 'quarter_final'
+  | 'semi_final'
+  | 'final'
 
 interface ComputedRow extends RankRow {
   livePoints: number // pontos provisórios (jogos ao vivo)
@@ -82,7 +88,11 @@ function computeLiveDelta(
 
 const TAB_OPTIONS: { key: Tab; label: string }[] = [
   { key: 'geral', label: '🏆 ranking geral' },
-  { key: 'mata', label: '🔥 mata-mata' },
+  { key: 'round_of_32', label: '16-avos de final' },
+  { key: 'round_of_16', label: 'oitavas de final' },
+  { key: 'quarter_final', label: 'quartas de final' },
+  { key: 'semi_final', label: 'semifinal' },
+  { key: 'final', label: 'final' },
 ]
 
 // dropdown no mesmo estilo do seletor de rodada dos palpites
@@ -155,19 +165,23 @@ export function RankingScreen({ data }: { data: RankingData }) {
     liveEntries.map((e) => [pairKey(e.homeCode, e.awayCode), e]),
   )
 
-  // o mata-mata só conta jogos de mata-mata; o geral conta tudo
-  const baseRows = tab === 'geral' ? data.rows : data.knockout
-  const liveForTab =
-    tab === 'geral' ? liveMatches : liveMatches.filter((m) => m.isKnockout)
+  // geral conta tudo; cada fase conta só os jogos daquela fase
+  const isGeral = tab === 'geral'
+  const baseRows = isGeral ? data.rows : (data.stages[tab] ?? [])
+  const liveForTab = isGeral
+    ? liveMatches
+    : liveMatches.filter((m) => m.stage === tab)
 
   const delta = computeLiveDelta(liveForTab, liveByPair)
   const liveAny = liveMatches.length > 0
   const liveOn = liveForTab.length > 0
 
-  // o mata-mata "começa" quando rola o 1º jogo dos 16-avos
-  const knockoutStarted =
-    data.knockout.some((r) => r.points > 0) ||
-    liveMatches.some((m) => m.isKnockout)
+  // a fase "começou" quando algum jogo dela já pontuou ou está rolando
+  const phaseStarted =
+    isGeral ||
+    baseRows.some((r) => r.points > 0) ||
+    liveForTab.length > 0
+  const tabLabel = TAB_OPTIONS.find((t) => t.key === tab)?.label ?? ''
 
   // recompõe a tabela com os pontos provisórios e reordena
   const computed: ComputedRow[] = baseRows
@@ -191,7 +205,7 @@ export function RankingScreen({ data }: { data: RankingData }) {
       ? computed[computed.length - 1].userId
       : null
 
-  const showEmptyKnockout = tab === 'mata' && !knockoutStarted
+  const showEmptyPhase = !isGeral && !phaseStarted
 
   return (
     <div className="flex min-h-full flex-col bg-paper">
@@ -222,20 +236,20 @@ export function RankingScreen({ data }: { data: RankingData }) {
           {/* seletor geral × mata-mata (mesmo estilo do seletor de rodada) */}
           <RankTabSelector tab={tab} onSelect={setTab} />
 
-          {tab === 'mata' && (
+          {!isGeral && (
             <p className="text-center text-[12px] text-sepia">
-              competição paralela · só os jogos do mata-mata (16-avos → final)
+              ranking só dos jogos da fase · {tabLabel}
             </p>
           )}
 
-          {me && !showEmptyKnockout && (
+          {me && !showEmptyPhase && (
             <section className="grid grid-cols-3 gap-3 rounded-lg border border-rule bg-bone/50 p-4">
               <div>
                 <Eyebrow>posição</Eyebrow>
                 <p className="display text-3xl text-ink">{me.position}º</p>
               </div>
               <div>
-                <Eyebrow>{tab === 'mata' ? 'pts mata-mata' : 'pontos'}</Eyebrow>
+                <Eyebrow>{isGeral ? 'pontos' : 'pts na fase'}</Eyebrow>
                 <p className="display text-3xl text-ink tabular">
                   {me.total}
                   {me.livePoints > 0 && (
@@ -268,10 +282,10 @@ export function RankingScreen({ data }: { data: RankingData }) {
               <Eyebrow>classificação</Eyebrow>
               <Eyebrow className="text-[10px]">pts</Eyebrow>
             </div>
-            {showEmptyKnockout ? (
+            {showEmptyPhase ? (
               <p className="py-10 text-center text-[14px] text-sepia">
-                🔥 o mata-mata começa nos 16-avos. todo mundo zerado até a bola
-                rolar no primeiro jogo eliminatório.
+                a fase de {tabLabel} ainda não começou. todo mundo zerado até a
+                bola rolar no primeiro jogo dessa fase.
               </p>
             ) : computed.length === 0 ? (
               <p className="py-10 text-center text-[14px] text-sepia">

@@ -23,20 +23,36 @@ interface RawRanking {
   exact_scores: number
 }
 
-// Ranking de um bolão a partir de uma view (pool_rankings = geral;
-// pool_knockout_rankings = só mata-mata). RLS via security_invoker.
-// Ordena por pontos → exatos → palpites, e calcula a posição.
-async function rankingFromView(
-  view: 'pool_rankings' | 'pool_knockout_rankings',
-  poolId: string,
-): Promise<RankingRow[]> {
+function toRow(r: RawRanking, i: number, meId: string | undefined): RankingRow {
+  return {
+    position: i + 1,
+    userId: r.user_id,
+    name: r.display_name?.trim() || r.username,
+    avatarUrl: r.avatar_url,
+    points: r.total_points,
+    predictionsMade: r.predictions_made,
+    exactScores: r.exact_scores,
+    isMe: r.user_id === meId,
+  }
+}
+
+function rankSort(a: RankingRow, b: RankingRow) {
+  return (
+    b.points - a.points ||
+    b.exactScores - a.exactScores ||
+    b.predictionsMade - a.predictionsMade
+  )
+}
+
+// Ranking GERAL do bolão (pool_rankings). RLS via security_invoker.
+export async function getPoolRanking(poolId: string): Promise<RankingRow[]> {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   const { data, error } = await supabase
-    .from(view)
+    .from('pool_rankings')
     .select(
       'user_id, display_name, username, avatar_url, total_points, predictions_made, exact_scores',
     )
@@ -45,44 +61,47 @@ async function rankingFromView(
     .order('exact_scores', { ascending: false })
     .order('predictions_made', { ascending: false })
   if (error) throw new Error(`Erro ao buscar ranking: ${error.message}`)
-
-  return (data as unknown as RawRanking[]).map((r, i) => ({
-    position: i + 1,
-    userId: r.user_id,
-    name: r.display_name?.trim() || r.username,
-    avatarUrl: r.avatar_url,
-    points: r.total_points,
-    predictionsMade: r.predictions_made,
-    exactScores: r.exact_scores,
-    isMe: r.user_id === user?.id,
-  }))
+  return (data as unknown as RawRanking[]).map((r, i) => toRow(r, i, user?.id))
 }
 
-export function getPoolRanking(poolId: string): Promise<RankingRow[]> {
-  return rankingFromView('pool_rankings', poolId)
+interface RawStageRanking extends RawRanking {
+  stage: string
 }
 
-/** Ranking paralelo do mata-mata (16-avos → final). */
-export function getPoolKnockoutRanking(poolId: string): Promise<RankingRow[]> {
-  return rankingFromView('pool_knockout_rankings', poolId)
+/** Rankings POR FASE do mata-mata: stage → classificação daquela fase. */
+export async function getPoolStageRankings(
+  poolId: string,
+): Promise<Record<string, RankingRow[]>> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('pool_stage_rankings')
+    .select(
+      'user_id, display_name, username, avatar_url, total_points, predictions_made, exact_scores, stage',
+    )
+    .eq('pool_id', poolId)
+  if (error) throw new Error(`Erro ao buscar ranking por fase: ${error.message}`)
+
+  const byStage: Record<string, RankingRow[]> = {}
+  for (const r of (data as unknown as RawStageRanking[]) ?? []) {
+    ;(byStage[r.stage] ??= []).push(toRow(r, 0, user?.id))
+  }
+  for (const stage of Object.keys(byStage)) {
+    byStage[stage].sort(rankSort).forEach((r, i) => (r.position = i + 1))
+  }
+  return byStage
 }
 
 // ── pontuação provisória ao vivo ────────────────────────────────────────────
-
-const KNOCKOUT_STAGES = new Set([
-  'round_of_32',
-  'round_of_16',
-  'quarter_final',
-  'semi_final',
-  'third_place',
-  'final',
-])
 
 export interface LiveMatchGuesses {
   matchId: string
   homeCode: string
   awayCode: string
-  isKnockout: boolean // conta no ranking do mata-mata
+  stage: string // fase do jogo (pra os rankings por fase)
   // placar do banco (orientado casa/fora), fallback quando o front pisca
   dbScore: [number, number] | null
   // palpite de cada membro pra esse jogo (já liberado, jogo em andamento)
@@ -137,7 +156,7 @@ export async function getLiveMatchGuesses(): Promise<LiveMatchGuesses[]> {
       matchId: m.id,
       homeCode: code(m.home),
       awayCode: code(m.away),
-      isKnockout: KNOCKOUT_STAGES.has(m.stage),
+      stage: m.stage,
       dbScore:
         m.home_score != null && m.away_score != null
           ? [m.home_score, m.away_score]

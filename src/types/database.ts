@@ -548,6 +548,20 @@ export type Database = {
         }
         Relationships: []
       }
+      pool_stage_rankings: {
+        Row: {
+          pool_id: string
+          user_id: string
+          display_name: string | null
+          username: string
+          avatar_url: string | null
+          stage: MatchStage
+          total_points: number
+          predictions_made: number
+          exact_scores: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_pool_member: {

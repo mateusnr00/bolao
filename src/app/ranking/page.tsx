@@ -3,8 +3,8 @@ import { RankingScreen } from '@/components/ranking/ranking-screen'
 import { getUserPools } from '@/lib/queries/pools'
 import {
   getLiveMatchGuesses,
-  getPoolKnockoutRanking,
   getPoolRanking,
+  getPoolStageRankings,
 } from '@/lib/queries/rankings'
 
 export const dynamic = 'force-dynamic'
@@ -22,9 +22,9 @@ export default async function RankingPage() {
     )
   }
 
-  const [rows, knockout, liveMatches] = await Promise.all([
+  const [rows, stages, liveMatches] = await Promise.all([
     getPoolRanking(pool.id),
-    getPoolKnockoutRanking(pool.id),
+    getPoolStageRankings(pool.id),
     getLiveMatchGuesses(),
   ])
   return (
@@ -33,7 +33,7 @@ export default async function RankingPage() {
         poolName: pool.name,
         memberCount: pool.memberCount,
         rows,
-        knockout,
+        stages,
         liveMatches,
       }}
     />
