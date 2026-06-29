@@ -88,7 +88,7 @@ function computeLiveDelta(
 
 const TAB_OPTIONS: { key: Tab; label: string }[] = [
   { key: 'geral', label: '🏆 ranking geral' },
-  { key: 'round_of_32', label: '32-avos de final' },
+  { key: 'round_of_32', label: '16-avos de final' },
   { key: 'round_of_16', label: 'oitavas de final' },
   { key: 'quarter_final', label: 'quartas de final' },
   { key: 'semi_final', label: 'semifinal' },

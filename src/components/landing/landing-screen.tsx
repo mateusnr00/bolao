@@ -29,7 +29,7 @@ const STEPS = [
 
 const PHASES = [
   { label: 'grupos', color: 'bg-phase-group' },
-  { label: '32-avos', color: 'bg-phase-32' },
+  { label: '16-avos', color: 'bg-phase-32' },
   { label: 'oitavas', color: 'bg-phase-16' },
   { label: 'quartas', color: 'bg-phase-quarter' },
   { label: 'semi', color: 'bg-phase-semi' },

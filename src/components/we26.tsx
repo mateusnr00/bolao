@@ -25,7 +25,7 @@ export type Phase =
 
 export const PHASE_META: Record<Phase, { label: string; bg: string; fg: string }> = {
   group: { label: 'grupos', bg: 'bg-phase-group', fg: 'text-paper' },
-  round_of_32: { label: '32-avos', bg: 'bg-phase-32', fg: 'text-ink' },
+  round_of_32: { label: '16-avos', bg: 'bg-phase-32', fg: 'text-ink' },
   round_of_16: { label: 'oitavas', bg: 'bg-phase-16', fg: 'text-paper' },
   quarter_final: { label: 'quartas', bg: 'bg-phase-quarter', fg: 'text-paper' },
   semi_final: { label: 'semi', bg: 'bg-phase-semi', fg: 'text-paper' },
