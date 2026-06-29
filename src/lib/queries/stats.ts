@@ -14,6 +14,8 @@ export interface BestPalpite {
   points: number
   homeCode: string
   awayCode: string
+  homeFlag: string | null
+  awayFlag: string | null
   actual: [number, number]
   guess: [number, number]
   exact: boolean // cravou o placar exato
@@ -31,8 +33,7 @@ export interface MemberStat {
   average: number
   burrinhoCount: number
   zeroCount: number
-  bestPalpites: BestPalpite[] // melhores palpites (não cravados), por pontos
-  cravadas: BestPalpite[] // placares exatos
+  cravadas: BestPalpite[] // placares exatos cravados
   trophies: Trophy[]
 }
 
@@ -160,6 +161,8 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
       points: p.points,
       homeCode: m.home.code,
       awayCode: m.away.code,
+      homeFlag: m.home.flagUrl,
+      awayFlag: m.away.flagUrl,
       actual: [m.homeScore!, m.awayScore!],
       guess: [p.home_score, p.away_score],
       exact: p.home_score === m.homeScore && p.away_score === m.awayScore,
@@ -170,12 +173,7 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
   const members: MemberStat[] = ((rankRes.data as RawRank[] | null) ?? []).map((r, i) => {
     const u = perUser.get(r.user_id)
     const pals = u?.pals ?? []
-    // melhores palpites = não-cravados com pontos, top 5 por pontuação
-    const bestPalpites = pals
-      .filter((x) => !x.exact && x.points > 0)
-      .sort((a, b) => b.points - a.points)
-      .slice(0, 5)
-    // cravadas = placares exatos (mostra primeiro os de fase mais valiosa = + pts)
+    // cravadas = placares exatos (mostra primeiro os que valeram mais pontos)
     const cravadas = pals.filter((x) => x.exact).sort((a, b) => b.points - a.points)
     return {
       userId: r.user_id,
@@ -189,7 +187,6 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
       average: u && u.count > 0 ? u.sum / u.count : 0,
       burrinhoCount: u?.zeros ?? 0, // burrinho = zerou
       zeroCount: u?.zeros ?? 0,
-      bestPalpites,
       cravadas,
       trophies: [],
     }

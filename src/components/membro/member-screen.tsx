@@ -2,34 +2,36 @@ import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { BottomNav, Eyebrow, Rule, TopNav } from '@/components/we26'
+import { BottomNav, Eyebrow, Flag, Rule, TopNav } from '@/components/we26'
 import { DONKEY_SRC } from '@/lib/brand'
 import type { BestPalpite, MemberStat } from '@/lib/queries/stats'
 import { cn } from '@/lib/utils'
 
-function PalpiteRow({ b }: { b: BestPalpite }) {
+function CravadaCard({ b }: { b: BestPalpite }) {
   return (
-    <li className="flex items-center justify-between gap-3 rounded-lg border border-rule p-4">
-      <div className="space-y-0.5">
-        <p className="font-mono text-[15px] font-semibold text-ink">
-          {b.homeCode} {b.actual[0]}×{b.actual[1]} {b.awayCode}
-        </p>
-        <p className="text-[12px] text-sepia">
-          {b.exact ? (
-            <>cravou o placar 🎯</>
-          ) : (
-            <>
-              palpitou{' '}
-              <span className="font-mono text-ink">
-                {b.guess[0]}×{b.guess[1]}
-              </span>
-            </>
-          )}
-        </p>
+    <li className="rounded-xl border border-trophy/30 bg-trophy/5 p-3.5">
+      <div className="flex items-center justify-center gap-3">
+        <span className="flex min-w-0 flex-1 items-center justify-end gap-2">
+          <span className="truncate font-mono text-[15px] font-semibold text-ink">
+            {b.homeCode}
+          </span>
+          <Flag src={b.homeFlag ?? undefined} className="h-5 w-7" />
+        </span>
+        <span className="shrink-0 font-mono text-[22px] tabular font-bold text-ink">
+          {b.actual[0]}
+          <span className="px-1.5 text-sepia">×</span>
+          {b.actual[1]}
+        </span>
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <Flag src={b.awayFlag ?? undefined} className="h-5 w-7" />
+          <span className="truncate font-mono text-[15px] font-semibold text-ink">
+            {b.awayCode}
+          </span>
+        </span>
       </div>
-      <span className="shrink-0 font-mono text-lg tabular font-semibold text-trophy-deep">
-        +{b.points}
-      </span>
+      <p className="mt-2 text-center text-[11px] font-semibold uppercase tracking-[0.08em] text-trophy-deep">
+        🎯 cravada · +{b.points} pts
+      </p>
     </li>
   )
 }
@@ -151,31 +153,15 @@ export function MemberScreen({
 
           <Rule />
 
-          {/* melhores palpites */}
-          <section className="space-y-2.5">
-            <Eyebrow>melhores palpites</Eyebrow>
-            {member.bestPalpites.length > 0 ? (
-              <ul className="space-y-2">
-                {member.bestPalpites.map((b, i) => (
-                  <PalpiteRow key={i} b={b} />
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[13px] text-sepia">ainda sem pontos em jogos encerrados.</p>
-            )}
-          </section>
-
-          <Rule />
-
           {/* cravadas (placares exatos) */}
           <section className="space-y-2.5">
             <Eyebrow>
               cravadas 🎯 {member.cravadas.length > 0 && `(${member.cravadas.length})`}
             </Eyebrow>
             {member.cravadas.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-2.5">
                 {member.cravadas.map((b, i) => (
-                  <PalpiteRow key={i} b={b} />
+                  <CravadaCard key={i} b={b} />
                 ))}
               </ul>
             ) : (
