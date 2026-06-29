@@ -16,6 +16,7 @@ export interface BestPalpite {
   awayCode: string
   actual: [number, number]
   guess: [number, number]
+  exact: boolean // cravou o placar exato
 }
 
 export interface MemberStat {
@@ -30,7 +31,8 @@ export interface MemberStat {
   average: number
   burrinhoCount: number
   zeroCount: number
-  best: BestPalpite | null
+  bestPalpites: BestPalpite[] // melhores palpites (não cravados), por pontos
+  cravadas: BestPalpite[] // placares exatos
   trophies: Trophy[]
 }
 
@@ -139,35 +141,42 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
     return m && m.status === 'finished' && m.homeScore != null && m.awayScore != null
   })
 
-  // por membro: soma, melhor palpite, zeros (= burrinhos). Burrinho agora é
-  // simplesmente quem ZEROU no jogo (mesma regra da lista da galera).
+  // por membro: soma, zeros (= burrinhos) e todos os palpites encerrados (pra
+  // derivar melhores palpites + cravadas). Burrinho = quem ZEROU no jogo.
   interface Acc {
     sum: number
     count: number
     zeros: number
-    best: BestPalpite | null
+    pals: BestPalpite[]
   }
   const perUser = new Map<string, Acc>()
   for (const p of finished) {
     const m = matchById.get(p.match_id)!
-    const u = perUser.get(p.user_id) ?? { sum: 0, count: 0, zeros: 0, best: null }
+    const u = perUser.get(p.user_id) ?? { sum: 0, count: 0, zeros: 0, pals: [] }
     u.sum += p.points
     u.count += 1
     if (p.points === 0) u.zeros += 1
-    if (!u.best || p.points > u.best.points) {
-      u.best = {
-        points: p.points,
-        homeCode: m.home.code,
-        awayCode: m.away.code,
-        actual: [m.homeScore!, m.awayScore!],
-        guess: [p.home_score, p.away_score],
-      }
-    }
+    u.pals.push({
+      points: p.points,
+      homeCode: m.home.code,
+      awayCode: m.away.code,
+      actual: [m.homeScore!, m.awayScore!],
+      guess: [p.home_score, p.away_score],
+      exact: p.home_score === m.homeScore && p.away_score === m.awayScore,
+    })
     perUser.set(p.user_id, u)
   }
 
   const members: MemberStat[] = ((rankRes.data as RawRank[] | null) ?? []).map((r, i) => {
     const u = perUser.get(r.user_id)
+    const pals = u?.pals ?? []
+    // melhores palpites = não-cravados com pontos, top 5 por pontuação
+    const bestPalpites = pals
+      .filter((x) => !x.exact && x.points > 0)
+      .sort((a, b) => b.points - a.points)
+      .slice(0, 5)
+    // cravadas = placares exatos (mostra primeiro os de fase mais valiosa = + pts)
+    const cravadas = pals.filter((x) => x.exact).sort((a, b) => b.points - a.points)
     return {
       userId: r.user_id,
       name: r.display_name?.trim() || r.username,
@@ -180,7 +189,8 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
       average: u && u.count > 0 ? u.sum / u.count : 0,
       burrinhoCount: u?.zeros ?? 0, // burrinho = zerou
       zeroCount: u?.zeros ?? 0,
-      best: u?.best ?? null,
+      bestPalpites,
+      cravadas,
       trophies: [],
     }
   })

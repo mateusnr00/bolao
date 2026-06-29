@@ -4,8 +4,35 @@ import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { BottomNav, Eyebrow, Rule, TopNav } from '@/components/we26'
 import { DONKEY_SRC } from '@/lib/brand'
-import type { MemberStat } from '@/lib/queries/stats'
+import type { BestPalpite, MemberStat } from '@/lib/queries/stats'
 import { cn } from '@/lib/utils'
+
+function PalpiteRow({ b }: { b: BestPalpite }) {
+  return (
+    <li className="flex items-center justify-between gap-3 rounded-lg border border-rule p-4">
+      <div className="space-y-0.5">
+        <p className="font-mono text-[15px] font-semibold text-ink">
+          {b.homeCode} {b.actual[0]}×{b.actual[1]} {b.awayCode}
+        </p>
+        <p className="text-[12px] text-sepia">
+          {b.exact ? (
+            <>cravou o placar 🎯</>
+          ) : (
+            <>
+              palpitou{' '}
+              <span className="font-mono text-ink">
+                {b.guess[0]}×{b.guess[1]}
+              </span>
+            </>
+          )}
+        </p>
+      </div>
+      <span className="shrink-0 font-mono text-lg tabular font-semibold text-trophy-deep">
+        +{b.points}
+      </span>
+    </li>
+  )
+}
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/)
@@ -124,29 +151,35 @@ export function MemberScreen({
 
           <Rule />
 
-          {/* melhor palpite */}
+          {/* melhores palpites */}
           <section className="space-y-2.5">
-            <Eyebrow>melhor palpite</Eyebrow>
-            {member.best ? (
-              <div className="flex items-center justify-between gap-3 rounded-lg border border-rule p-4">
-                <div className="space-y-0.5">
-                  <p className="font-mono text-[15px] font-semibold text-ink">
-                    {member.best.homeCode} {member.best.actual[0]}×{member.best.actual[1]}{' '}
-                    {member.best.awayCode}
-                  </p>
-                  <p className="text-[12px] text-sepia">
-                    cravou{' '}
-                    <span className="font-mono text-ink">
-                      {member.best.guess[0]}×{member.best.guess[1]}
-                    </span>
-                  </p>
-                </div>
-                <span className="shrink-0 font-mono text-lg tabular font-semibold text-trophy-deep">
-                  +{member.best.points}
-                </span>
-              </div>
+            <Eyebrow>melhores palpites</Eyebrow>
+            {member.bestPalpites.length > 0 ? (
+              <ul className="space-y-2">
+                {member.bestPalpites.map((b, i) => (
+                  <PalpiteRow key={i} b={b} />
+                ))}
+              </ul>
             ) : (
               <p className="text-[13px] text-sepia">ainda sem pontos em jogos encerrados.</p>
+            )}
+          </section>
+
+          <Rule />
+
+          {/* cravadas (placares exatos) */}
+          <section className="space-y-2.5">
+            <Eyebrow>
+              cravadas 🎯 {member.cravadas.length > 0 && `(${member.cravadas.length})`}
+            </Eyebrow>
+            {member.cravadas.length > 0 ? (
+              <ul className="space-y-2">
+                {member.cravadas.map((b, i) => (
+                  <PalpiteRow key={i} b={b} />
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[13px] text-sepia">ainda não cravou nenhum placar.</p>
             )}
           </section>
         </div>
