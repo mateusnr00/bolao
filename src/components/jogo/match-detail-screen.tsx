@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { savePrediction } from '@/app/jogo/[id]/actions'
 import { PalpitesDaGalera } from '@/components/jogo/palpites-da-galera'
 import { LiveRefresher } from '@/components/live-refresher'
-import { LiveScore } from '@/components/live/live-score'
+import { ScoreBoard } from '@/components/jogo/score-board'
 import { TeamFlag } from '@/components/team-flag'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
@@ -239,31 +239,12 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 <Eyebrow>{liveNow ? 'ao vivo' : 'resultado'}</Eyebrow>
                 {liveNow && <LiveBadge />}
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <TeamSide team={match.home} form={match.homeForm} align="start" />
-                <div className="shrink-0 text-center">
-                  <LiveScore
-                    homeCode={match.home.code}
-                    awayCode={match.away.code}
-                    size="lg"
-                    withBadge={false}
-                    fallback={
-                      match.score ? (
-                        <p className="font-mono text-4xl tabular font-semibold text-ink">
-                          {match.score[0]}
-                          <span className="px-1 text-sepia">×</span>
-                          {match.score[1]}
-                        </p>
-                      ) : (
-                        <p className="font-mono text-sm text-sepia">
-                          aguardando placar
-                        </p>
-                      )
-                    }
-                  />
-                </div>
-                <TeamSide team={match.away} form={match.awayForm} align="end" />
-              </div>
+              <ScoreBoard
+                home={match.home}
+                away={match.away}
+                score={actual ?? match.score ?? null}
+                live={liveNow}
+              />
               {match.guess && (
                 <p className="text-center text-[13px] text-sepia">
                   seu palpite{' '}
