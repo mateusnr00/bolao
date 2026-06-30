@@ -89,6 +89,7 @@ export function ScoreBoard({
   edit,
   homeForm = [],
   awayForm = [],
+  staticFlags = false,
 }: {
   home: Team
   away: Team
@@ -96,6 +97,7 @@ export function ScoreBoard({
   edit?: ScoreEdit
   homeForm?: FormMatch[]
   awayForm?: FormMatch[]
+  staticFlags?: boolean // bandeiras não-clicáveis (ex.: dentro de um Link)
 }) {
   const h = score ? String(score[0]) : '–'
   const a = score ? String(score[1]) : '–'
@@ -105,22 +107,26 @@ export function ScoreBoard({
   return (
     <div className="relative w-full">
       {/* bandeiras clicáveis (popover de histórico) sobre o SVG */}
-      <div className="absolute" style={{ left: FLAG_LEFT.home, ...FLAG_BOX }}>
-        <TeamFlag
-          team={home}
-          form={homeForm}
-          triggerClassName="block h-full w-full"
-          className={flagCls}
-        />
-      </div>
-      <div className="absolute" style={{ left: FLAG_LEFT.away, ...FLAG_BOX }}>
-        <TeamFlag
-          team={away}
-          form={awayForm}
-          triggerClassName="block h-full w-full"
-          className={flagCls}
-        />
-      </div>
+      {!staticFlags && (
+        <>
+          <div className="absolute" style={{ left: FLAG_LEFT.home, ...FLAG_BOX }}>
+            <TeamFlag
+              team={home}
+              form={homeForm}
+              triggerClassName="block h-full w-full"
+              className={flagCls}
+            />
+          </div>
+          <div className="absolute" style={{ left: FLAG_LEFT.away, ...FLAG_BOX }}>
+            <TeamFlag
+              team={away}
+              form={awayForm}
+              triggerClassName="block h-full w-full"
+              className={flagCls}
+            />
+          </div>
+        </>
+      )}
 
       <svg
         viewBox="0 0 1180 176"
@@ -128,6 +134,16 @@ export function ScoreBoard({
         role="img"
         aria-label={`${home.code} ${h} x ${a} ${away.code}`}
       >
+        {staticFlags && (
+          <defs>
+            <clipPath id="sb-flag-h">
+              <rect x="66" y="38" width="156" height="100" rx="12" />
+            </clipPath>
+            <clipPath id="sb-flag-a">
+              <rect x="958" y="38" width="156" height="100" rx="12" />
+            </clipPath>
+          </defs>
+        )}
       {/* esquerda: coral (vertical) → vermelho (base), conectados no canto */}
       <rect x="0" y="18" width="36" height="156" rx="18" fill={C.coral} />
       <rect x="16" y="150" width="548" height="24" rx="12" fill={C.red} />
@@ -138,7 +154,31 @@ export function ScoreBoard({
       {/* cápsula preta principal */}
       <rect x="14" y="10" width="1152" height="150" rx="34" fill={C.black} />
 
-      {/* (bandeira mandante é a TeamFlag sobreposta em HTML) */}
+      {/* bandeira mandante: estática (SVG) ou clicável (overlay HTML acima) */}
+      {staticFlags && (
+        <>
+          <image
+            href={home.flagUrl ?? undefined}
+            x="66"
+            y="38"
+            width="156"
+            height="100"
+            preserveAspectRatio="xMidYMid slice"
+            clipPath="url(#sb-flag-h)"
+          />
+          <rect
+            x="66"
+            y="38"
+            width="156"
+            height="100"
+            rx="12"
+            fill="none"
+            stroke="#ffffff"
+            strokeOpacity="0.25"
+            strokeWidth="2"
+          />
+        </>
+      )}
       <text
         x="320"
         y="88"
@@ -222,7 +262,31 @@ export function ScoreBoard({
       >
         {away.code}
       </text>
-      {/* (bandeira visitante é a TeamFlag sobreposta em HTML) */}
+      {/* bandeira visitante: estática (SVG) ou clicável (overlay HTML acima) */}
+      {staticFlags && (
+        <>
+          <image
+            href={away.flagUrl ?? undefined}
+            x="958"
+            y="38"
+            width="156"
+            height="100"
+            preserveAspectRatio="xMidYMid slice"
+            clipPath="url(#sb-flag-a)"
+          />
+          <rect
+            x="958"
+            y="38"
+            width="156"
+            height="100"
+            rx="12"
+            fill="none"
+            stroke="#ffffff"
+            strokeOpacity="0.25"
+            strokeWidth="2"
+          />
+        </>
+      )}
       </svg>
     </div>
   )

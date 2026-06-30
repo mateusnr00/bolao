@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 import { PendingPalpites } from '@/components/dashboard/pending-palpites'
+import { ScoreBoard } from '@/components/jogo/score-board'
 import { LiveRefresher } from '@/components/live-refresher'
-import { LiveScore } from '@/components/live/live-score'
 import type { DashboardData, LiveMatch } from '@/lib/queries/dashboard'
 import {
   BottomNav,
@@ -19,70 +19,20 @@ import { cn } from '@/lib/utils'
 
 function LiveRow({ m }: { m: LiveMatch }) {
   return (
-    <Link
-      href={`/jogo/${m.matchId}`}
-      className="flex items-center gap-3 rounded-lg border border-phase-semi/40 bg-phase-semi/5 px-3 py-2.5 transition-colors hover:bg-phase-semi/10"
-    >
-      <span className="flex min-w-0 flex-1 items-center gap-2">
-        <Flag src={m.home.flagUrl ?? undefined} />
-        <span className="font-mono text-sm font-medium text-ink">{m.home.code}</span>
-        <LiveScore
-          homeCode={m.home.code}
-          awayCode={m.away.code}
-          size="sm"
-          withBadge={false}
-          fallback={
-            <span className="font-mono tabular text-lg font-semibold text-phase-semi">
-              {m.score[0]}
-              <span className="px-0.5 text-sepia">×</span>
-              {m.score[1]}
-            </span>
-          }
-        />
-        <span className="font-mono text-sm font-medium text-ink">{m.away.code}</span>
-        <Flag src={m.away.flagUrl ?? undefined} />
-      </span>
+    <Link href={`/jogo/${m.matchId}`} className="block">
+      <ScoreBoard home={m.home} away={m.away} score={m.score} staticFlags />
       {m.guess && (
-        <span className="hidden shrink-0 font-mono text-[12px] tabular text-sepia sm:inline">
-          você: {m.guess[0]}-{m.guess[1]}
-        </span>
+        <p className="mt-1.5 text-center text-[12px] text-sepia">
+          seu palpite{' '}
+          <span className="font-mono text-ink">
+            {m.guess[0]} a {m.guess[1]}
+          </span>
+        </p>
       )}
     </Link>
   )
 }
 
-function TeamSide({
-  team,
-  align,
-}: {
-  team: { flagUrl: string | null; code: string }
-  align: 'start' | 'end'
-}) {
-  return (
-    <div
-      className={cn(
-        'flex flex-1 flex-col gap-1',
-        align === 'end' ? 'items-end' : 'items-start',
-      )}
-    >
-      <Flag src={team.flagUrl ?? undefined} className="h-6 w-8" />
-      <span className="font-mono text-sm font-semibold text-ink">{team.code}</span>
-    </div>
-  )
-}
-
-function ScoreBox({ value }: { value?: number }) {
-  return (
-    <div
-      className={cn(
-        'flex size-12 items-center justify-center rounded-md border bg-paper font-mono text-2xl tabular font-medium',
-        value == null ? 'border-dashed border-rule text-rule' : 'border-rule-dark text-ink',
-      )}
-    >
-      {value ?? ''}
-    </div>
-  )
-}
 
 export function DashboardScreen({ data }: { data: DashboardData }) {
   const { pool, me, live, next, pending, ranking, results } = data
@@ -175,15 +125,12 @@ export function DashboardScreen({ data }: { data: DashboardData }) {
                 className="block space-y-4 rounded-lg px-2 py-1 transition-colors hover:bg-bone"
               >
                 <PhaseBadge phase={next.stage} label={next.label} />
-                <div className="flex items-center justify-between gap-3">
-                  <TeamSide team={next.home} align="start" />
-                  <div className="flex items-center gap-2">
-                    <ScoreBox value={next.guess?.[0]} />
-                    <span className="font-display text-xl text-sepia">×</span>
-                    <ScoreBox value={next.guess?.[1]} />
-                  </div>
-                  <TeamSide team={next.away} align="end" />
-                </div>
+                <ScoreBoard
+                  home={next.home}
+                  away={next.away}
+                  score={next.guess ?? null}
+                  staticFlags
+                />
                 <p className="text-center text-[13px] font-medium text-trophy-deep">
                   {next.guess ? 'editar palpite →' : 'palpitar →'}
                 </p>
