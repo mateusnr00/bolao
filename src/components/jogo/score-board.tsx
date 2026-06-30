@@ -1,9 +1,15 @@
+import { TeamFlag } from '@/components/team-flag'
 import { COPA_LOGO_WHITE_SRC } from '@/lib/brand'
+import type { FormMatch } from '@/lib/queries/matches'
 
 interface Team {
   code: string
   flagUrl: string | null
 }
+
+// posições das bandeiras (em % do viewBox 1180×176) pra sobrepor a TeamFlag
+const FLAG_BOX = { top: '21.59%', width: '13.22%', height: '56.82%' } as const
+const FLAG_LEFT = { home: '5.59%', away: '81.19%' } as const
 
 export interface ScoreEdit {
   home: number | null
@@ -81,32 +87,47 @@ export function ScoreBoard({
   away,
   score,
   edit,
+  homeForm = [],
+  awayForm = [],
 }: {
   home: Team
   away: Team
   score: [number, number] | null
   edit?: ScoreEdit
+  homeForm?: FormMatch[]
+  awayForm?: FormMatch[]
 }) {
   const h = score ? String(score[0]) : '–'
   const a = score ? String(score[1]) : '–'
   const display = { fontFamily: 'var(--font-display)' }
+  const flagCls = 'h-full w-full rounded-[10px] object-cover ring-2 ring-white/25'
 
   return (
-    <svg
-      viewBox="0 0 1180 176"
-      className="h-auto w-full"
-      role="img"
-      aria-label={`${home.code} ${h} x ${a} ${away.code}`}
-    >
-      <defs>
-        <clipPath id="sb-flag-h">
-          <rect x="66" y="38" width="156" height="100" rx="12" />
-        </clipPath>
-        <clipPath id="sb-flag-a">
-          <rect x="958" y="38" width="156" height="100" rx="12" />
-        </clipPath>
-      </defs>
+    <div className="relative w-full">
+      {/* bandeiras clicáveis (popover de histórico) sobre o SVG */}
+      <div className="absolute" style={{ left: FLAG_LEFT.home, ...FLAG_BOX }}>
+        <TeamFlag
+          team={home}
+          form={homeForm}
+          triggerClassName="block h-full w-full"
+          className={flagCls}
+        />
+      </div>
+      <div className="absolute" style={{ left: FLAG_LEFT.away, ...FLAG_BOX }}>
+        <TeamFlag
+          team={away}
+          form={awayForm}
+          triggerClassName="block h-full w-full"
+          className={flagCls}
+        />
+      </div>
 
+      <svg
+        viewBox="0 0 1180 176"
+        className="block h-auto w-full"
+        role="img"
+        aria-label={`${home.code} ${h} x ${a} ${away.code}`}
+      >
       {/* esquerda: coral (vertical) → vermelho (base), conectados no canto */}
       <rect x="0" y="18" width="36" height="156" rx="18" fill={C.coral} />
       <rect x="16" y="150" width="548" height="24" rx="12" fill={C.red} />
@@ -117,27 +138,7 @@ export function ScoreBoard({
       {/* cápsula preta principal */}
       <rect x="14" y="10" width="1152" height="150" rx="34" fill={C.black} />
 
-      {/* bandeira mandante */}
-      <image
-        href={home.flagUrl ?? undefined}
-        x="66"
-        y="38"
-        width="156"
-        height="100"
-        preserveAspectRatio="xMidYMid slice"
-        clipPath="url(#sb-flag-h)"
-      />
-      <rect
-        x="66"
-        y="38"
-        width="156"
-        height="100"
-        rx="12"
-        fill="none"
-        stroke="#ffffff"
-        strokeOpacity="0.25"
-        strokeWidth="2"
-      />
+      {/* (bandeira mandante é a TeamFlag sobreposta em HTML) */}
       <text
         x="320"
         y="88"
@@ -221,27 +222,8 @@ export function ScoreBoard({
       >
         {away.code}
       </text>
-      {/* bandeira visitante */}
-      <image
-        href={away.flagUrl ?? undefined}
-        x="958"
-        y="38"
-        width="156"
-        height="100"
-        preserveAspectRatio="xMidYMid slice"
-        clipPath="url(#sb-flag-a)"
-      />
-      <rect
-        x="958"
-        y="38"
-        width="156"
-        height="100"
-        rx="12"
-        fill="none"
-        stroke="#ffffff"
-        strokeOpacity="0.25"
-        strokeWidth="2"
-      />
-    </svg>
+      {/* (bandeira visitante é a TeamFlag sobreposta em HTML) */}
+      </svg>
+    </div>
   )
 }

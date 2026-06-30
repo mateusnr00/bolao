@@ -282,6 +282,8 @@ function EditableMatchRow({
           away={m.away}
           score={null}
           edit={{ home, away, setHome, setAway, disabled: !hasPools }}
+          homeForm={m.homeForm}
+          awayForm={m.awayForm}
         />
       </div>
 
@@ -360,7 +362,13 @@ function StaticMatchRow({
       </div>
 
       <div className="mt-3">
-        <ScoreBoard home={m.home} away={m.away} score={m.score ?? null} />
+        <ScoreBoard
+          home={m.home}
+          away={m.away}
+          score={m.score ?? null}
+          homeForm={m.homeForm}
+          awayForm={m.awayForm}
+        />
       </div>
       <p className="mt-2 text-center text-[12px] text-sepia">
         {m.guess ? (

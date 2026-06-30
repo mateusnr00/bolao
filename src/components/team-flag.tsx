@@ -21,16 +21,21 @@ export function TeamFlag({
   team,
   form,
   className,
+  triggerClassName,
 }: {
   team: { code: string; name?: string; flagUrl: string | null }
   form: FormMatch[]
   className?: string
+  triggerClassName?: string
 }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`últimos jogos de ${team.code}`}
-        className="rounded-sm ring-offset-2 ring-offset-paper transition hover:ring-2 hover:ring-trophy focus-visible:ring-2 focus-visible:ring-trophy"
+        className={cn(
+          'rounded-sm ring-offset-2 ring-offset-paper transition hover:ring-2 hover:ring-trophy focus-visible:ring-2 focus-visible:ring-trophy',
+          triggerClassName,
+        )}
       >
         <Flag src={team.flagUrl ?? undefined} className={className} />
       </DropdownMenuTrigger>
