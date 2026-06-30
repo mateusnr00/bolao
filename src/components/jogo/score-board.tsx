@@ -1,11 +1,11 @@
-import { LOGO_TROPHY_SRC } from '@/lib/brand'
+import { COPA_LOGO_WHITE_SRC } from '@/lib/brand'
 
 interface Team {
   code: string
   flagUrl: string | null
 }
 
-// Dimensões/cores do scoreboard (referência FIFA 26). viewBox 1180×176.
+// Cores do scoreboard (referência FIFA 26). viewBox 1180×176.
 const C = {
   coral: '#F7A18E',
   purple: '#B28BFF',
@@ -16,9 +16,9 @@ const C = {
   white: '#FFFFFF',
 }
 
-/** Scoreboard "We Are 26" — clone fiel da arte FIFA 2026, em SVG (escala
- *  sozinho mantendo as proporções). Bandeira · sigla · placar (cápsula ciano) ·
- *  emblema da Copa no meio · placar · sigla · bandeira. */
+/** Scoreboard "We Are 26" (FIFA 2026) em SVG — escala sozinho mantendo as
+ *  proporções. Bandeira · sigla · placar (cápsula ciano) · emblema · placar ·
+ *  sigla · bandeira. */
 export function ScoreBoard({
   home,
   away,
@@ -41,21 +41,20 @@ export function ScoreBoard({
     >
       <defs>
         <clipPath id="sb-flag-h">
-          <rect x="118" y="40" width="150" height="96" rx="12" />
+          <rect x="66" y="38" width="156" height="100" rx="12" />
         </clipPath>
         <clipPath id="sb-flag-a">
-          <rect x="912" y="40" width="150" height="96" rx="12" />
+          <rect x="958" y="38" width="156" height="100" rx="12" />
         </clipPath>
       </defs>
 
-      {/* bordas coral/roxa (atrás, aparecem nas pontas) */}
-      <rect x="0" y="16" width="40" height="144" rx="20" fill={C.coral} />
-      <rect x="1140" y="16" width="40" height="144" rx="20" fill={C.purple} />
+      {/* bordas coral/roxa (atrás, aparecem só nas pontas) */}
+      <rect x="0" y="18" width="38" height="140" rx="19" fill={C.coral} />
+      <rect x="1142" y="18" width="38" height="140" rx="19" fill={C.purple} />
 
-      {/* barras de baixo (atrás, aparecem na base): vermelho · lima · roxo */}
-      <rect x="70" y="150" width="470" height="26" rx="9" fill={C.red} />
-      <rect x="540" y="150" width="470" height="26" rx="9" fill={C.lime} />
-      <rect x="1010" y="150" width="120" height="26" rx="9" fill={C.purple} />
+      {/* barras de baixo: vermelho à esquerda, verde à direita (gap no centro) */}
+      <rect x="60" y="150" width="470" height="24" rx="8" fill={C.red} />
+      <rect x="650" y="150" width="430" height="24" rx="8" fill={C.lime} />
 
       {/* cápsula preta principal */}
       <rect x="14" y="10" width="1152" height="150" rx="34" fill={C.black} />
@@ -63,30 +62,31 @@ export function ScoreBoard({
       {/* bandeira mandante */}
       <image
         href={home.flagUrl ?? undefined}
-        x="118"
-        y="40"
-        width="150"
-        height="96"
+        x="66"
+        y="38"
+        width="156"
+        height="100"
         preserveAspectRatio="xMidYMid slice"
         clipPath="url(#sb-flag-h)"
       />
       <rect
-        x="118"
-        y="40"
-        width="150"
-        height="96"
+        x="66"
+        y="38"
+        width="156"
+        height="100"
         rx="12"
         fill="none"
         stroke="#ffffff"
         strokeOpacity="0.25"
         strokeWidth="2"
       />
+      {/* sigla mandante (entre a bandeira e a cápsula ciano) */}
       <text
-        x="360"
-        y="90"
+        x="320"
+        y="88"
         fill={C.white}
         style={display}
-        fontSize="84"
+        fontSize="80"
         letterSpacing="-2"
         textAnchor="middle"
         dominantBaseline="central"
@@ -94,49 +94,49 @@ export function ScoreBoard({
         {home.code}
       </text>
 
-      {/* cápsula ciano (placar) — atrás do bloco FIFA */}
-      <rect x="408" y="6" width="364" height="164" rx="28" fill={C.cyan} />
+      {/* cápsula ciano (placar) */}
+      <rect x="428" y="6" width="324" height="164" rx="28" fill={C.cyan} />
       <text
-        x="470"
-        y="90"
+        x="487"
+        y="88"
         fill={C.black}
         style={display}
-        fontSize="96"
+        fontSize="92"
         textAnchor="middle"
         dominantBaseline="central"
       >
         {h}
       </text>
       <text
-        x="710"
-        y="90"
+        x="693"
+        y="88"
         fill={C.black}
         style={display}
-        fontSize="96"
+        fontSize="92"
         textAnchor="middle"
         dominantBaseline="central"
       >
         {a}
       </text>
 
-      {/* bloco FIFA flutuante (emblema da Copa) */}
-      <rect x="540" y="0" width="100" height="176" rx="26" fill={C.black} />
+      {/* bloco FIFA flutuante (emblema branco da Copa) */}
+      <rect x="542" y="2" width="96" height="172" rx="26" fill={C.black} />
       <image
-        href={LOGO_TROPHY_SRC}
-        x="546"
-        y="12"
-        width="88"
-        height="152"
+        href={COPA_LOGO_WHITE_SRC}
+        x="552"
+        y="20"
+        width="76"
+        height="136"
         preserveAspectRatio="xMidYMid meet"
       />
 
-      {/* sigla visitante */}
+      {/* sigla visitante (entre a cápsula ciano e a bandeira) */}
       <text
-        x="820"
-        y="90"
+        x="860"
+        y="88"
         fill={C.white}
         style={display}
-        fontSize="84"
+        fontSize="80"
         letterSpacing="-2"
         textAnchor="middle"
         dominantBaseline="central"
@@ -146,18 +146,18 @@ export function ScoreBoard({
       {/* bandeira visitante */}
       <image
         href={away.flagUrl ?? undefined}
-        x="912"
-        y="40"
-        width="150"
-        height="96"
+        x="958"
+        y="38"
+        width="156"
+        height="100"
         preserveAspectRatio="xMidYMid slice"
         clipPath="url(#sb-flag-a)"
       />
       <rect
-        x="912"
-        y="40"
-        width="150"
-        height="96"
+        x="958"
+        y="38"
+        width="156"
+        height="100"
         rx="12"
         fill="none"
         stroke="#ffffff"
