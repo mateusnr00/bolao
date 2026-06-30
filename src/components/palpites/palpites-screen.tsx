@@ -106,44 +106,6 @@ function TeamCol({
   )
 }
 
-/* uma casinha de placar editável (input numérico discreto) */
-function ScoreSlot({
-  value,
-  onChange,
-  disabled,
-  ariaLabel,
-}: {
-  value: number | null
-  onChange: (n: number | null) => void
-  disabled?: boolean
-  ariaLabel: string
-}) {
-  return (
-    <input
-      type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      aria-label={ariaLabel}
-      value={value === null ? '' : String(value)}
-      disabled={disabled}
-      onChange={(e) => {
-        const d = e.target.value.replace(/\D/g, '').slice(0, 2)
-        onChange(d === '' ? null : Math.min(20, parseInt(d, 10)))
-      }}
-      onFocus={(e) => e.currentTarget.select()}
-      className="size-11 rounded-full bg-transparent text-center font-mono text-2xl tabular font-semibold text-ink caret-trophy outline-none transition-colors focus:bg-bone disabled:cursor-not-allowed"
-    />
-  )
-}
-
-function ScorePill({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-rule-dark px-1.5 py-1">
-      {children}
-    </div>
-  )
-}
-
 /* "sobre o jogo": fica em cima do placar, abre as infos da partida */
 function SobreJogo({ m }: { m: PalpiteMatch }) {
   const [open, setOpen] = useState(false)
@@ -318,29 +280,9 @@ function EditableMatchRow({
         <ScoreBoard
           home={m.home}
           away={m.away}
-          score={home !== null && away !== null ? [home, away] : null}
+          score={null}
+          edit={{ home, away, setHome, setAway, disabled: !hasPools }}
         />
-      </div>
-
-      {/* inputs pra editar o palpite */}
-      <div className="mt-3 flex items-center justify-center gap-3">
-        <span className="font-mono text-[13px] font-semibold text-sepia">{m.home.code}</span>
-        <ScorePill>
-          <ScoreSlot
-            value={home}
-            onChange={setHome}
-            disabled={!hasPools}
-            ariaLabel={`gols ${m.home.code}`}
-          />
-          <span className="font-mono text-sm text-sepia">×</span>
-          <ScoreSlot
-            value={away}
-            onChange={setAway}
-            disabled={!hasPools}
-            ariaLabel={`gols ${m.away.code}`}
-          />
-        </ScorePill>
-        <span className="font-mono text-[13px] font-semibold text-sepia">{m.away.code}</span>
       </div>
 
       <div className="mt-3">
