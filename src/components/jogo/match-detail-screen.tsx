@@ -129,6 +129,12 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
   const myLivePts =
     actual && match.guess ? calcPredictionPoints(match.guess, actual) : null
 
+  // prévia do scoreboard: só no Brasil × Japão, pra visualizar o placar novo
+  // mesmo sem jogo ao vivo/encerrado (temporário).
+  const isBraJpn =
+    [match.home.code, match.away.code].includes('BRA') &&
+    [match.home.code, match.away.code].includes('JPN')
+
   function confirm() {
     startTransition(async () => {
       const res = await savePrediction({
@@ -176,6 +182,17 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
               </p>
             </div>
           </section>
+
+          {isBraJpn && (
+            <section className="space-y-2">
+              <Eyebrow>prévia do placar</Eyebrow>
+              <ScoreBoard
+                home={match.home}
+                away={match.away}
+                score={actual ?? match.score ?? match.guess ?? [3, 2]}
+              />
+            </section>
+          )}
 
           {match.isOpen ? (
             /* placar / stepper */
