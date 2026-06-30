@@ -18,7 +18,6 @@ import { toast } from 'sonner'
 import { savePrediction } from '@/app/jogo/[id]/actions'
 import { ScoreBoard } from '@/components/jogo/score-board'
 import { LiveRefresher } from '@/components/live-refresher'
-import { LiveScore } from '@/components/live/live-score'
 import { GaleraInline } from '@/components/palpites/galera-inline'
 import { TeamFlag } from '@/components/team-flag'
 import {
@@ -142,20 +141,6 @@ function ScorePill({ children }: { children: React.ReactNode }) {
     <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-rule-dark px-1.5 py-1">
       {children}
     </div>
-  )
-}
-
-function ReadonlyScore({ guess }: { guess: [number, number] }) {
-  return (
-    <ScorePill>
-      <span className="flex size-11 items-center justify-center font-mono text-2xl tabular font-semibold text-ink">
-        {guess[0]}
-      </span>
-      <span className="font-mono text-sm text-sepia">×</span>
-      <span className="flex size-11 items-center justify-center font-mono text-2xl tabular font-semibold text-ink">
-        {guess[1]}
-      </span>
-    </ScorePill>
   )
 }
 
@@ -329,8 +314,17 @@ function EditableMatchRow({
         <SobreJogo m={m} />
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <TeamCol team={m.home} form={m.homeForm} />
+      <div className="mt-3">
+        <ScoreBoard
+          home={m.home}
+          away={m.away}
+          score={home !== null && away !== null ? [home, away] : null}
+        />
+      </div>
+
+      {/* inputs pra editar o palpite */}
+      <div className="mt-3 flex items-center justify-center gap-3">
+        <span className="font-mono text-[13px] font-semibold text-sepia">{m.home.code}</span>
         <ScorePill>
           <ScoreSlot
             value={home}
@@ -346,7 +340,7 @@ function EditableMatchRow({
             ariaLabel={`gols ${m.away.code}`}
           />
         </ScorePill>
-        <TeamCol team={m.away} form={m.awayForm} />
+        <span className="font-mono text-[13px] font-semibold text-sepia">{m.away.code}</span>
       </div>
 
       <div className="mt-3">
@@ -423,46 +417,21 @@ function StaticMatchRow({
         <SobreJogo m={m} />
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <TeamCol team={m.home} form={m.homeForm} />
-        <div className="shrink-0 text-center">
-          <LiveScore
-            homeCode={m.home.code}
-            awayCode={m.away.code}
-            size="md"
-            withBadge={false}
-            fallback={
-              (finished || live) && m.score ? (
-                <>
-                  <p
-                    className={cn(
-                      'font-mono text-2xl tabular font-semibold',
-                      live ? 'text-phase-semi' : 'text-ink',
-                    )}
-                  >
-                    {m.score[0]}
-                    <span className="px-1 text-sepia">×</span>
-                    {m.score[1]}
-                  </p>
-                  {m.guess && (
-                    <p className="mt-0.5 font-mono text-[11px] tabular text-sepia">
-                      você: {m.guess[0]} a {m.guess[1]}
-                    </p>
-                  )}
-                </>
-              ) : m.guess ? (
-                <>
-                  <ReadonlyScore guess={m.guess} />
-                  <p className="mt-1 text-[11px] text-sepia">seu palpite</p>
-                </>
-              ) : (
-                <p className="font-mono text-[13px] text-sepia">sem palpite</p>
-              )
-            }
-          />
-        </div>
-        <TeamCol team={m.away} form={m.awayForm} />
+      <div className="mt-3">
+        <ScoreBoard home={m.home} away={m.away} score={m.score ?? null} />
       </div>
+      <p className="mt-2 text-center text-[12px] text-sepia">
+        {m.guess ? (
+          <>
+            seu palpite{' '}
+            <span className="font-mono text-ink">
+              {m.guess[0]} a {m.guess[1]}
+            </span>
+          </>
+        ) : (
+          'sem palpite'
+        )}
+      </p>
 
       {hasPools && (
         <div className="mt-3">
@@ -638,15 +607,6 @@ export function PalpitesScreen({
     }))
     .filter((d) => d.matches.length > 0)
 
-  // prévia do scoreboard novo: acha o Brasil × Japão em qualquer rodada
-  const braJpn = rounds
-    .flatMap((r) => r.days.flatMap((d) => d.matches))
-    .find(
-      (m) =>
-        [m.home.code, m.away.code].includes('BRA') &&
-        [m.home.code, m.away.code].includes('JPN'),
-    )
-
   // ao abrir, desce até o primeiro jogo AO VIVO (uma vez só, pra não brigar
   // com o scroll do usuário depois).
   useEffect(() => {
@@ -669,19 +629,6 @@ export function PalpitesScreen({
       >
         <div className="space-y-5">
           <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">palpites</h1>
-
-          {braJpn && (
-            <section className="space-y-1.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-sepia">
-                prévia do placar
-              </p>
-              <ScoreBoard
-                home={braJpn.home}
-                away={braJpn.away}
-                score={braJpn.score ?? braJpn.guess ?? [3, 2]}
-              />
-            </section>
-          )}
 
           {rounds.length > 0 && (
             <RoundSelector
