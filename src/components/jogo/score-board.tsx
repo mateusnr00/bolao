@@ -1,4 +1,3 @@
-import { Flag } from '@/components/we26'
 import { LOGO_TROPHY_SRC } from '@/lib/brand'
 
 interface Team {
@@ -6,73 +5,165 @@ interface Team {
   flagUrl: string | null
 }
 
-/** Placar estilizado "We Are 26": bandeira · sigla · placar (bloco mint) ·
- *  emblema da Copa no meio · placar · sigla · bandeira. Barra escura com borda
- *  colorida — fica igual nos dois temas (sempre escura, como o scoreboard). */
+// Dimensões/cores do scoreboard (referência FIFA 26). viewBox 1180×176.
+const C = {
+  coral: '#F7A18E',
+  purple: '#B28BFF',
+  red: '#FF0000',
+  lime: '#B8FF1A',
+  cyan: '#A8FFF0',
+  black: '#0E0E10',
+  white: '#FFFFFF',
+}
+
+/** Scoreboard "We Are 26" — clone fiel da arte FIFA 2026, em SVG (escala
+ *  sozinho mantendo as proporções). Bandeira · sigla · placar (cápsula ciano) ·
+ *  emblema da Copa no meio · placar · sigla · bandeira. */
 export function ScoreBoard({
   home,
   away,
   score,
-  live = false,
 }: {
   home: Team
   away: Team
   score: [number, number] | null
-  live?: boolean
 }) {
   const h = score ? String(score[0]) : '–'
   const a = score ? String(score[1]) : '–'
+  const display = { fontFamily: 'var(--font-display)' }
 
   return (
-    <div className="overflow-hidden rounded-[20px] bg-[linear-gradient(100deg,#ef6f6c_0%,#34d3a6_38%,#b6e62a_72%,#9b6bdf_100%)] p-[3px] shadow-md">
-      <div className="flex items-center justify-between gap-1.5 rounded-[17px] bg-[#0e0e10] px-3 py-3 sm:gap-3 sm:px-4">
-        {/* mandante */}
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-          <Flag
-            src={home.flagUrl ?? undefined}
-            className="h-7 w-10 shrink-0 rounded-md ring-1 ring-white/15 sm:h-9 sm:w-12"
-          />
-          <span className="truncate font-mono text-[26px] font-extrabold tracking-tight text-white sm:text-4xl">
-            {home.code}
-          </span>
-        </div>
+    <svg
+      viewBox="0 0 1180 176"
+      className="h-auto w-full"
+      role="img"
+      aria-label={`${home.code} ${h} x ${a} ${away.code}`}
+    >
+      <defs>
+        <clipPath id="sb-flag-h">
+          <rect x="118" y="40" width="150" height="96" rx="12" />
+        </clipPath>
+        <clipPath id="sb-flag-a">
+          <rect x="912" y="40" width="150" height="96" rx="12" />
+        </clipPath>
+      </defs>
 
-        {/* placar + emblema */}
-        <div className="flex shrink-0 items-center">
-          <span className="flex h-12 min-w-10 items-center justify-center rounded-l-xl bg-[#9ff0cf] px-2 font-mono text-3xl font-extrabold tabular text-[#0e0e10] sm:h-16 sm:min-w-14 sm:text-5xl">
-            {h}
-          </span>
-          <span className="z-10 -mx-2.5 flex size-14 shrink-0 items-center justify-center rounded-full border-4 border-[#0e0e10] bg-[#0e0e10] sm:size-[72px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={LOGO_TROPHY_SRC}
-              alt=""
-              className="h-10 w-auto object-contain sm:h-14"
-            />
-          </span>
-          <span className="flex h-12 min-w-10 items-center justify-center rounded-r-xl bg-[#9ff0cf] px-2 font-mono text-3xl font-extrabold tabular text-[#0e0e10] sm:h-16 sm:min-w-14 sm:text-5xl">
-            {a}
-          </span>
-        </div>
+      {/* bordas coral/roxa (atrás, aparecem nas pontas) */}
+      <rect x="0" y="16" width="40" height="144" rx="20" fill={C.coral} />
+      <rect x="1140" y="16" width="40" height="144" rx="20" fill={C.purple} />
 
-        {/* visitante */}
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:gap-3">
-          <span className="truncate font-mono text-[26px] font-extrabold tracking-tight text-white sm:text-4xl">
-            {away.code}
-          </span>
-          <Flag
-            src={away.flagUrl ?? undefined}
-            className="h-7 w-10 shrink-0 rounded-md ring-1 ring-white/15 sm:h-9 sm:w-12"
-          />
-        </div>
-      </div>
+      {/* barras de baixo (atrás, aparecem na base): vermelho · lima · roxo */}
+      <rect x="70" y="150" width="470" height="26" rx="9" fill={C.red} />
+      <rect x="540" y="150" width="470" height="26" rx="9" fill={C.lime} />
+      <rect x="1010" y="150" width="120" height="26" rx="9" fill={C.purple} />
 
-      {live && (
-        <div className="flex items-center justify-center gap-1.5 bg-[#0e0e10] pb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#34d3a6]">
-          <span className="size-1.5 animate-pulse rounded-full bg-[#34d3a6]" />
-          ao vivo
-        </div>
-      )}
-    </div>
+      {/* cápsula preta principal */}
+      <rect x="14" y="10" width="1152" height="150" rx="34" fill={C.black} />
+
+      {/* bandeira mandante */}
+      <image
+        href={home.flagUrl ?? undefined}
+        x="118"
+        y="40"
+        width="150"
+        height="96"
+        preserveAspectRatio="xMidYMid slice"
+        clipPath="url(#sb-flag-h)"
+      />
+      <rect
+        x="118"
+        y="40"
+        width="150"
+        height="96"
+        rx="12"
+        fill="none"
+        stroke="#ffffff"
+        strokeOpacity="0.25"
+        strokeWidth="2"
+      />
+      <text
+        x="360"
+        y="90"
+        fill={C.white}
+        style={display}
+        fontSize="84"
+        letterSpacing="-2"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        {home.code}
+      </text>
+
+      {/* cápsula ciano (placar) — atrás do bloco FIFA */}
+      <rect x="408" y="6" width="364" height="164" rx="28" fill={C.cyan} />
+      <text
+        x="470"
+        y="90"
+        fill={C.black}
+        style={display}
+        fontSize="96"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        {h}
+      </text>
+      <text
+        x="710"
+        y="90"
+        fill={C.black}
+        style={display}
+        fontSize="96"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        {a}
+      </text>
+
+      {/* bloco FIFA flutuante (emblema da Copa) */}
+      <rect x="540" y="0" width="100" height="176" rx="26" fill={C.black} />
+      <image
+        href={LOGO_TROPHY_SRC}
+        x="546"
+        y="12"
+        width="88"
+        height="152"
+        preserveAspectRatio="xMidYMid meet"
+      />
+
+      {/* sigla visitante */}
+      <text
+        x="820"
+        y="90"
+        fill={C.white}
+        style={display}
+        fontSize="84"
+        letterSpacing="-2"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        {away.code}
+      </text>
+      {/* bandeira visitante */}
+      <image
+        href={away.flagUrl ?? undefined}
+        x="912"
+        y="40"
+        width="150"
+        height="96"
+        preserveAspectRatio="xMidYMid slice"
+        clipPath="url(#sb-flag-a)"
+      />
+      <rect
+        x="912"
+        y="40"
+        width="150"
+        height="96"
+        rx="12"
+        fill="none"
+        stroke="#ffffff"
+        strokeOpacity="0.25"
+        strokeWidth="2"
+      />
+    </svg>
   )
 }

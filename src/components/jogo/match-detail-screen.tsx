@@ -243,7 +243,6 @@ export function MatchDetailScreen({ match }: { match: MatchDetail }) {
                 home={match.home}
                 away={match.away}
                 score={actual ?? match.score ?? null}
-                live={liveNow}
               />
               {match.guess && (
                 <p className="text-center text-[13px] text-sepia">
