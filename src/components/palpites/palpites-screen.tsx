@@ -16,6 +16,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { savePrediction } from '@/app/jogo/[id]/actions'
+import { ScoreBoard } from '@/components/jogo/score-board'
 import { LiveRefresher } from '@/components/live-refresher'
 import { LiveScore } from '@/components/live/live-score'
 import { GaleraInline } from '@/components/palpites/galera-inline'
@@ -637,6 +638,15 @@ export function PalpitesScreen({
     }))
     .filter((d) => d.matches.length > 0)
 
+  // prévia do scoreboard novo: acha o Brasil × Japão em qualquer rodada
+  const braJpn = rounds
+    .flatMap((r) => r.days.flatMap((d) => d.matches))
+    .find(
+      (m) =>
+        [m.home.code, m.away.code].includes('BRA') &&
+        [m.home.code, m.away.code].includes('JPN'),
+    )
+
   // ao abrir, desce até o primeiro jogo AO VIVO (uma vez só, pra não brigar
   // com o scroll do usuário depois).
   useEffect(() => {
@@ -659,6 +669,19 @@ export function PalpitesScreen({
       >
         <div className="space-y-5">
           <h1 className="display text-[clamp(28px,7vw,40px)] uppercase text-ink">palpites</h1>
+
+          {braJpn && (
+            <section className="space-y-1.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-sepia">
+                prévia do placar
+              </p>
+              <ScoreBoard
+                home={braJpn.home}
+                away={braJpn.away}
+                score={braJpn.score ?? braJpn.guess ?? [3, 2]}
+              />
+            </section>
+          )}
 
           {rounds.length > 0 && (
             <RoundSelector
