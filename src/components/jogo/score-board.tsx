@@ -144,11 +144,13 @@ export function ScoreBoard({
             </clipPath>
           </defs>
         )}
-      {/* esquerda: coral (vertical) → vermelho (base), conectados no canto */}
+      {/* esquerda: coral envolve o canto e segue pela base até a marca; depois vermelho */}
       <rect x="0" y="18" width="36" height="156" rx="18" fill={C.coral} />
-      <rect x="16" y="150" width="548" height="24" rx="12" fill={C.red} />
-      {/* direita: verde (base) → roxo (vertical), conectados no canto */}
-      <rect x="616" y="150" width="548" height="24" rx="12" fill={C.lime} />
+      <rect x="0" y="150" width="258" height="24" rx="12" fill={C.coral} />
+      <rect x="250" y="150" width="300" height="24" rx="12" fill={C.red} />
+      {/* direita: roxo envolve o canto e segue pela base até a marca; antes verde */}
+      <rect x="630" y="150" width="300" height="24" rx="12" fill={C.lime} />
+      <rect x="922" y="150" width="258" height="24" rx="12" fill={C.purple} />
       <rect x="1144" y="18" width="36" height="156" rx="18" fill={C.purple} />
 
       {/* cápsula preta principal */}
