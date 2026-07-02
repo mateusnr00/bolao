@@ -40,6 +40,7 @@ create table matches (
   away_score   integer,
   status       match_status not null default 'scheduled',
   finished_at  timestamptz,
+  score_locked boolean not null default false,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
@@ -172,6 +173,27 @@ $$ language plpgsql;
 create trigger trg_recalc_predictions
 after update on matches
 for each row execute function recalc_predictions_for_match();
+
+-- trava de placar manual no nível do banco: jogo com score_locked mantém o
+-- placar/status originais em qualquer update (o sync não sobrescreve).
+create or replace function enforce_score_lock() returns trigger as $$
+begin
+  if old.score_locked then
+    new.home_score  := old.home_score;
+    new.away_score  := old.away_score;
+    new.status      := old.status;
+    new.finished_at := old.finished_at;
+    if new.score_locked is distinct from false then
+      new.score_locked := true;
+    end if;
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger trg_enforce_score_lock
+before update on matches
+for each row execute function enforce_score_lock();
 
 -- cria profile ao cadastrar usuário.
 -- search_path = '' (com nomes schema-qualified) é obrigatório: a função roda

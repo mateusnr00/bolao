@@ -100,6 +100,7 @@ export type Database = {
           away_score: number | null
           status: MatchStatus
           finished_at: string | null
+          score_locked: boolean
           created_at: string
           updated_at: string
         }
@@ -116,6 +117,7 @@ export type Database = {
           away_score?: number | null
           status?: MatchStatus
           finished_at?: string | null
+          score_locked?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -132,6 +134,7 @@ export type Database = {
           away_score?: number | null
           status?: MatchStatus
           finished_at?: string | null
+          score_locked?: boolean
           created_at?: string
           updated_at?: string
         }

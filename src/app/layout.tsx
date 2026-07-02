@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono, Anton } from 'next/font/google'
 
+import { AvisoModal } from '@/components/aviso/aviso-modal'
 import { Toaster } from '@/components/ui/sonner'
 import { EMBLEM_SRC_DARK, EMBLEM_SRC_LIGHT } from '@/lib/brand'
 
@@ -61,6 +62,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         {children}
+        <AvisoModal />
         <Toaster position="bottom-right" />
       </body>
     </html>
