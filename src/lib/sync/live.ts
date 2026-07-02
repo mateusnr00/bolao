@@ -45,6 +45,7 @@ interface RawMatchRow {
   id: string
   home: unknown
   away: unknown
+  score_locked: boolean | null
 }
 
 export async function applyLiveUpdates(
@@ -54,15 +55,16 @@ export async function applyLiveUpdates(
   // índice dos nossos jogos por par de seleções.
   const { data, error } = await supabase
     .from('matches')
-    .select('id, home:home_team_id(code), away:away_team_id(code)')
+    .select('id, score_locked, home:home_team_id(code), away:away_team_id(code)')
   if (error) throw new Error(`Erro ao ler matches: ${error.message}`)
 
-  const byPair = new Map<string, { id: string; homeCode: string }>()
+  // jogos com placar travado manualmente não são sobrescritos pela API.
+  const byPair = new Map<string, { id: string; homeCode: string; locked: boolean }>()
   for (const r of (data ?? []) as unknown as RawMatchRow[]) {
     const hc = readCode(r.home)
     const ac = readCode(r.away)
     if (!hc || !ac) continue
-    byPair.set(pairKey(hc, ac), { id: r.id, homeCode: hc })
+    byPair.set(pairKey(hc, ac), { id: r.id, homeCode: hc, locked: r.score_locked === true })
   }
 
   let live = 0
@@ -76,6 +78,8 @@ export async function applyLiveUpdates(
       unmatched.push(`${u.homeCode}-${u.awayCode}`)
       continue
     }
+    // placar travado manualmente: ignora o que a API mandar.
+    if (m.locked) continue
     // orienta o placar conforme a ordem casa/fora do NOSSO registro.
     const sameOrientation = m.homeCode === u.homeCode
     const patch: Database['public']['Tables']['matches']['Update'] = {

@@ -40,6 +40,7 @@ create table matches (
   away_score   integer,
   status       match_status not null default 'scheduled',
   finished_at  timestamptz,
+  score_locked boolean not null default false,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
