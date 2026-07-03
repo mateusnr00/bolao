@@ -192,22 +192,16 @@ export type Database = {
           pool_id: string
           user_id: string
           joined_at: string
-          blocked: boolean
-          hidden: boolean
         }
         Insert: {
           pool_id: string
           user_id: string
           joined_at?: string
-          blocked?: boolean
-          hidden?: boolean
         }
         Update: {
           pool_id?: string
           user_id?: string
           joined_at?: string
-          blocked?: boolean
-          hidden?: boolean
         }
         Relationships: [
           {

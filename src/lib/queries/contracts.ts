@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { isHiddenUsername } from '@/lib/hidden-members'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -57,7 +58,6 @@ export async function getPoolSignStatus(): Promise<PoolSignStatus | null> {
       'user_id, profiles:profiles!pool_members_user_id_fkey ( display_name, username, avatar_url )',
     )
     .eq('pool_id', poolId)
-    .eq('hidden', false) // membros ocultos pelo dono não entram no contrato
 
   const memberIds = ((members as unknown as RawMember[]) ?? []).map((m) => m.user_id)
   const { data: sigs } = await admin
@@ -67,7 +67,12 @@ export async function getPoolSignStatus(): Promise<PoolSignStatus | null> {
 
   const signedSet = new Set((sigs ?? []).map((s) => s.user_id))
 
-  const rows: MemberSign[] = ((members as unknown as RawMember[]) ?? []).map((m) => {
+  const rows: MemberSign[] = ((members as unknown as RawMember[]) ?? [])
+    .filter((m) => {
+      const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
+      return !isHiddenUsername(prof?.username)
+    })
+    .map((m) => {
     const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
     return {
       userId: m.user_id,

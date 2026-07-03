@@ -7,7 +7,6 @@ import {
   FileSignature,
   Globe,
   LogOut,
-  ShieldCheck,
   UserRound,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -40,7 +39,6 @@ function initialsOf(name: string) {
 export function UserMenu() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isMember, setIsMember] = useState(false)
-  const [isOwner, setIsOwner] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
@@ -51,7 +49,7 @@ export function UserMenu() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
-      const [{ data }, { count }, { count: ownedCount }] = await Promise.all([
+      const [{ data }, { count }] = await Promise.all([
         supabase
           .from('profiles')
           .select('username, display_name, avatar_url')
@@ -61,10 +59,6 @@ export function UserMenu() {
           .from('pool_members')
           .select('pool_id', { count: 'exact', head: true })
           .eq('user_id', user.id),
-        supabase
-          .from('pools')
-          .select('id', { count: 'exact', head: true })
-          .eq('owner_id', user.id),
       ])
       if (!active) return
       if (data) {
@@ -75,7 +69,6 @@ export function UserMenu() {
         })
       }
       setIsMember((count ?? 0) > 0)
-      setIsOwner((ownedCount ?? 0) > 0)
     })()
     return () => {
       active = false
@@ -127,14 +120,6 @@ export function UserMenu() {
         >
           <UserRound className="size-4 text-sepia" /> editar perfil
         </DropdownMenuItem>
-        {isOwner && (
-          <DropdownMenuItem
-            render={<Link href="/admin" />}
-            className="gap-2.5 px-2 py-2 text-[14px]"
-          >
-            <ShieldCheck className="size-4 text-sepia" /> painel do dono
-          </DropdownMenuItem>
-        )}
         <DropdownMenuItem
           render={<Link href="/grupos" />}
           className="gap-2.5 px-2 py-2 text-[14px]"

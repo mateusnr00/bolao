@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { isHiddenUsername } from '@/lib/hidden-members'
 import { getMatches } from '@/lib/queries/matches'
 import { createClient } from '@/lib/supabase/server'
 
@@ -170,7 +171,9 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
     perUser.set(p.user_id, u)
   }
 
-  const members: MemberStat[] = ((rankRes.data as RawRank[] | null) ?? []).map((r, i) => {
+  const members: MemberStat[] = ((rankRes.data as RawRank[] | null) ?? [])
+    .filter((r) => !isHiddenUsername(r.username))
+    .map((r, i) => {
     const u = perUser.get(r.user_id)
     const pals = u?.pals ?? []
     // cravadas = placares exatos (mostra primeiro os que valeram mais pontos)

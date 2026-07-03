@@ -62,9 +62,6 @@ create table pool_members (
   pool_id   uuid not null references pools(id) on delete cascade,
   user_id   uuid not null references profiles(id) on delete cascade,
   joined_at timestamptz not null default now(),
-  -- moderação do dono (ver 0032): bloqueado não palpita, oculto some das listas
-  blocked   boolean not null default false,
-  hidden    boolean not null default false,
   primary key (pool_id, user_id)
 );
 create index idx_pool_members_user on pool_members(user_id);
@@ -278,7 +275,6 @@ from pool_members pm
 join profiles p on p.id = pm.user_id
 left join predictions pr on pr.user_id = pm.user_id and pr.pool_id = pm.pool_id
 left join matches m       on m.id = pr.match_id and m.status = 'finished'
-where not pm.hidden
 group by pm.pool_id, pm.user_id, p.display_name, p.username, p.avatar_url;
 
 -- Por que security_invoker: por padrão views em Postgres ignoram a RLS das
@@ -344,21 +340,12 @@ create policy "predictions insert before kickoff" on predictions for insert with
     where m.id = match_id and m.kickoff_at > now() and m.status = 'scheduled'
   )
   and public.is_pool_member(predictions.pool_id)
-  -- membro bloqueado pelo dono não palpita (ver 0032)
-  and not exists (
-    select 1 from pool_members pm
-    where pm.pool_id = predictions.pool_id and pm.user_id = auth.uid() and pm.blocked
-  )
 );
 create policy "predictions update before kickoff" on predictions for update using (
   auth.uid() = user_id
   and exists (
     select 1 from matches m
     where m.id = match_id and m.kickoff_at > now() and m.status = 'scheduled'
-  )
-  and not exists (
-    select 1 from pool_members pm
-    where pm.pool_id = predictions.pool_id and pm.user_id = auth.uid() and pm.blocked
   )
 );
 
@@ -546,13 +533,6 @@ as $$
         select pm.pool_id
         from public.pool_members pm
         where pm.user_id = auth.uid()
-      )
-      -- oculto naquele bolão não entra na lista (ver 0032)
-      and not exists (
-        select 1 from public.pool_members pmh
-        where pmh.pool_id = p.pool_id
-          and pmh.user_id = p.user_id
-          and pmh.hidden
       )
     order by p.user_id, p.points desc
   )
