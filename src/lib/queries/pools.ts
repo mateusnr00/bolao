@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { isHiddenUsername } from '@/lib/hidden-members'
+import { isHiddenMember } from '@/lib/hidden-members'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -14,6 +14,7 @@ export interface PoolSummary {
 }
 
 interface RawPoolMember {
+  user_id: string
   profiles: { username: string } | { username: string }[] | null
 }
 
@@ -38,7 +39,7 @@ export async function getUserPools(): Promise<PoolSummary[]> {
   const { data, error } = await supabase
     .from('pools')
     .select(
-      'id, name, slug, invite_code, owner_id, members:pool_members(profiles!pool_members_user_id_fkey(username))',
+      'id, name, slug, invite_code, owner_id, members:pool_members(user_id, profiles!pool_members_user_id_fkey(username))',
     )
     .order('created_at', { ascending: false })
   if (error) throw new Error(`Erro ao buscar bolões: ${error.message}`)
@@ -47,7 +48,7 @@ export async function getUserPools(): Promise<PoolSummary[]> {
   const visibleMembers = (members: RawPoolMember[] | null) =>
     (members ?? []).filter((m) => {
       const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
-      return !isHiddenUsername(prof?.username)
+      return !isHiddenMember({ userId: m.user_id, username: prof?.username })
     }).length
 
   return (data as unknown as RawPool[]).map((p) => ({

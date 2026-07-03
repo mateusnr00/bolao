@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { isHiddenUsername } from '@/lib/hidden-members'
+import { isHiddenMember } from '@/lib/hidden-members'
 import { createClient } from '@/lib/supabase/server'
 
 export type Guess = [home: number, away: number]
@@ -91,7 +91,7 @@ export async function getMatchPredictions(
   if (error) throw new Error(`Erro ao buscar palpites da galera: ${error.message}`)
 
   const rows: GaleraGuess[] = (data ?? [])
-    .filter((r) => !isHiddenUsername(r.username))
+    .filter((r) => !isHiddenMember({ userId: r.user_id, username: r.username }))
     .map((r) => ({
     userId: r.user_id,
     name: r.display_name ?? r.username,

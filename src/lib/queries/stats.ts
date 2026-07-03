@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { isHiddenUsername } from '@/lib/hidden-members'
+import { isHiddenMember } from '@/lib/hidden-members'
 import { getMatches } from '@/lib/queries/matches'
 import { createClient } from '@/lib/supabase/server'
 
@@ -172,7 +172,7 @@ export async function getPoolStats(poolId: string): Promise<MemberStat[]> {
   }
 
   const members: MemberStat[] = ((rankRes.data as RawRank[] | null) ?? [])
-    .filter((r) => !isHiddenUsername(r.username))
+    .filter((r) => !isHiddenMember({ userId: r.user_id, username: r.username }))
     .map((r, i) => {
     const u = perUser.get(r.user_id)
     const pals = u?.pals ?? []
