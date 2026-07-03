@@ -57,6 +57,7 @@ export async function getPoolSignStatus(): Promise<PoolSignStatus | null> {
       'user_id, profiles:profiles!pool_members_user_id_fkey ( display_name, username, avatar_url )',
     )
     .eq('pool_id', poolId)
+    .eq('hidden', false) // membros ocultos pelo dono não entram no contrato
 
   const memberIds = ((members as unknown as RawMember[]) ?? []).map((m) => m.user_id)
   const { data: sigs } = await admin
