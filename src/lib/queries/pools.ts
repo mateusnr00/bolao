@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { isHiddenUsername } from '@/lib/hidden-members'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -12,13 +13,17 @@ export interface PoolSummary {
   memberCount: number
 }
 
+interface RawPoolMember {
+  profiles: { username: string } | { username: string }[] | null
+}
+
 interface RawPool {
   id: string
   name: string
   slug: string
   invite_code: string
   owner_id: string
-  members: { count: number }[] | null
+  members: RawPoolMember[] | null
 }
 
 // Bolões do usuário logado. A RLS de SELECT já restringe a pools onde ele é
@@ -32,9 +37,18 @@ export async function getUserPools(): Promise<PoolSummary[]> {
 
   const { data, error } = await supabase
     .from('pools')
-    .select('id, name, slug, invite_code, owner_id, members:pool_members(count)')
+    .select(
+      'id, name, slug, invite_code, owner_id, members:pool_members(profiles!pool_members_user_id_fkey(username))',
+    )
     .order('created_at', { ascending: false })
   if (error) throw new Error(`Erro ao buscar bolões: ${error.message}`)
+
+  // conta só quem não está oculto — mantém a contagem batendo com as listas
+  const visibleMembers = (members: RawPoolMember[] | null) =>
+    (members ?? []).filter((m) => {
+      const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
+      return !isHiddenUsername(prof?.username)
+    }).length
 
   return (data as unknown as RawPool[]).map((p) => ({
     id: p.id,
@@ -42,7 +56,7 @@ export async function getUserPools(): Promise<PoolSummary[]> {
     slug: p.slug,
     inviteCode: p.invite_code,
     isOwner: p.owner_id === user.id,
-    memberCount: p.members?.[0]?.count ?? 0,
+    memberCount: visibleMembers(p.members),
   }))
 }
 

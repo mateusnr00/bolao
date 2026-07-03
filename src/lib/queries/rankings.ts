@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { isHiddenUsername } from '@/lib/hidden-members'
 import { createClient } from '@/lib/supabase/server'
 
 export interface RankingRow {
@@ -61,7 +62,9 @@ export async function getPoolRanking(poolId: string): Promise<RankingRow[]> {
     .order('exact_scores', { ascending: false })
     .order('predictions_made', { ascending: false })
   if (error) throw new Error(`Erro ao buscar ranking: ${error.message}`)
-  return (data as unknown as RawRanking[]).map((r, i) => toRow(r, i, user?.id))
+  return (data as unknown as RawRanking[])
+    .filter((r) => !isHiddenUsername(r.username))
+    .map((r, i) => toRow(r, i, user?.id))
 }
 
 interface RawStageRanking extends RawRanking {
@@ -87,6 +90,7 @@ export async function getPoolStageRankings(
 
   const byStage: Record<string, RankingRow[]> = {}
   for (const r of (data as unknown as RawStageRanking[]) ?? []) {
+    if (isHiddenUsername(r.username)) continue
     ;(byStage[r.stage] ??= []).push(toRow(r, 0, user?.id))
   }
   for (const stage of Object.keys(byStage)) {
@@ -146,7 +150,12 @@ export async function getLiveMatchGuesses(): Promise<LiveMatchGuesses[]> {
       p_match_id: m.id,
     })
     const guesses = (preds ?? [])
-      .filter((p) => p.home_score != null && p.away_score != null)
+      .filter(
+        (p) =>
+          p.home_score != null &&
+          p.away_score != null &&
+          !isHiddenUsername(p.username),
+      )
       .map((p) => ({
         userId: p.user_id,
         guess: [p.home_score!, p.away_score!] as [number, number],
