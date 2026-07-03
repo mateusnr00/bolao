@@ -6,7 +6,6 @@ import { useState } from 'react'
 import { ReactionBar } from '@/components/reactions/reaction-bar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DONKEY_SRC } from '@/lib/brand'
-import { isHiddenMember } from '@/lib/hidden-members'
 import { useLivePair } from '@/lib/live-store'
 import { fetchMatchReactions, type ReactionState } from '@/lib/reactions'
 import { calcPredictionPoints } from '@/lib/scoring'
@@ -179,9 +178,7 @@ export function GaleraInline({
     const { data, error } = predRes
     if (!error && data) {
       setRows(
-        data
-          .filter((r) => !isHiddenMember({ userId: r.user_id, username: r.username }))
-          .map((r) => ({
+        data.map((r) => ({
           userId: r.user_id,
           name: r.display_name ?? r.username,
           avatarUrl: r.avatar_url,
