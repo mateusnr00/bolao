@@ -1,6 +1,5 @@
 import 'server-only'
 
-import { isHiddenUsername } from '@/lib/hidden-members'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -62,7 +61,8 @@ export async function getPoolPayments(poolId: string): Promise<PoolPayments | nu
       .select(
         'user_id, profiles:profiles!pool_members_user_id_fkey ( display_name, username, avatar_url )',
       )
-      .eq('pool_id', poolId),
+      .eq('pool_id', poolId)
+      .eq('hidden', false), // membros ocultos pelo dono não entram na cobrança
     admin
       .from('payments')
       .select('user_id, external_id, mov_id')
@@ -80,12 +80,7 @@ export async function getPoolPayments(poolId: string): Promise<PoolPayments | nu
     else if (p.mov_id === 'MANUAL') manualSet.add(p.user_id)
   }
 
-  const rows: MemberPayment[] = ((members as unknown as RawMember[]) ?? [])
-    .filter((m) => {
-      const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
-      return !isHiddenUsername(prof?.username)
-    })
-    .map((m) => {
+  const rows: MemberPayment[] = ((members as unknown as RawMember[]) ?? []).map((m) => {
     const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
     const real = realSet.has(m.user_id)
     const manual = !real && manualSet.has(m.user_id)
