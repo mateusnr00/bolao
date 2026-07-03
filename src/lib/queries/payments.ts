@@ -1,6 +1,5 @@
 import 'server-only'
 
-import { isHiddenMember } from '@/lib/hidden-members'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -80,12 +79,7 @@ export async function getPoolPayments(poolId: string): Promise<PoolPayments | nu
     else if (p.mov_id === 'MANUAL') manualSet.add(p.user_id)
   }
 
-  const rows: MemberPayment[] = ((members as unknown as RawMember[]) ?? [])
-    .filter((m) => {
-      const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
-      return !isHiddenMember({ userId: m.user_id, username: prof?.username })
-    })
-    .map((m) => {
+  const rows: MemberPayment[] = ((members as unknown as RawMember[]) ?? []).map((m) => {
     const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
     const real = realSet.has(m.user_id)
     const manual = !real && manualSet.has(m.user_id)

@@ -1,6 +1,5 @@
 import 'server-only'
 
-import { isHiddenMember } from '@/lib/hidden-members'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -67,12 +66,7 @@ export async function getPoolSignStatus(): Promise<PoolSignStatus | null> {
 
   const signedSet = new Set((sigs ?? []).map((s) => s.user_id))
 
-  const rows: MemberSign[] = ((members as unknown as RawMember[]) ?? [])
-    .filter((m) => {
-      const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
-      return !isHiddenMember({ userId: m.user_id, username: prof?.username })
-    })
-    .map((m) => {
+  const rows: MemberSign[] = ((members as unknown as RawMember[]) ?? []).map((m) => {
     const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
     return {
       userId: m.user_id,
