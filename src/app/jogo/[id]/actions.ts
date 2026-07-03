@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 
-import { getUserPoolIds } from '@/lib/queries/predictions'
 import { createClient } from '@/lib/supabase/server'
 import { predictionSchema } from '@/lib/validations'
 
@@ -44,12 +43,21 @@ export async function savePrediction(input: {
     return { error: 'Palpites encerrados para este jogo' }
   }
 
-  const poolIds = await getUserPoolIds()
-  if (poolIds.length === 0) {
+  // Bolões do usuário + se ele está bloqueado em cada um. Palpite só entra nos
+  // bolões em que ele NÃO foi bloqueado pelo dono.
+  const { data: memberships } = await supabase
+    .from('pool_members')
+    .select('pool_id, blocked')
+    .eq('user_id', user.id)
+  if (!memberships || memberships.length === 0) {
     return { error: 'Entre em um bolão antes de palpitar' }
   }
+  const poolIds = memberships.filter((m) => !m.blocked).map((m) => m.pool_id)
+  if (poolIds.length === 0) {
+    return { error: 'O dono do bolão bloqueou seus palpites' }
+  }
 
-  // Um placar, replicado em todos os bolões do usuário.
+  // Um placar, replicado em todos os bolões (não bloqueados) do usuário.
   const rows = poolIds.map((poolId) => ({
     user_id: user.id,
     match_id: matchId,

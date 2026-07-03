@@ -1,6 +1,5 @@
 import 'server-only'
 
-import { isHiddenMember } from '@/lib/hidden-members'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -14,8 +13,7 @@ export interface PoolSummary {
 }
 
 interface RawPoolMember {
-  user_id: string
-  profiles: { username: string } | { username: string }[] | null
+  hidden: boolean
 }
 
 interface RawPool {
@@ -39,17 +37,14 @@ export async function getUserPools(): Promise<PoolSummary[]> {
   const { data, error } = await supabase
     .from('pools')
     .select(
-      'id, name, slug, invite_code, owner_id, members:pool_members(user_id, profiles!pool_members_user_id_fkey(username))',
+      'id, name, slug, invite_code, owner_id, members:pool_members(hidden)',
     )
     .order('created_at', { ascending: false })
   if (error) throw new Error(`Erro ao buscar bolões: ${error.message}`)
 
-  // conta só quem não está oculto — mantém a contagem batendo com as listas
+  // conta só quem não está oculto — mantém a contagem batendo com o ranking
   const visibleMembers = (members: RawPoolMember[] | null) =>
-    (members ?? []).filter((m) => {
-      const prof = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles
-      return !isHiddenMember({ userId: m.user_id, username: prof?.username })
-    }).length
+    (members ?? []).filter((m) => !m.hidden).length
 
   return (data as unknown as RawPool[]).map((p) => ({
     id: p.id,
