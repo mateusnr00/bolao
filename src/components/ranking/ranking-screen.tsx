@@ -36,9 +36,31 @@ type Tab =
   | 'geral'
   | 'round_of_32'
   | 'round_of_16'
-  | 'quarter_final'
-  | 'semi_final'
-  | 'final'
+  | 'knockout_finals' // quartas + semi + final numa contagem só
+
+// as três fases finais entram juntas num ranking combinado
+const KNOCKOUT_FINAL_STAGES = ['quarter_final', 'semi_final', 'final']
+
+// junta várias fases numa contagem só, somando pontos/exatos/palpites por membro
+function mergeStages(
+  stages: Record<string, RankRow[]>,
+  keys: string[],
+): RankRow[] {
+  const byUser = new Map<string, RankRow>()
+  for (const key of keys) {
+    for (const r of stages[key] ?? []) {
+      const acc = byUser.get(r.userId)
+      if (!acc) {
+        byUser.set(r.userId, { ...r })
+      } else {
+        acc.points += r.points
+        acc.exactScores += r.exactScores
+        acc.predictionsMade += r.predictionsMade
+      }
+    }
+  }
+  return [...byUser.values()]
+}
 
 interface ComputedRow extends RankRow {
   livePoints: number // pontos provisórios (jogos ao vivo)
@@ -90,9 +112,7 @@ const TAB_OPTIONS: { key: Tab; label: string }[] = [
   { key: 'geral', label: '🏆 ranking geral' },
   { key: 'round_of_32', label: '16-avos de final' },
   { key: 'round_of_16', label: 'oitavas de final' },
-  { key: 'quarter_final', label: 'quartas de final' },
-  { key: 'semi_final', label: 'semifinal' },
-  { key: 'final', label: 'final' },
+  { key: 'knockout_finals', label: 'quartas + semi + final' },
 ]
 
 // dropdown no mesmo estilo do seletor de rodada dos palpites
@@ -165,12 +185,20 @@ export function RankingScreen({ data }: { data: RankingData }) {
     liveEntries.map((e) => [pairKey(e.homeCode, e.awayCode), e]),
   )
 
-  // geral conta tudo; cada fase conta só os jogos daquela fase
+  // geral conta tudo; a reta final (quartas+semi+final) soma as três fases;
+  // as demais contam só os jogos da própria fase
   const isGeral = tab === 'geral'
-  const baseRows = isGeral ? data.rows : (data.stages[tab] ?? [])
+  const isCombined = tab === 'knockout_finals'
+  const baseRows = isGeral
+    ? data.rows
+    : isCombined
+      ? mergeStages(data.stages, KNOCKOUT_FINAL_STAGES)
+      : (data.stages[tab] ?? [])
   const liveForTab = isGeral
     ? liveMatches
-    : liveMatches.filter((m) => m.stage === tab)
+    : isCombined
+      ? liveMatches.filter((m) => KNOCKOUT_FINAL_STAGES.includes(m.stage))
+      : liveMatches.filter((m) => m.stage === tab)
 
   const delta = computeLiveDelta(liveForTab, liveByPair)
   const liveAny = liveMatches.length > 0
