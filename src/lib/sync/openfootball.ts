@@ -84,7 +84,29 @@ interface OpenfootballMatch {
   team2: string
   group?: string
   ground?: string
-  score?: { ft?: (number | null)[]; ht?: (number | null)[] }
+  // ft = tempo normal, et = prorrogação, p = pênaltis (desempate), ht = intervalo.
+  score?: {
+    ft?: (number | null)[]
+    ht?: (number | null)[]
+    et?: (number | null)[]
+    p?: (number | null)[]
+  }
+}
+
+// Placar FINAL do jogo. openfootball guarda o tempo normal em `ft`; nos jogos de
+// mata-mata decididos na prorrogação, o resultado final fica em `et` (ex.:
+// Argentina x Cabo Verde veio ft 1-1, et 3-2 — o certo é 3-2). Pênaltis (`p`)
+// são desempate, não gol, então não entram no placar. Preferimos `et` quando
+// existir; senão, `ft`.
+function finalScore(
+  score?: OpenfootballMatch['score'],
+): [number, number] | null {
+  for (const pair of [score?.et, score?.ft]) {
+    if (Array.isArray(pair) && pair.length === 2 && pair[0] != null && pair[1] != null) {
+      return [pair[0] as number, pair[1] as number]
+    }
+  }
+  return null
 }
 
 export interface SyncResult {
@@ -221,9 +243,8 @@ export async function runOpenfootballSync(
       continue
     }
 
-    const ft = mt.score?.ft
-    const hasScore =
-      Array.isArray(ft) && ft.length === 2 && ft[0] != null && ft[1] != null
+    const finalFt = finalScore(mt.score)
+    const hasScore = finalFt != null
     const groupName = mt.group ? mt.group.replace(/^Group\s+/i, '') : null
     const externalId = mt.group
       ? `wc2026-g-${slug(groupName ?? '')}-${slug(mt.team1)}-${slug(mt.team2)}`
@@ -244,8 +265,8 @@ export async function runOpenfootballSync(
       stage: mapStage(mt.round, mt.group),
       group_name: groupName,
       venue: mt.ground ?? null,
-      home_score: hasScore ? (ft![0] as number) : null,
-      away_score: hasScore ? (ft![1] as number) : null,
+      home_score: finalFt ? finalFt[0] : null,
+      away_score: finalFt ? finalFt[1] : null,
       status: hasScore ? 'finished' : 'scheduled',
       finished_at: hasScore ? kickoff : null,
       updated_at: new Date().toISOString(),
